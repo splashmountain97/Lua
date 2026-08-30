@@ -1,0 +1,55 @@
+/* Nocturne tokens (from the Lua design bundle's _ds styles.css) — only what the app actually uses. */
+:root {
+  --color-bg: #161826;
+  --color-bg-deep: #0e0f18;
+  --color-surface: #232532;
+  --color-text: #e9e9ed;
+
+  --color-neutral-100: #f3f5fe;
+  --color-neutral-300: #cfd3e5;
+  --color-neutral-400: #b2b6ca;
+  --color-neutral-500: #9397ab;
+  --color-neutral-800: #3f424d;
+
+  --color-accent: #9184d9;
+  --color-accent-300: #d2cefd;
+  --color-accent-400: #b5abfc;
+
+  --amber-core: #f2c14e;
+  --amber-deep: #b8791f;
+}
+
+html, body {
+  margin: 0;
+  background: var(--color-bg-deep);
+  height: 100%;
+}
+body {
+  font-family: "Inter", system-ui, sans-serif;
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+}
+#root { height: 100%; }
+* { box-sizing: border-box; }
+button { font-family: inherit; }
+::selection { background: rgba(145, 132, 217, .3); }
+
+@keyframes lua-jitter {
+  0%   { transform: translate3d(0,0,0) rotate(0deg); }
+  18%  { transform: translate3d(-3.5px,1.5px,0) rotate(-1.1deg); }
+  34%  { transform: translate3d(3px,-2px,0) rotate(1.3deg); }
+  52%  { transform: translate3d(-2px,-2.5px,0) rotate(-0.6deg); }
+  71%  { transform: translate3d(3.5px,2px,0) rotate(1deg); }
+  88%  { transform: translate3d(-1.5px,1px,0) rotate(-0.9deg); }
+  100% { transform: translate3d(0,0,0) rotate(0deg); }
+}
+@keyframes lua-swirl { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes lua-swirl-rev { from { transform: rotate(0deg) scale(1.15); } to { transform: rotate(-360deg) scale(1.15); } }
+@keyframes lua-drift {
+  0%   { transform: translate3d(0,0,0) scale(1); }
+  50%  { transform: translate3d(0,-7px,0) scale(1.018); }
+  100% { transform: translate3d(0,0,0) scale(1); }
+}
+@keyframes lua-breathe { 0%,100% { opacity: .5; } 50% { opacity: .85; } }
+@keyframes lua-rise { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: none; } }
+@keyframes lua-hint { 0%,100% { opacity: .32; } 50% { opacity: .72; } }

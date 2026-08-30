@@ -1,0 +1,256 @@
+import { useEffect, useRef, useState } from 'react';
+import { CATS, PROMPTS, type CategoryId, type Weight, shareText } from '../data/content';
+import { IDLE_FIRST, IDLE_RETURN } from '../data/content';
+import { PHASES, REVEAL_MS, type Phase } from '../lib/phases';
+import { shareOrCopy } from '../lib/share';
+import {
+  getCoachSeen, getPrefs, getUnlocked, hasOpenedBefore,
+  markCoachSeen, markOpened, rollStreakOnOpen, savePrefs, setUnlocked as persistUnlocked,
+} from '../lib/storage';
+
+export type Screen = 'onboard1' | 'home' | 'streak' | 'unlock';
+
+interface LuaState {
+  screen: Screen;
+  phase: Phase;
+  selected: CategoryId[];
+  weight: Weight | null;
+  infoOpen: CategoryId | null;
+  promptIx: number;
+  tiltX: number; tiltY: number; energy: number;
+  unlocked: boolean;
+  holding: boolean;
+  shareNote: string | null;
+  idleLine: string;
+  motionGranted: boolean;
+}
+
+const TILT_AMT = 1;
+const QUIET_PILLS = true;
+
+function pick(s: Pick<LuaState, 'selected' | 'weight'>): number {
+  const sel = s.selected.length ? s.selected : CATS.map(c => c.id);
+  const w = s.weight;
+  let pool = PROMPTS.filter(p => sel.includes(p.c) && (w === null || p.w === w));
+  if (!pool.length) pool = PROMPTS.filter(p => sel.includes(p.c));
+  const p = pool[Math.floor(Math.random() * pool.length)] || PROMPTS[0];
+  return PROMPTS.indexOf(p);
+}
+
+export function useLua() {
+  const startedOpen = hasOpenedBefore();
+  const initialPrefs = getPrefs({ selected: ['you', 'life', 'world'], weight: null });
+
+  const [state, setState] = useState<LuaState>(() => ({
+    screen: startedOpen ? 'home' : 'onboard1',
+    phase: 'idle',
+    selected: initialPrefs.selected as CategoryId[],
+    weight: initialPrefs.weight as Weight | null,
+    infoOpen: null,
+    promptIx: 0,
+    tiltX: 0, tiltY: 0, energy: 0,
+    unlocked: getUnlocked(),
+    holding: false,
+    shareNote: null,
+    idleLine: IDLE_FIRST[0],
+    motionGranted: false,
+  }));
+
+  const [streakDays] = useState(() => rollStreakOnOpen());
+  const [coachSeen, setCoachSeenState] = useState(getCoachSeen());
+
+  const stateRef = useRef(state);
+  useEffect(() => { stateRef.current = state; }, [state]);
+
+  const idleShownOnceRef = useRef(startedOpen);
+  const shakeBoundRef = useRef(false);
+  const motionAskedRef = useRef(false);
+  const timersRef = useRef<number[]>([]);
+
+  function patch(p: Partial<LuaState> | ((s: LuaState) => Partial<LuaState>)) {
+    setState(s => ({ ...s, ...(typeof p === 'function' ? p(s) : p) }));
+  }
+  function after(ms: number, fn: () => void) {
+    const id = window.setTimeout(fn, ms);
+    timersRef.current.push(id);
+    return id;
+  }
+  function clearTimers() {
+    timersRef.current.forEach(clearTimeout);
+    timersRef.current = [];
+  }
+  useEffect(() => clearTimers, []);
+
+  function rollIdleLine() {
+    const returning = idleShownOnceRef.current || hasOpenedBefore();
+    idleShownOnceRef.current = true;
+    markOpened();
+    patch(s => {
+      const pool = returning ? IDLE_RETURN : IDLE_FIRST;
+      const options = pool.length > 1 ? pool.filter(l => l !== s.idleLine) : pool;
+      const line = options[Math.floor(Math.random() * options.length)];
+      return { idleLine: line };
+    });
+  }
+
+  // A returning user skips the welcome screen (and so never calls
+  // rollIdleLine via askMotion) — roll the real line once on mount instead of
+  // leaving the idle placeholder showing.
+  useEffect(() => {
+    if (startedOpen) rollIdleLine();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function startShakeWatch() {
+    if (shakeBoundRef.current) return;
+    shakeBoundRef.current = true;
+    let last = 0;
+    window.addEventListener('devicemotion', (ev: DeviceMotionEvent) => {
+      const a = ev.accelerationIncludingGravity;
+      if (!a) return;
+      const mag = Math.abs(a.x || 0) + Math.abs(a.y || 0) + Math.abs(a.z || 0);
+      const now = Date.now();
+      if (mag < 26 || now - last < 220) return;
+      last = now;
+      if (stateRef.current.screen !== 'home') return;
+      if (stateRef.current.phase === 'idle') {
+        clearTimers();
+        patch({ holding: true, phase: 'agitate', energy: 0.6 });
+        after(900, () => { if (stateRef.current.holding) onUp(); });
+      } else if (stateRef.current.phase === 'agitate') {
+        patch(s => ({ energy: Math.min(1, s.energy + 0.12) }));
+      }
+    });
+  }
+
+  // Real DeviceMotion permission only grants inside a user gesture, so this
+  // is invoked both from the welcome button and lazily from the first tap on
+  // the object for a returning user who skipped the welcome screen.
+  function requestMotionPermission(onSettled?: (granted: boolean) => void) {
+    if (motionAskedRef.current) { onSettled?.(stateRef.current.motionGranted); return; }
+    motionAskedRef.current = true;
+    const DME = (window as unknown as { DeviceMotionEvent?: { requestPermission?: () => Promise<string> } }).DeviceMotionEvent;
+    const finish = (ok: boolean) => {
+      if (ok) startShakeWatch();
+      patch({ motionGranted: ok });
+      onSettled?.(ok);
+    };
+    if (DME && typeof DME.requestPermission === 'function') {
+      DME.requestPermission().then(r => finish(r === 'granted')).catch(() => finish(false));
+    } else {
+      finish(!!DME);
+    }
+  }
+
+  function askMotion() {
+    requestMotionPermission(() => {
+      rollIdleLine();
+      go('home', 'idle');
+    });
+  }
+
+  function go(screen: Screen, phase: Phase = 'idle') {
+    clearTimers();
+    patch(s => ({
+      screen, phase, infoOpen: null, tiltX: 0, tiltY: 0, holding: false,
+      energy: phase === 'anticipate' || phase === 'agitate' ? 1 : 0,
+      promptIx: phase === 'settled' ? pick(s) : s.promptIx,
+    }));
+  }
+
+  function onDown(e: React.PointerEvent) {
+    if (state.screen !== 'home') return;
+    if ((e.target as HTMLElement)?.closest?.('button')) return;
+    requestMotionPermission();
+    const ph = state.phase;
+    if (ph === 'settled') { dismiss(); return; }
+    if (ph !== 'idle') return;
+    clearTimers();
+    patch({ holding: true, phase: 'agitate', energy: .5, infoOpen: null });
+  }
+
+  function onMove(e: React.PointerEvent) {
+    if (state.screen !== 'home') return;
+    const r = e.currentTarget.getBoundingClientRect();
+    const nx = (e.clientX - r.left) / r.width - .5, ny = (e.clientY - r.top) / r.height - .5;
+    patch(s => ({
+      tiltX: nx * 26 * TILT_AMT, tiltY: ny * 16 * TILT_AMT,
+      energy: s.holding ? Math.min(1, s.energy + .06) : s.energy,
+    }));
+  }
+
+  function onUp() {
+    if (stateRef.current.screen !== 'home' || !stateRef.current.holding) return;
+    patch({ holding: false, phase: 'anticipate', tiltX: 0, tiltY: 0 });
+    after(PHASES.anticipate.dur + 720, () => {
+      patch(s => ({ phase: 'reveal', promptIx: pick(s) }));
+      after(REVEAL_MS, () => patch({ phase: 'settled' }));
+    });
+  }
+
+  function dismiss(e?: React.SyntheticEvent) {
+    e?.stopPropagation();
+    clearTimers();
+    patch({ phase: 'dismiss' });
+    if (!coachSeen) { setCoachSeenState(true); markCoachSeen(); }
+    after(PHASES.dismiss.dur, () => { patch({ phase: 'idle' }); rollIdleLine(); });
+  }
+
+  function again(e?: React.SyntheticEvent) {
+    e?.stopPropagation();
+    clearTimers();
+    if (!state.unlocked) { patch({ screen: 'unlock' }); return; }
+    patch({ phase: 'dismiss' });
+    after(520, () => {
+      patch({ phase: 'agitate', energy: 1 });
+      after(700, () => {
+        patch({ phase: 'anticipate' });
+        after(PHASES.anticipate.dur + 620, () => {
+          patch(s => ({ phase: 'reveal', promptIx: pick(s) }));
+          after(REVEAL_MS, () => patch({ phase: 'settled' }));
+        });
+      });
+    });
+  }
+
+  async function share(e?: React.SyntheticEvent) {
+    e?.stopPropagation();
+    const msg = shareText(PROMPTS[stateRef.current.promptIx].t);
+    await shareOrCopy(msg, (t) => {
+      patch({ shareNote: t });
+      after(2400, () => patch({ shareNote: null }));
+    });
+  }
+
+  function toggleCategory(id: CategoryId, e?: React.SyntheticEvent) {
+    e?.stopPropagation();
+    patch(s => {
+      const next = s.selected.includes(id) ? s.selected.filter(x => x !== id) : [...s.selected, id];
+      const selected = next.length ? next : s.selected;
+      savePrefs({ selected, weight: s.weight });
+      return { selected, infoOpen: null };
+    });
+  }
+
+  function toggleInfo(id: CategoryId, e?: React.SyntheticEvent) {
+    e?.stopPropagation();
+    patch(s => ({ infoOpen: s.infoOpen === id ? null : id }));
+  }
+
+  function setWeight(w: Weight | null, e?: React.SyntheticEvent) {
+    e?.stopPropagation();
+    patch(s => { savePrefs({ selected: s.selected, weight: w }); return { weight: w, infoOpen: null }; });
+  }
+
+  function goStreak(e?: React.SyntheticEvent) { e?.stopPropagation(); go('streak'); }
+  function goHome() { rollIdleLine(); go('home', 'idle'); }
+  function doUnlock() { persistUnlocked(true); patch({ unlocked: true }); go('home', 'idle'); }
+
+  return {
+    state, streakDays, coachSeen, quiet: QUIET_PILLS,
+    actions: {
+      askMotion, onDown, onMove, onUp, dismiss, again, share,
+      toggleCategory, toggleInfo, setWeight, goStreak, goHome, doUnlock,
+    },
+  };
+}
