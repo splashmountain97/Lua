@@ -1,7 +1,8 @@
 import moonBody from '../assets/moon-body.png';
 import glassSwirl from '../assets/glass-swirl.png';
 import { CATS, PROMPTS, WEIGHTS } from '../data/content';
-import { PHASES, EASE_IN, EASE_OUT, M, CX, CY, WX, WY, WPX, WPY, AP_R } from '../lib/phases';
+import { PHASES, EASE_IN, EASE_OUT, M, CX, WX, WY, WPX, AP_R, apertureY, targetY } from '../lib/phases';
+import { useStageLayout } from '../lib/layout';
 import type { useLua } from '../hooks/useLua';
 
 type Lua = ReturnType<typeof useLua>;
@@ -13,6 +14,7 @@ const wdotStyle = (i: number, pw: number): React.CSSProperties => ({
 
 export default function Home({ lua }: { lua: Lua }) {
   const { state, streakDays, coachSeen, quiet, actions } = lua;
+  const { titleY, moonCY, lineY, height: stageH } = useStageLayout();
   const ph = state.phase;
   const v = PHASES[ph];
   const big = ph === 'reveal' || ph === 'settled';
@@ -20,6 +22,9 @@ export default function Home({ lua }: { lua: Lua }) {
   const tx = state.tiltX * (big ? .06 : 1);
   const ty = state.tiltY * (big ? .06 : 1);
   const jitterOn = ph === 'agitate';
+  // The moon's vertical anchor moves with the stage, so the distance it travels
+  // to reach the centre has to be measured rather than baked into the phase.
+  const pushY = v.push ? targetY(stageH) - apertureY(moonCY) : 0;
   const swirlBlur = 1 + state.energy * 3.2;
   const prompt = PROMPTS[state.promptIx];
   const pw = prompt.w;
@@ -53,11 +58,11 @@ export default function Home({ lua }: { lua: Lua }) {
           </button>
         </div>
 
-        <div style={{ position: 'absolute', top: 246, left: 0, right: 0, textAlign: 'center', padding: '0 32px' }}>
+        <div style={{ position: 'absolute', top: titleY, left: 0, right: 0, textAlign: 'center', padding: '0 32px' }}>
           <div style={{ font: '300 25px/1.2 Inter,sans-serif', letterSpacing: '-.028em', color: '#f0eef2' }}>{hintTitle}</div>
         </div>
         <div style={{
-          position: 'absolute', top: 578, left: 0, right: 0, textAlign: 'center', padding: '0 40px',
+          position: 'absolute', top: lineY, left: 0, right: 0, textAlign: 'center', padding: '0 40px',
           font: '400 11px/1.5 ui-monospace,Menlo,monospace', letterSpacing: '.06em', color: 'rgba(147,151,171,.9)',
           animation: 'lua-hint 5.2s ease-in-out infinite',
           display: infoCat ? 'none' : 'block',
@@ -153,9 +158,9 @@ export default function Home({ lua }: { lua: Lua }) {
 
       {/* the object */}
       <div style={{
-        position: 'absolute', left: CX - M / 2, top: CY - M / 2, width: M, height: M, zIndex: 2,
+        position: 'absolute', left: CX - M / 2, top: moonCY - M / 2, width: M, height: M, zIndex: 2,
         transformOrigin: `${WX * 100}% ${WY * 100}%`, willChange: 'transform',
-        transform: `translate3d(${v.tx + tx}px, ${v.ty + ty}px, 0) scale(${v.k})`,
+        transform: `translate3d(${v.tx + tx}px, ${pushY + v.ty + ty}px, 0) scale(${v.k})`,
         transition: `transform ${dur}ms ${ease}`,
       }}>
         <div style={{ position: 'absolute', inset: 0, animation: jitterOn ? `lua-jitter ${(0.72 - state.energy * 0.3).toFixed(2)}s ease-in-out infinite` : undefined }}>
@@ -197,10 +202,10 @@ export default function Home({ lua }: { lua: Lua }) {
 
       {/* the aperture: the window's own edge, growing into the screen edge */}
       <div style={{
-        position: 'absolute', left: WPX - AP_R, top: WPY - AP_R, width: AP_R * 2, height: AP_R * 2, borderRadius: '50%',
+        position: 'absolute', left: WPX - AP_R, top: apertureY(moonCY) - AP_R, width: AP_R * 2, height: AP_R * 2, borderRadius: '50%',
         zIndex: 3, pointerEvents: 'none', transformOrigin: '50% 50%', willChange: 'transform',
         opacity: v.ap,
-        transform: `translate3d(${v.tx + tx}px, ${v.ty + ty}px, 0) scale(${v.k})`,
+        transform: `translate3d(${v.tx + tx}px, ${pushY + v.ty + ty}px, 0) scale(${v.k})`,
         boxShadow: `0 0 0 9999px rgba(14,15,24,${v.occ})`,
         transition: `transform ${dur}ms ${ease}, opacity ${Math.round(dur * 0.3)}ms linear, box-shadow ${Math.round(dur * 0.75)}ms linear`,
       }}>
@@ -258,7 +263,7 @@ export default function Home({ lua }: { lua: Lua }) {
           </div>
           <p style={{
             margin: 0, font: `400 ${promptFs}px/1.34 Inter,sans-serif`, letterSpacing: '-.014em', color: '#f0eef2',
-            textShadow: '0 0 22px rgba(242,193,78,.2), 0 0 60px rgba(145,132,217,.14)', filter: 'blur(.32px)',
+            textShadow: '0 0 22px rgba(242,193,78,.2), 0 0 60px rgba(145,132,217,.14)',
           }}>{prompt.t}</p>
         </div>
 
