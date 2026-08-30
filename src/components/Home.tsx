@@ -258,7 +258,7 @@ export default function Home({ lua }: { lua: Lua }) {
           </div>
           <p style={{
             margin: 0, font: `400 ${promptFs}px/1.34 Inter,sans-serif`, letterSpacing: '-.014em', color: '#f0eef2',
-            textShadow: '0 0 22px rgba(242,193,78,.2), 0 0 60px rgba(145,132,217,.14)', filter: 'blur(.32px)',
+            textShadow: '0 0 22px rgba(242,193,78,.2), 0 0 60px rgba(145,132,217,.14)',
           }}>{prompt.t}</p>
         </div>
 
