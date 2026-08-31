@@ -7,6 +7,7 @@ const UNLOCKED_KEY = 'lua.unlocked';
 const STREAK_DAYS_KEY = 'lua.streakDays';
 const STREAK_LAST_KEY = 'lua.streakLastOpen';
 const PREFS_KEY = 'lua.prefs';
+const REVEALS_KEY = 'lua.revealsToday';
 
 function safeGet(key: string): string | null {
   try { return localStorage.getItem(key); } catch { return null; }
@@ -64,6 +65,25 @@ export function rollStreakOnOpen(): number {
   safeSet(STREAK_DAYS_KEY, String(days));
   safeSet(STREAK_LAST_KEY, today);
   return days;
+}
+
+/**
+ * Questions revealed today, stamped with the local date so it resets at
+ * midnight wherever the reader is. Stored as one value rather than a growing
+ * history: yesterday's count is of no interest once it is yesterday.
+ */
+export function getRevealsToday(): number {
+  const raw = safeGet(REVEALS_KEY);
+  if (!raw) return 0;
+  const sep = raw.lastIndexOf(':');
+  if (sep < 0) return 0;
+  return raw.slice(0, sep) === todayKey() ? Number(raw.slice(sep + 1)) || 0 : 0;
+}
+
+export function bumpRevealsToday(): number {
+  const next = getRevealsToday() + 1;
+  safeSet(REVEALS_KEY, `${todayKey()}:${next}`);
+  return next;
 }
 
 export interface Prefs {
