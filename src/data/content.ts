@@ -182,11 +182,22 @@ export const PROMPTS: Prompt[] = [
 export const WEIGHTS: { id: Weight | null; label: string }[] = [
   { id: null, label: 'Any' },
   { id: 1, label: 'Light' },
-  { id: 2, label: 'Firm' },
+  { id: 2, label: 'Medium' },
   { id: 3, label: 'Heavy' },
 ];
 
-export const WEIGHT_NAME: Record<Weight, string> = { 1: 'Light', 2: 'Firm', 3: 'Heavy' };
+export const WEIGHT_NAME: Record<Weight, string> = { 1: 'Light', 2: 'Medium', 3: 'Heavy' };
+
+// Every level explains itself when tapped. Light and Heavy always did; the
+// middle one fell through to the unfiltered line, so choosing it looked like
+// nothing had happened.
+export const WEIGHT_NOTE: Record<Weight, string> = {
+  1: 'A gentler set. Nothing here will ambush you — answer it however you like, and take your time.',
+  2: 'Enough to make you stop and think properly, without following you around for the rest of the day.',
+  3: 'The ones that take a while to put down. Answer however you like, and take your time.',
+};
+export const WEIGHT_ANY_NOTE =
+  'Filter, give it a shake, then answer however you want — pen and paper, out loud, or just in your head. Take your time.';
 
 // Welcome body copy — swap the index to change the whole screen.
 export const WELCOME_ALTS = [

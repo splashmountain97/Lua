@@ -27,14 +27,14 @@ interface LuaState {
   motionGranted: boolean;
 }
 
-const SHARED_LINE = 'Someone sent you this one.';
-
 function sharedIndex(): number | null {
   const id = sharedPromptId();
   if (id === null) return null;
   const ix = promptIndexById(id);
   return ix >= 0 ? ix : null;
 }
+
+const INTRO_DONE = 2;
 
 const TILT_AMT = 1;
 const QUIET_PILLS = true;
@@ -55,23 +55,28 @@ export function useLua() {
 
   const [state, setState] = useState<LuaState>(() => ({
     screen: startedOpen ? 'home' : 'onboard1',
-    phase: 'idle',
+    // A shared link opens on the question itself. A first-time visitor still
+    // gets the welcome screen — the share is the pitch — and the question is
+    // held until they are through it.
+    phase: startedOpen && sharedIx !== null ? 'settled' : 'idle',
     selected: initialPrefs.selected as CategoryId[],
     weight: initialPrefs.weight as Weight | null,
     infoOpen: null,
     promptIx: sharedIx ?? 0,
     tiltX: 0, tiltY: 0, energy: 0,
-    pinnedIx: sharedIx,
+    pinnedIx: startedOpen ? null : sharedIx,
     unlocked: getUnlocked(),
     holding: false,
     shareNote: null,
-    idleLine: sharedIx === null ? IDLE_FIRST[0] : SHARED_LINE,
+    idleLine: IDLE_FIRST[0],
     motionGranted: false,
   }));
 
   const [streakDays] = useState(() => rollStreakOnOpen());
   const [coachSeen, setCoachSeenState] = useState(getCoachSeen());
-  const [pillIntroSeen, setPillIntroSeenState] = useState(getPillIntroSeen());
+  // The filter intro runs as two beats — subject, then difficulty — kept under
+  // one flag because it is one moment, not a tour to be resumed part-way.
+  const [introStep, setIntroStep] = useState(() => (getPillIntroSeen() ? INTRO_DONE : 0));
 
   const stateRef = useRef(state);
   useEffect(() => { stateRef.current = state; }, [state]);
@@ -96,7 +101,6 @@ export function useLua() {
   useEffect(() => clearTimers, []);
 
   function rollIdleLine() {
-    if (stateRef.current.pinnedIx !== null) { markOpened(); return; }
     const returning = idleShownOnceRef.current || hasOpenedBefore();
     idleShownOnceRef.current = true;
     markOpened();
@@ -159,8 +163,9 @@ export function useLua() {
 
   function askMotion() {
     requestMotionPermission(() => {
+      const shared = stateRef.current.pinnedIx !== null;
       rollIdleLine();
-      go('home', 'idle');
+      go('home', shared ? 'settled' : 'idle');
     });
   }
 
@@ -169,7 +174,8 @@ export function useLua() {
     patch(s => ({
       screen, phase, infoOpen: null, tiltX: 0, tiltY: 0, holding: false,
       energy: phase === 'anticipate' || phase === 'agitate' ? 1 : 0,
-      promptIx: phase === 'settled' ? pick(s) : s.promptIx,
+      promptIx: phase === 'settled' ? (s.pinnedIx ?? pick(s)) : s.promptIx,
+      pinnedIx: phase === 'settled' ? null : s.pinnedIx,
     }));
   }
 
@@ -212,10 +218,12 @@ export function useLua() {
     markCoachSeen();
   }
 
-  function dismissPillIntro() {
-    if (pillIntroSeen) return;
-    setPillIntroSeenState(true);
-    markPillIntroSeen();
+  function advanceIntro() {
+    setIntroStep(step => {
+      const next = step + 1;
+      if (next >= INTRO_DONE) markPillIntroSeen();
+      return next;
+    });
   }
 
   function dismiss(e?: React.SyntheticEvent) {
@@ -280,11 +288,11 @@ export function useLua() {
   function doUnlock() { persistUnlocked(true); patch({ unlocked: true }); go('home', 'idle'); }
 
   return {
-    state, streakDays, coachSeen, pillIntroSeen, quiet: QUIET_PILLS,
+    state, streakDays, coachSeen, introStep, quiet: QUIET_PILLS,
     actions: {
       askMotion, onDown, onMove, onUp, dismiss, again, share,
       toggleCategory, toggleInfo, setWeight, goStreak, goHome, doUnlock,
-      dismissCoach, dismissPillIntro,
+      dismissCoach, advanceIntro,
     },
   };
 }

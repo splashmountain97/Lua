@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import moonBody from '../assets/moon-body.png';
 import glassSwirl from '../assets/glass-swirl.png';
-import { CATS, PROMPTS, WEIGHTS } from '../data/content';
+import { CATS, PROMPTS, WEIGHTS, WEIGHT_ANY_NOTE, WEIGHT_NOTE } from '../data/content';
 import { PHASES, EASE_IN, EASE_OUT, M, CX, WX, WY, WPX, AP_R, apertureY, targetY } from '../lib/phases';
 import { useStageLayout } from '../lib/layout';
 import Spotlight from './Spotlight';
@@ -15,10 +15,11 @@ const wdotStyle = (i: number, pw: number): React.CSSProperties => ({
 });
 
 export default function Home({ lua }: { lua: Lua }) {
-  const { state, streakDays, coachSeen, pillIntroSeen, quiet, actions } = lua;
+  const { state, streakDays, coachSeen, introStep, quiet, actions } = lua;
   const { titleY, moonCY, lineY, height: stageH } = useStageLayout();
   const promptRef = useRef<HTMLDivElement>(null);
-  const pillsRef = useRef<HTMLDivElement>(null);
+  const catsRef = useRef<HTMLDivElement>(null);
+  const weightsRef = useRef<HTMLDivElement>(null);
   const ph = state.phase;
   const v = PHASES[ph];
   const big = ph === 'reveal' || ph === 'settled';
@@ -89,9 +90,9 @@ export default function Home({ lua }: { lua: Lua }) {
             </div>
           )}
 
-          <div ref={pillsRef}>
+          <div ref={catsRef}>
             <div style={{ margin: '0 0 3px', padding: '0 2px' }}>
-              <span style={{ font: '400 11.5px/1.4 Inter,sans-serif', letterSpacing: '.01em', color: '#9397ab' }}>Tap to choose what you're asked</span>
+              <span style={{ font: '400 11.5px/1.4 Inter,sans-serif', letterSpacing: '.01em', color: '#9397ab' }}>Tap to choose what you'd like to reflect on</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               {CATS.map(c => {
@@ -130,8 +131,9 @@ export default function Home({ lua }: { lua: Lua }) {
             </div>
           </div>
 
+          <div ref={weightsRef}>
           <div style={{ margin: '6px 0 3px', padding: '0 2px' }}>
-            <span style={{ font: '400 11.5px/1.4 Inter,sans-serif', letterSpacing: '.01em', color: '#9397ab' }}>Choose the level of difficulty</span>
+            <span style={{ font: '400 11.5px/1.4 Inter,sans-serif', letterSpacing: '.01em', color: '#9397ab' }}>How hard do you want to think?</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             {WEIGHTS.map(w => {
@@ -149,15 +151,12 @@ export default function Home({ lua }: { lua: Lua }) {
               );
             })}
           </div>
+          </div>
           <div style={{
             padding: '0 2px', margin: '7px 0 0', font: '400 11px/1.4 Inter,sans-serif',
-            color: state.weight === 1 || state.weight === 3 ? 'rgba(181,171,252,.8)' : 'rgba(147,151,171,.75)',
+            color: state.weight === null ? 'rgba(147,151,171,.75)' : 'rgba(181,171,252,.8)',
           }}>
-            {state.weight === 1
-              ? 'A gentler set. Nothing here will ambush you — answer it however you like, and take your time.'
-              : state.weight === 3
-              ? 'The ones that take a while to put down. Answer however you like, and take your time.'
-              : 'Filter, give it a shake, then answer however you want — pen and paper, out loud, or just in your head. Take your time.'}
+            {state.weight === null ? WEIGHT_ANY_NOTE : WEIGHT_NOTE[state.weight]}
           </div>
         </div>
       </div>
@@ -294,11 +293,18 @@ export default function Home({ lua }: { lua: Lua }) {
       </div>
 
       <Spotlight
-        targetRef={pillsRef}
-        show={ph === 'idle' && !pillIntroSeen && !state.infoOpen}
-        text="These decide what you get asked. Set them once, or change them whenever you like."
+        targetRef={catsRef}
+        show={ph === 'idle' && introStep === 0 && !state.infoOpen}
+        text="Pick the ground your question comes from — yourself, your life, or the world beyond it. Change it whenever you like."
         place="above"
-        onDismiss={actions.dismissPillIntro}
+        onDismiss={actions.advanceIntro}
+      />
+      <Spotlight
+        targetRef={weightsRef}
+        show={ph === 'idle' && introStep === 1 && !state.infoOpen}
+        text="And how far you want to be pushed. Some questions are a passing thought, some stay with you for days."
+        place="above"
+        onDismiss={actions.advanceIntro}
       />
       <Spotlight
         targetRef={promptRef}
