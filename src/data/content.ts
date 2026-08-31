@@ -237,12 +237,16 @@ export const WEIGHT_ANY_NOTE =
   'Filter, give it a shake, then answer however you want — pen and paper, out loud, or just in your head. Take your time.';
 
 // Welcome body copy — swap the index to change the whole screen.
+// These say 'no account, no journal' and stop there. They used to add 'nothing
+// stored', which the premium test makes untrue the moment someone leaves an
+// address at a wall — and none of these is the one currently rendered, so the
+// claim would have gone live silently on whichever index got picked next.
 export const WELCOME_ALTS = [
   'Everything else on your phone is built to keep you moving. This is built to stop you, for about a minute.',
-  'The tube, the kettle boiling, a spare minute — most of it disappears without a thought. Lua asks you to spend just one of those minutes actually thinking, about something real. No account, no journal, nothing stored.',
-  'The world isn’t going to slow down for you, so slow down on purpose. One real question, once a day, and a minute to sit with it. No account, no journal, nothing stored.',
-  'Long before apps, people carried a single question around for a day and let it do its work. That is all this is. No account, no journal, nothing stored.',
-  'You probably know less about yourself than you think — most of us are too busy to check. One question a day, one minute of actually thinking. No account, no journal, nothing stored.',
+  'The tube, the kettle boiling, a spare minute — most of it disappears without a thought. Lua asks you to spend just one of those minutes actually thinking, about something real. No account, no journal.',
+  'The world isn’t going to slow down for you, so slow down on purpose. One real question, once a day, and a minute to sit with it. No account, no journal.',
+  'Long before apps, people carried a single question around for a day and let it do its work. That is all this is. No account, no journal.',
+  'You probably know less about yourself than you think — most of us are too busy to check. One question a day, one minute of actually thinking. No account, no journal.',
 ];
 export const WELCOME_COPY = WELCOME_ALTS[0];
 
