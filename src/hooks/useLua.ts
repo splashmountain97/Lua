@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { CATS, PROMPTS, promptIndexById, type CategoryId, type Weight, shareText } from '../data/content';
-import { IDLE_FIRST, IDLE_RETURN } from '../data/content';
+import { IDLE_FIRST, IDLE_RETURN, IDLE_TIPS, SETTLING, TIP_CHANCE } from '../data/content';
 import { PHASES, REVEAL_MS, type Phase } from '../lib/phases';
 import { shareOrCopy, sharedPromptId } from '../lib/share';
 import { trackPromptShown } from '../lib/analytics';
@@ -27,6 +27,8 @@ interface LuaState {
   holding: boolean;
   shareNote: string | null;
   idleLine: string;
+  /** The line held while the object settles, drawn as the pause begins. */
+  settlingLine: string;
   motionGranted: boolean;
 }
 
@@ -84,6 +86,7 @@ export function useLua() {
     holding: false,
     shareNote: null,
     idleLine: IDLE_FIRST[0],
+    settlingLine: SETTLING[0],
     motionGranted: false,
   }));
 
@@ -115,16 +118,26 @@ export function useLua() {
   }
   useEffect(() => clearTimers, []);
 
+  /** Draw from a pool, never handing back the line already on screen. */
+  function drawLine(pool: string[], current: string): string {
+    const fresh = pool.filter(l => l !== current);
+    const from = fresh.length ? fresh : pool;
+    return from[Math.floor(Math.random() * from.length)];
+  }
+
   function rollIdleLine() {
     const returning = idleShownOnceRef.current || hasOpenedBefore();
     idleShownOnceRef.current = true;
     markOpened();
-    patch(s => {
-      const pool = returning ? IDLE_RETURN : IDLE_FIRST;
-      const options = pool.length > 1 ? pool.filter(l => l !== s.idleLine) : pool;
-      const line = options[Math.floor(Math.random() * options.length)];
-      return { idleLine: line };
-    });
+    // A first-ever open always gets the dedicated pool — a newcomer needs
+    // telling what to do, not a thought about journaling. After that the nudge
+    // is the norm and the tip is the quarter-of-the-time surprise.
+    const pool = !returning ? IDLE_FIRST
+      : Math.random() < TIP_CHANCE ? IDLE_TIPS
+      : IDLE_RETURN;
+    // Drawn outside the updater: React re-runs updaters under StrictMode, and a
+    // draw inside one can settle on a line other than the one committed.
+    patch({ idleLine: drawLine(pool, stateRef.current.idleLine) });
   }
 
   // A returning user skips the welcome screen (and so never calls
@@ -230,7 +243,10 @@ export function useLua() {
 
   function onUp() {
     if (stateRef.current.screen !== 'home' || !stateRef.current.holding) return;
-    patch({ holding: false, phase: 'anticipate', tiltX: 0, tiltY: 0 });
+    patch({
+      holding: false, phase: 'anticipate', tiltX: 0, tiltY: 0,
+      settlingLine: drawLine(SETTLING, stateRef.current.settlingLine),
+    });
     after(PHASES.anticipate.dur + 720, reveal);
   }
 
@@ -270,7 +286,7 @@ export function useLua() {
     after(520, () => {
       patch({ phase: 'agitate', energy: 1 });
       after(700, () => {
-        patch({ phase: 'anticipate' });
+        patch({ phase: 'anticipate', settlingLine: drawLine(SETTLING, stateRef.current.settlingLine) });
         after(PHASES.anticipate.dur + 620, reveal);
       });
     });

@@ -233,11 +233,49 @@ export const WELCOME_ALTS = [
 ];
 export const WELCOME_COPY = WELCOME_ALTS[0];
 
+// The dedicated first-ever-open pool. A newcomer is told what to do with the
+// object in front of them; every other line assumes they already know.
 export const IDLE_FIRST = [
+  'Shake your phone or tap the Moon to start',
   'Shake to look inside.',
   'Give it a shake.',
   'There’s something in here for you.',
+  'Give the moon a shake',
+  'Tap the moon to start',
+  'Tap the moon and get out of your comfort zone',
 ];
+// Longer lines for the same slot, drawn a quarter of the time so the nudge
+// stays the norm and the tip stays a small surprise.
+export const IDLE_TIPS = [
+  'Journaling is said to help untangle thoughts you didn’t know you were carrying.',
+  'People have kept some version of this ritual for thousands of years, long before notebooks existed.',
+  'Ready to know a little more about yourself?',
+  'Some of the clearest thinking happens in the sixty seconds before you write anything down.',
+  'Writing about your day for even a few minutes is said to make it feel a little lighter.',
+  'You don’t need the right words. Just one honest one.',
+  'The hardest part is usually just starting. You’re already here.',
+  'Small moments of reflection add up more than big ones you never get around to.',
+  'This isn’t therapy. It’s a minute of actually listening to yourself.',
+  'Curious what today’s question will bring up?',
+  'Nobody’s watching. Not even us.',
+  'Sometimes the most interesting person to learn about is the one you already are.',
+  'Some people write pages. Some just sit with it for a second. Both count.',
+  'What would you tell a stranger about today, if they actually asked?',
+];
+
+/** How often the line under the moon is a tip rather than a nudge. */
+export const TIP_CHANCE = 0.25;
+
+// Shown while the object is settling, in place of the one line that used to
+// carry that whole beat.
+export const SETTLING = [
+  'Let it settle',
+  'Almost.',
+  'Still finding it.',
+  'One second more.',
+  'Nearly there.',
+];
+
 export const IDLE_RETURN = [
   'One question, whenever you’re ready.',
   'Welcome back. Shake for today’s question.',
@@ -247,10 +285,6 @@ export const IDLE_RETURN = [
   'Ready when you are.',
   'Something’s waiting inside.',
   'Take a breath. Then shake.',
-  'Back again? Let’s see what’s inside today.',
-  'No rush. Shake whenever.',
-  'Give the moon a shake.',
-  'Whenever you’re ready — no rush.',
 ];
 
 export const LANDING_URL = 'https://lua-coral.vercel.app';
