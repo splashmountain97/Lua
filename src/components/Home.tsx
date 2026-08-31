@@ -36,10 +36,9 @@ export default function Home({ lua }: { lua: Lua }) {
   const promptLen = prompt.t.length;
   const promptFs = promptLen > 92 ? 21.5 : promptLen > 74 ? 23.5 : promptLen > 56 ? 26 : promptLen > 38 ? 28 : 31;
   const dur = v.dur;
-  // Idle says nothing here any more — the rotating line under the moon carries
-  // that job, and a fixed 'Ready to begin?' above it only said it twice. The
-  // agitation beat says nothing either: the swirl is the message.
-  const hintTitle = ph === 'idle' || ph === 'agitate' ? '' : state.settlingLine;
+  // The slot that held 'Ready to begin?' now rotates through the nudges, at the
+  // same size. It says nothing during the agitation: the swirl is the message.
+  const hintTitle = ph === 'idle' ? state.idleLine : ph === 'agitate' ? '' : state.settlingLine;
   const infoCat = CATS.find(c => c.id === state.infoOpen);
   const promptCat = CATS.find(c => c.id === prompt.c)!;
 
@@ -74,7 +73,7 @@ export default function Home({ lua }: { lua: Lua }) {
           font: '400 11px/1.5 ui-monospace,Menlo,monospace', letterSpacing: '.06em', color: 'rgba(147,151,171,.9)',
           animation: 'lua-hint 5.2s ease-in-out infinite',
           display: infoCat ? 'none' : 'block',
-        }}>{state.idleLine}</div>
+        }}>{state.tipLine}</div>
 
         <div style={{ position: 'absolute', bottom: 46, left: 0, right: 0, padding: '0 20px' }}>
           {infoCat && (

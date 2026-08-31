@@ -28,8 +28,13 @@ export const DESIGN_H = 874;
 const TOP_RESERVE = 116;
 const BOTTOM_RESERVE = 227;
 
-const TITLE_H = 30;
-const GAP_TITLE_MOON = 71;
+// Two lines, not one. The nudge above the moon rotates, and the longest of them
+// wraps at 25px on a narrow screen — reserving a single line let it lap over the
+// moon once the composition compressed. The gap below it is shortened by the
+// same amount, so title top to moon top is unchanged and the reference
+// coordinates still come out exactly at the design height.
+const TITLE_H = 60;
+const GAP_TITLE_MOON = 41;
 const MOON_H = 210;
 const GAP_MOON_LINE = 21;
 const LINE_H = 16;

@@ -26,7 +26,10 @@ interface LuaState {
   unlocked: boolean;
   holding: boolean;
   shareNote: string | null;
+  /** The nudge above the moon, in the slot 'Ready to begin?' used to hold. */
   idleLine: string;
+  /** The longer tip below the moon. Empty most opens — it is the exception. */
+  tipLine: string;
   /** The line held while the object settles, drawn as the pause begins. */
   settlingLine: string;
   motionGranted: boolean;
@@ -86,6 +89,7 @@ export function useLua() {
     holding: false,
     shareNote: null,
     idleLine: IDLE_FIRST[0],
+    tipLine: '',
     settlingLine: SETTLING[0],
     motionGranted: false,
   }));
@@ -132,12 +136,18 @@ export function useLua() {
     // A first-ever open always gets the dedicated pool — a newcomer needs
     // telling what to do, not a thought about journaling. After that the nudge
     // is the norm and the tip is the quarter-of-the-time surprise.
-    const pool = !returning ? IDLE_FIRST
-      : Math.random() < TIP_CHANCE ? IDLE_TIPS
-      : IDLE_RETURN;
+    // Two slots, not one. The nudge always sits above the moon, where 'Ready to
+    // begin?' used to; the longer tip is the exception underneath it, a quarter
+    // of the time. A first-ever open takes the dedicated pool and never a tip —
+    // someone opening this for the first time needs telling what the object
+    // does, not a thought about journaling.
     // Drawn outside the updater: React re-runs updaters under StrictMode, and a
     // draw inside one can settle on a line other than the one committed.
-    patch({ idleLine: drawLine(pool, stateRef.current.idleLine) });
+    const s = stateRef.current;
+    patch({
+      idleLine: drawLine(returning ? IDLE_RETURN : IDLE_FIRST, s.idleLine),
+      tipLine: returning && Math.random() < TIP_CHANCE ? drawLine(IDLE_TIPS, s.tipLine) : '',
+    });
   }
 
   // A returning user skips the welcome screen (and so never calls
