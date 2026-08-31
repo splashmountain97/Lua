@@ -36,7 +36,10 @@ export default function Home({ lua }: { lua: Lua }) {
   const promptLen = prompt.t.length;
   const promptFs = promptLen > 92 ? 21.5 : promptLen > 74 ? 23.5 : promptLen > 56 ? 26 : promptLen > 38 ? 28 : 31;
   const dur = v.dur;
-  const hintTitle = ph === 'idle' ? 'Ready to begin?' : ph === 'agitate' ? 'Something is moving' : 'Let it settle';
+  // Idle says nothing here any more — the rotating line under the moon carries
+  // that job, and a fixed 'Ready to begin?' above it only said it twice. The
+  // agitation beat says nothing either: the swirl is the message.
+  const hintTitle = ph === 'idle' || ph === 'agitate' ? '' : state.settlingLine;
   const infoCat = CATS.find(c => c.id === state.infoOpen);
   const promptCat = CATS.find(c => c.id === prompt.c)!;
 
