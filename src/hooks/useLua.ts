@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import { CATS, PROMPTS, type CategoryId, type Weight, shareText } from '../data/content';
+import { CATS, PROMPTS, promptIndexById, type CategoryId, type Weight, shareText } from '../data/content';
 import { IDLE_FIRST, IDLE_RETURN } from '../data/content';
 import { PHASES, REVEAL_MS, type Phase } from '../lib/phases';
-import { shareOrCopy } from '../lib/share';
+import { shareOrCopy, sharedPromptId } from '../lib/share';
 import {
-  getCoachSeen, getPrefs, getUnlocked, hasOpenedBefore,
-  markCoachSeen, markOpened, rollStreakOnOpen, savePrefs, setUnlocked as persistUnlocked,
+  getCoachSeen, getPillIntroSeen, getPrefs, getUnlocked, hasOpenedBefore,
+  markCoachSeen, markOpened, markPillIntroSeen, rollStreakOnOpen, savePrefs, setUnlocked as persistUnlocked,
 } from '../lib/storage';
 
 export type Screen = 'onboard1' | 'home' | 'streak' | 'unlock';
@@ -18,12 +18,23 @@ interface LuaState {
   infoOpen: CategoryId | null;
   promptIx: number;
   tiltX: number; tiltY: number; energy: number;
+  /** A question arrived at through a share link, held back for the next reveal. */
+  pinnedIx: number | null;
   unlocked: boolean;
   holding: boolean;
   shareNote: string | null;
   idleLine: string;
   motionGranted: boolean;
 }
+
+function sharedIndex(): number | null {
+  const id = sharedPromptId();
+  if (id === null) return null;
+  const ix = promptIndexById(id);
+  return ix >= 0 ? ix : null;
+}
+
+const INTRO_DONE = 2;
 
 const TILT_AMT = 1;
 const QUIET_PILLS = true;
@@ -39,16 +50,21 @@ function pick(s: Pick<LuaState, 'selected' | 'weight'>): number {
 
 export function useLua() {
   const startedOpen = hasOpenedBefore();
+  const [sharedIx] = useState(sharedIndex);
   const initialPrefs = getPrefs({ selected: ['you', 'life', 'world'], weight: null });
 
   const [state, setState] = useState<LuaState>(() => ({
     screen: startedOpen ? 'home' : 'onboard1',
-    phase: 'idle',
+    // A shared link opens on the question itself. A first-time visitor still
+    // gets the welcome screen — the share is the pitch — and the question is
+    // held until they are through it.
+    phase: startedOpen && sharedIx !== null ? 'settled' : 'idle',
     selected: initialPrefs.selected as CategoryId[],
     weight: initialPrefs.weight as Weight | null,
     infoOpen: null,
-    promptIx: 0,
+    promptIx: sharedIx ?? 0,
     tiltX: 0, tiltY: 0, energy: 0,
+    pinnedIx: startedOpen ? null : sharedIx,
     unlocked: getUnlocked(),
     holding: false,
     shareNote: null,
@@ -58,6 +74,9 @@ export function useLua() {
 
   const [streakDays] = useState(() => rollStreakOnOpen());
   const [coachSeen, setCoachSeenState] = useState(getCoachSeen());
+  // The filter intro runs as two beats — subject, then difficulty — kept under
+  // one flag because it is one moment, not a tour to be resumed part-way.
+  const [introStep, setIntroStep] = useState(() => (getPillIntroSeen() ? INTRO_DONE : 0));
 
   const stateRef = useRef(state);
   useEffect(() => { stateRef.current = state; }, [state]);
@@ -144,8 +163,9 @@ export function useLua() {
 
   function askMotion() {
     requestMotionPermission(() => {
+      const shared = stateRef.current.pinnedIx !== null;
       rollIdleLine();
-      go('home', 'idle');
+      go('home', shared ? 'settled' : 'idle');
     });
   }
 
@@ -154,7 +174,8 @@ export function useLua() {
     patch(s => ({
       screen, phase, infoOpen: null, tiltX: 0, tiltY: 0, holding: false,
       energy: phase === 'anticipate' || phase === 'agitate' ? 1 : 0,
-      promptIx: phase === 'settled' ? pick(s) : s.promptIx,
+      promptIx: phase === 'settled' ? (s.pinnedIx ?? pick(s)) : s.promptIx,
+      pinnedIx: phase === 'settled' ? null : s.pinnedIx,
     }));
   }
 
@@ -183,8 +204,25 @@ export function useLua() {
     if (stateRef.current.screen !== 'home' || !stateRef.current.holding) return;
     patch({ holding: false, phase: 'anticipate', tiltX: 0, tiltY: 0 });
     after(PHASES.anticipate.dur + 720, () => {
-      patch(s => ({ phase: 'reveal', promptIx: pick(s) }));
+      patch(s => ({ phase: 'reveal', promptIx: s.pinnedIx ?? pick(s), pinnedIx: null }));
       after(REVEAL_MS, () => patch({ phase: 'settled' }));
+    });
+  }
+
+  // Both coach moments are dismissed by their own overlay rather than by the
+  // gesture underneath it, so the tap that puts the dim away is not also the
+  // tap that puts the question away.
+  function dismissCoach() {
+    if (coachSeen) return;
+    setCoachSeenState(true);
+    markCoachSeen();
+  }
+
+  function advanceIntro() {
+    setIntroStep(step => {
+      const next = step + 1;
+      if (next >= INTRO_DONE) markPillIntroSeen();
+      return next;
     });
   }
 
@@ -209,7 +247,7 @@ export function useLua() {
       after(700, () => {
         patch({ phase: 'anticipate' });
         after(PHASES.anticipate.dur + 620, () => {
-          patch(s => ({ phase: 'reveal', promptIx: pick(s) }));
+          patch(s => ({ phase: 'reveal', promptIx: s.pinnedIx ?? pick(s), pinnedIx: null }));
           after(REVEAL_MS, () => patch({ phase: 'settled' }));
         });
       });
@@ -218,7 +256,7 @@ export function useLua() {
 
   async function share(e?: React.SyntheticEvent) {
     e?.stopPropagation();
-    const msg = shareText(PROMPTS[stateRef.current.promptIx].t);
+    const msg = shareText(PROMPTS[stateRef.current.promptIx]);
     await shareOrCopy(msg, (t) => {
       patch({ shareNote: t });
       after(2400, () => patch({ shareNote: null }));
@@ -250,10 +288,11 @@ export function useLua() {
   function doUnlock() { persistUnlocked(true); patch({ unlocked: true }); go('home', 'idle'); }
 
   return {
-    state, streakDays, coachSeen, quiet: QUIET_PILLS,
+    state, streakDays, coachSeen, introStep, quiet: QUIET_PILLS,
     actions: {
       askMotion, onDown, onMove, onUp, dismiss, again, share,
       toggleCategory, toggleInfo, setWeight, goStreak, goHome, doUnlock,
+      dismissCoach, advanceIntro,
     },
   };
 }

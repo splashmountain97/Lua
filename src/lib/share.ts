@@ -1,3 +1,16 @@
+/**
+ * The question id in a /q/<id> share link, if the app was opened through one.
+ * The pages under /q are built at deploy time so the link previews correctly in
+ * a chat app; this is how the running app recognises one and opens on that
+ * question rather than a random one.
+ */
+export function sharedPromptId(): number | null {
+  const m = /^\/q\/(\d+)\/?$/.exec(window.location.pathname);
+  if (!m) return null;
+  const id = Number(m[1]);
+  return Number.isSafeInteger(id) ? id : null;
+}
+
 export async function shareOrCopy(
   message: string,
   note: (text: string) => void,
