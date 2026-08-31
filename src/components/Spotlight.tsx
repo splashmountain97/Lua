@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 
 const STAGE_W = 402;
 
@@ -36,7 +36,6 @@ interface SpotlightProps {
 export default function Spotlight({ targetRef, show, text, place, onDismiss }: SpotlightProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
   const [rect, setRect] = useState<Rect | null>(null);
-  const [render, setRender] = useState(show);
 
   const measure = useCallback(() => {
     const overlay = overlayRef.current;
@@ -55,30 +54,12 @@ export default function Spotlight({ targetRef, show, text, place, onDismiss }: S
   }, [targetRef]);
 
   useLayoutEffect(() => {
-    if (!render) return;
     measure();
     const ro = new ResizeObserver(measure);
     if (overlayRef.current) ro.observe(overlayRef.current);
     if (targetRef.current) ro.observe(targetRef.current);
     return () => ro.disconnect();
-  }, [render, measure, targetRef]);
-
-  // Keep the overlay mounted through its fade-out so dismissing it reads as the
-  // dim lifting rather than the screen cutting. Mounting is adjusted during
-  // render rather than in an effect, so the dim is painted in the same commit
-  // that shows it and never flashes in at full strength.
-  const [prevShow, setPrevShow] = useState(show);
-  if (prevShow !== show) {
-    setPrevShow(show);
-    if (show) setRender(true);
-  }
-  useEffect(() => {
-    if (show) return;
-    const t = window.setTimeout(() => setRender(false), FADE_MS);
-    return () => window.clearTimeout(t);
-  }, [show]);
-
-  if (!render) return null;
+  }, [measure, targetRef]);
 
   const lit = show && rect;
   const calloutStyle: React.CSSProperties = place === 'above'
@@ -88,13 +69,19 @@ export default function Spotlight({ targetRef, show, text, place, onDismiss }: S
   return (
     <div
       ref={overlayRef}
-      onPointerDown={(e) => { e.stopPropagation(); onDismiss(); }}
+      onPointerDown={show ? (e) => { e.stopPropagation(); onDismiss(); } : undefined}
       style={{
         position: 'absolute', inset: 0, zIndex: 30,
+        // Always mounted, shown by style alone. Mounting on `show` and
+        // unmounting on a fade-out timer let the timer fire after the next
+        // spotlight had already been asked to appear, taking it back off the
+        // screen while it was still meant to be up. Visibility rather than
+        // display so the overlay keeps its box: it is its own measuring stick
+        // for the stage scale.
         opacity: show ? 1 : 0,
+        visibility: show ? 'visible' : 'hidden',
         pointerEvents: show ? 'auto' : 'none',
-        animation: show ? `lua-dim ${FADE_MS}ms linear both` : undefined,
-        transition: show ? undefined : `opacity ${FADE_MS}ms linear`,
+        transition: `opacity ${FADE_MS}ms linear`,
       }}
     >
       {rect && (
