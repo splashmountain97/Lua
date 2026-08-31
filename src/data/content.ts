@@ -255,8 +255,20 @@ export const IDLE_RETURN = [
 
 export const LANDING_URL = 'https://lua-coral.vercel.app';
 
+/**
+ * Tags a shared link as coming from someone passing it on. WhatsApp and
+ * iMessage send no referrer, so without this a forward chain arrives as
+ * "direct" and is indistinguishable from someone typing the address in.
+ *
+ * utm_source rather than a name of our own like `via`: Vercel Web Analytics
+ * reads UTM parameters as a dimension it can group by, and has nowhere to put
+ * an arbitrary one. It is static text — identical on every link, tied to
+ * nothing about the person sharing or the person opening it.
+ */
+const SHARE_SOURCE = 'utm_source=share';
+
 /** The page built for one question — see scripts/generate-share-pages.mjs. */
-export const shareUrl = (id: number) => `${LANDING_URL}/q/${id}`;
+export const shareUrl = (id: number) => `${LANDING_URL}/q/${id}?${SHARE_SOURCE}`;
 
 export function promptIndexById(id: number): number {
   return PROMPTS.findIndex(p => p.id === id);
