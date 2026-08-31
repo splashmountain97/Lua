@@ -66,18 +66,20 @@ export function useLua() {
   const initialPrefs = getPrefs({ selected: ['you', 'life'], weight: null });
 
   const [state, setState] = useState<LuaState>(() => ({
-    screen: startedOpen ? 'home' : 'onboard1',
-    // A shared link opens on the question itself. A first-time visitor still
-    // gets the welcome screen — the share is the pitch — and the question is
-    // held until they are through it.
-    phase: startedOpen && sharedIx !== null ? 'settled' : 'idle',
+    // A shared link opens on the question, full stop. Sending a first-time
+    // visitor to the welcome screen first meant someone handed a specific
+    // question arrived at a pitch and had to go looking for it — and a link
+    // opened in a private tab, where nobody counts as returning, always landed
+    // there. The welcome screen is still what a cold visitor to the root gets.
+    screen: sharedIx !== null || startedOpen ? 'home' : 'onboard1',
+    phase: sharedIx !== null ? 'settled' : 'idle',
     selected: initialPrefs.selected as CategoryId[],
     weight: initialPrefs.weight as Weight | null,
     infoOpen: null,
     promptIx: sharedIx ?? 0,
     tiltX: 0, tiltY: 0, energy: 0,
-    pinnedIx: startedOpen ? null : sharedIx,
-    lastShownIx: startedOpen && sharedIx !== null ? sharedIx : -1,
+    pinnedIx: null,
+    lastShownIx: sharedIx ?? -1,
     unlocked: getUnlocked(),
     holding: false,
     shareNote: null,
@@ -130,6 +132,7 @@ export function useLua() {
   // leaving the idle placeholder showing.
   useEffect(() => {
     if (startedOpen) rollIdleLine();
+    else if (sharedIx !== null) markOpened();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
