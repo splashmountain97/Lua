@@ -58,7 +58,11 @@ function pick(s: Pick<LuaState, 'selected' | 'weight' | 'lastShownIx'>): number 
 export function useLua() {
   const startedOpen = hasOpenedBefore();
   const [sharedIx] = useState(sharedIndex);
-  const initialPrefs = getPrefs({ selected: ['you', 'life', 'world'], weight: null });
+  // World is off to begin with: the first question should land somewhere a
+  // newcomer can answer from their own week, not out at the edge of the
+  // existential. It is one tap away, and only the default changes — anyone who
+  // has already set their filters keeps what they chose.
+  const initialPrefs = getPrefs({ selected: ['you', 'life'], weight: null });
 
   const [state, setState] = useState<LuaState>(() => ({
     screen: startedOpen ? 'home' : 'onboard1',
