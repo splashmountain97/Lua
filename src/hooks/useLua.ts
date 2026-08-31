@@ -199,7 +199,10 @@ export function useLua() {
   function again(e?: React.SyntheticEvent) {
     e?.stopPropagation();
     clearTimers();
-    if (!state.unlocked) { patch({ screen: 'unlock' }); return; }
+    // The unlock screen is parked until there is something to sell: it takes no
+    // payment, and the offer on it (six hundred questions, one a day) describes
+    // neither the pool the app ships with nor a limit anything enforces. Restore
+    // this guard to put it back in the flow.
     patch({ phase: 'dismiss' });
     after(520, () => {
       patch({ phase: 'agitate', energy: 1 });

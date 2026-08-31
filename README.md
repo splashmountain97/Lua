@@ -28,3 +28,17 @@ after replacing either source asset:
 ```
 node scripts/generate-icons.mjs
 ```
+
+## The unlock screen
+
+`src/components/Unlock.tsx` is in the tree but nothing routes to it. It was reached from
+the "Another" button, and it is parked rather than deleted because the screen itself is
+finished — what is missing is anything behind it:
+
+- it takes no payment. `doUnlock()` writes a local-storage flag and returns, so the
+  "$8.99 once" button hands over everything for free
+- its offer describes an app that does not exist yet: six hundred questions against the
+  42 in `src/data/content.ts`, and a one-a-day limit nothing enforces
+
+Put it back by restoring the guard at the top of `again()` in `src/hooks/useLua.ts`, once
+there is a real payment integration and the copy matches what ships.
