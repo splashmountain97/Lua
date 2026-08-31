@@ -42,3 +42,21 @@ finished — what is missing is anything behind it:
 
 Put it back by restoring the guard at the top of `again()` in `src/hooks/useLua.ts`, once
 there is a real payment integration and the copy matches what ships.
+
+## Share links
+
+Sharing a question produces `/q/<id>`, and `scripts/generate-share-pages.mjs` writes one
+static page per question under `dist/q/` at build time. Each carries its own title and
+Open Graph tags, so the question itself appears in the chat app's preview — the crawlers
+that build those previews do not run the app's JavaScript, so it has to be in the served
+markup. They are plain static files: no server, no database, nothing stored.
+
+The running app reads the id back out of the path and holds that question for the next
+reveal, so the same URL serves both the crawler and the person. An id that no longer
+exists falls through to the normal flow, and `vercel.json` rewrites unmatched `/q/*` to
+the app rather than a 404.
+
+`Prompt.id` is the stable identity this depends on. **Assign once, never reuse, never
+renumber** — array position does not survive an edit to the library, and a link shared
+today has to resolve to the same question next year. New questions take the next number
+above the current highest.

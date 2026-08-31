@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { CATS, PROMPTS, type CategoryId, type Weight, shareText } from '../data/content';
+import { CATS, PROMPTS, promptIndexById, type CategoryId, type Weight, shareText } from '../data/content';
 import { IDLE_FIRST, IDLE_RETURN } from '../data/content';
 import { PHASES, REVEAL_MS, type Phase } from '../lib/phases';
-import { shareOrCopy } from '../lib/share';
+import { shareOrCopy, sharedPromptId } from '../lib/share';
 import {
   getCoachSeen, getPrefs, getUnlocked, hasOpenedBefore,
   markCoachSeen, markOpened, rollStreakOnOpen, savePrefs, setUnlocked as persistUnlocked,
@@ -18,11 +18,22 @@ interface LuaState {
   infoOpen: CategoryId | null;
   promptIx: number;
   tiltX: number; tiltY: number; energy: number;
+  /** A question arrived at through a share link, held back for the next reveal. */
+  pinnedIx: number | null;
   unlocked: boolean;
   holding: boolean;
   shareNote: string | null;
   idleLine: string;
   motionGranted: boolean;
+}
+
+const SHARED_LINE = 'Someone sent you this one.';
+
+function sharedIndex(): number | null {
+  const id = sharedPromptId();
+  if (id === null) return null;
+  const ix = promptIndexById(id);
+  return ix >= 0 ? ix : null;
 }
 
 const TILT_AMT = 1;
@@ -39,6 +50,7 @@ function pick(s: Pick<LuaState, 'selected' | 'weight'>): number {
 
 export function useLua() {
   const startedOpen = hasOpenedBefore();
+  const [sharedIx] = useState(sharedIndex);
   const initialPrefs = getPrefs({ selected: ['you', 'life', 'world'], weight: null });
 
   const [state, setState] = useState<LuaState>(() => ({
@@ -47,12 +59,13 @@ export function useLua() {
     selected: initialPrefs.selected as CategoryId[],
     weight: initialPrefs.weight as Weight | null,
     infoOpen: null,
-    promptIx: 0,
+    promptIx: sharedIx ?? 0,
     tiltX: 0, tiltY: 0, energy: 0,
+    pinnedIx: sharedIx,
     unlocked: getUnlocked(),
     holding: false,
     shareNote: null,
-    idleLine: IDLE_FIRST[0],
+    idleLine: sharedIx === null ? IDLE_FIRST[0] : SHARED_LINE,
     motionGranted: false,
   }));
 
@@ -82,6 +95,7 @@ export function useLua() {
   useEffect(() => clearTimers, []);
 
   function rollIdleLine() {
+    if (stateRef.current.pinnedIx !== null) { markOpened(); return; }
     const returning = idleShownOnceRef.current || hasOpenedBefore();
     idleShownOnceRef.current = true;
     markOpened();
@@ -183,7 +197,7 @@ export function useLua() {
     if (stateRef.current.screen !== 'home' || !stateRef.current.holding) return;
     patch({ holding: false, phase: 'anticipate', tiltX: 0, tiltY: 0 });
     after(PHASES.anticipate.dur + 720, () => {
-      patch(s => ({ phase: 'reveal', promptIx: pick(s) }));
+      patch(s => ({ phase: 'reveal', promptIx: s.pinnedIx ?? pick(s), pinnedIx: null }));
       after(REVEAL_MS, () => patch({ phase: 'settled' }));
     });
   }
@@ -209,7 +223,7 @@ export function useLua() {
       after(700, () => {
         patch({ phase: 'anticipate' });
         after(PHASES.anticipate.dur + 620, () => {
-          patch(s => ({ phase: 'reveal', promptIx: pick(s) }));
+          patch(s => ({ phase: 'reveal', promptIx: s.pinnedIx ?? pick(s), pinnedIx: null }));
           after(REVEAL_MS, () => patch({ phase: 'settled' }));
         });
       });
@@ -218,7 +232,7 @@ export function useLua() {
 
   async function share(e?: React.SyntheticEvent) {
     e?.stopPropagation();
-    const msg = shareText(PROMPTS[stateRef.current.promptIx].t);
+    const msg = shareText(PROMPTS[stateRef.current.promptIx]);
     await shareOrCopy(msg, (t) => {
       patch({ shareNote: t });
       after(2400, () => patch({ shareNote: null }));
