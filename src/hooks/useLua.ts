@@ -3,6 +3,7 @@ import { CATS, PROMPTS, promptIndexById, type CategoryId, type Weight, shareText
 import { IDLE_FIRST, IDLE_RETURN } from '../data/content';
 import { PHASES, REVEAL_MS, type Phase } from '../lib/phases';
 import { shareOrCopy, sharedPromptId } from '../lib/share';
+import { trackPromptShown } from '../lib/analytics';
 import {
   getCoachSeen, getPillIntroSeen, getPrefs, getUnlocked, hasOpenedBefore,
   markCoachSeen, markOpened, markPillIntroSeen, rollStreakOnOpen, savePrefs, setUnlocked as persistUnlocked,
@@ -213,16 +214,21 @@ export function useLua() {
     }));
   }
 
+  // The index is resolved here rather than inside the state updater: React
+  // re-runs updaters under StrictMode, and an analytics call in one would
+  // report two reveals for every one the reader saw.
+  function reveal() {
+    const s = stateRef.current;
+    const ix = s.pinnedIx ?? pick(s);
+    patch({ phase: 'reveal', promptIx: ix, pinnedIx: null, lastShownIx: ix });
+    trackPromptShown(PROMPTS[ix]);
+    after(REVEAL_MS, () => patch({ phase: 'settled' }));
+  }
+
   function onUp() {
     if (stateRef.current.screen !== 'home' || !stateRef.current.holding) return;
     patch({ holding: false, phase: 'anticipate', tiltX: 0, tiltY: 0 });
-    after(PHASES.anticipate.dur + 720, () => {
-      patch(s => {
-        const ix = s.pinnedIx ?? pick(s);
-        return { phase: 'reveal', promptIx: ix, pinnedIx: null, lastShownIx: ix };
-      });
-      after(REVEAL_MS, () => patch({ phase: 'settled' }));
-    });
+    after(PHASES.anticipate.dur + 720, reveal);
   }
 
   // Both coach moments are dismissed by their own overlay rather than by the
@@ -262,13 +268,7 @@ export function useLua() {
       patch({ phase: 'agitate', energy: 1 });
       after(700, () => {
         patch({ phase: 'anticipate' });
-        after(PHASES.anticipate.dur + 620, () => {
-          patch(s => {
-        const ix = s.pinnedIx ?? pick(s);
-        return { phase: 'reveal', promptIx: ix, pinnedIx: null, lastShownIx: ix };
-      });
-          after(REVEAL_MS, () => patch({ phase: 'settled' }));
-        });
+        after(PHASES.anticipate.dur + 620, reveal);
       });
     });
   }
