@@ -1,8 +1,10 @@
+import { useRef } from 'react';
 import moonBody from '../assets/moon-body.png';
 import glassSwirl from '../assets/glass-swirl.png';
 import { CATS, PROMPTS, WEIGHTS } from '../data/content';
 import { PHASES, EASE_IN, EASE_OUT, M, CX, WX, WY, WPX, AP_R, apertureY, targetY } from '../lib/phases';
 import { useStageLayout } from '../lib/layout';
+import Spotlight from './Spotlight';
 import type { useLua } from '../hooks/useLua';
 
 type Lua = ReturnType<typeof useLua>;
@@ -13,8 +15,10 @@ const wdotStyle = (i: number, pw: number): React.CSSProperties => ({
 });
 
 export default function Home({ lua }: { lua: Lua }) {
-  const { state, streakDays, coachSeen, quiet, actions } = lua;
+  const { state, streakDays, coachSeen, pillIntroSeen, quiet, actions } = lua;
   const { titleY, moonCY, lineY, height: stageH } = useStageLayout();
+  const promptRef = useRef<HTMLDivElement>(null);
+  const pillsRef = useRef<HTMLDivElement>(null);
   const ph = state.phase;
   const v = PHASES[ph];
   const big = ph === 'reveal' || ph === 'settled';
@@ -85,43 +89,45 @@ export default function Home({ lua }: { lua: Lua }) {
             </div>
           )}
 
-          <div style={{ margin: '0 0 3px', padding: '0 2px' }}>
-            <span style={{ font: '400 11.5px/1.4 Inter,sans-serif', letterSpacing: '.01em', color: '#9397ab' }}>Tap to choose what you're asked</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            {CATS.map(c => {
-              const on = state.selected.includes(c.id);
-              return (
-                <div key={c.id} style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                  <button type="button" onClick={(e) => actions.toggleCategory(c.id, e)} style={{ display: 'flex', alignItems: 'center', height: 46, padding: 0, background: 'none', border: 0, cursor: 'pointer' }}>
-                    <span style={{
-                      display: 'flex', alignItems: 'center', height: 32, padding: '0 10px 0 11px', borderRadius: '100px 0 0 100px',
-                      font: '400 12.5px/1 Inter,sans-serif', letterSpacing: '.012em', transition: 'all .18s',
-                      border: `1px solid ${on ? `rgba(145,132,217,${quiet ? .34 : .6})` : 'rgba(147,151,171,.16)'}`,
-                      borderRight: 0,
-                      background: on ? `rgba(145,132,217,${quiet ? .05 : .13})` : 'transparent',
-                      color: on ? (quiet ? '#b5abfc' : '#d2cefd') : '#9397ab',
-                    }}>
+          <div ref={pillsRef}>
+            <div style={{ margin: '0 0 3px', padding: '0 2px' }}>
+              <span style={{ font: '400 11.5px/1.4 Inter,sans-serif', letterSpacing: '.01em', color: '#9397ab' }}>Tap to choose what you're asked</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              {CATS.map(c => {
+                const on = state.selected.includes(c.id);
+                return (
+                  <div key={c.id} style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                    <button type="button" onClick={(e) => actions.toggleCategory(c.id, e)} style={{ display: 'flex', alignItems: 'center', height: 46, padding: 0, background: 'none', border: 0, cursor: 'pointer' }}>
                       <span style={{
-                        display: 'block', flex: 'none', width: 8, height: 8, marginRight: 7, borderRadius: '50%', transition: 'all .18s',
-                        boxShadow: `inset 0 0 0 1px ${on ? 'rgba(181,171,252,.9)' : 'rgba(147,151,171,.5)'}`,
-                        background: on ? '#b5abfc' : 'transparent',
-                      }} />
-                      {c.label}
-                    </span>
-                  </button>
-                  <button type="button" onClick={(e) => actions.toggleInfo(c.id, e)} aria-label="About this category" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', width: 38, height: 46, padding: 0, background: 'none', border: 0, cursor: 'pointer' }}>
-                    <span style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 32, borderRadius: '0 100px 100px 0',
-                      font: '500 9.5px/1 ui-monospace,Menlo,monospace', transition: 'all .18s',
-                      border: `1px solid ${on ? `rgba(145,132,217,${quiet ? .34 : .6})` : 'rgba(147,151,171,.16)'}`,
-                      background: 'transparent',
-                      color: state.infoOpen === c.id ? '#d2cefd' : on ? 'rgba(181,171,252,.6)' : 'rgba(117,121,140,.75)',
-                    }}>i</span>
-                  </button>
-                </div>
-              );
-            })}
+                        display: 'flex', alignItems: 'center', height: 32, padding: '0 10px 0 11px', borderRadius: '100px 0 0 100px',
+                        font: '400 12.5px/1 Inter,sans-serif', letterSpacing: '.012em', transition: 'all .18s',
+                        border: `1px solid ${on ? `rgba(145,132,217,${quiet ? .34 : .6})` : 'rgba(147,151,171,.16)'}`,
+                        borderRight: 0,
+                        background: on ? `rgba(145,132,217,${quiet ? .05 : .13})` : 'transparent',
+                        color: on ? (quiet ? '#b5abfc' : '#d2cefd') : '#9397ab',
+                      }}>
+                        <span style={{
+                          display: 'block', flex: 'none', width: 8, height: 8, marginRight: 7, borderRadius: '50%', transition: 'all .18s',
+                          boxShadow: `inset 0 0 0 1px ${on ? 'rgba(181,171,252,.9)' : 'rgba(147,151,171,.5)'}`,
+                          background: on ? '#b5abfc' : 'transparent',
+                        }} />
+                        {c.label}
+                      </span>
+                    </button>
+                    <button type="button" onClick={(e) => actions.toggleInfo(c.id, e)} aria-label="About this category" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', width: 38, height: 46, padding: 0, background: 'none', border: 0, cursor: 'pointer' }}>
+                      <span style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 32, borderRadius: '0 100px 100px 0',
+                        font: '500 9.5px/1 ui-monospace,Menlo,monospace', transition: 'all .18s',
+                        border: `1px solid ${on ? `rgba(145,132,217,${quiet ? .34 : .6})` : 'rgba(147,151,171,.16)'}`,
+                        background: 'transparent',
+                        color: state.infoOpen === c.id ? '#d2cefd' : on ? 'rgba(181,171,252,.6)' : 'rgba(117,121,140,.75)',
+                      }}>i</span>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           <div style={{ margin: '6px 0 3px', padding: '0 2px' }}>
@@ -252,7 +258,7 @@ export default function Home({ lua }: { lua: Lua }) {
         pointerEvents: ph === 'settled' ? 'auto' : 'none',
         transition: `opacity ${Math.round(dur * 0.55)}ms linear ${ph === 'reveal' ? Math.round(dur * 0.46) : 0}ms, transform ${dur}ms ${ease}`,
       }}>
-        <div style={{ width: 302, textAlign: 'center' }}>
+        <div ref={promptRef} style={{ width: 302, textAlign: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9, margin: '0 0 22px' }}>
             <span style={{ font: '500 9.5px/1 ui-monospace,Menlo,monospace', letterSpacing: '.18em', textTransform: 'uppercase', color: 'rgba(242,193,78,.78)' }}>
               {promptCat.label}
@@ -280,19 +286,27 @@ export default function Home({ lua }: { lua: Lua }) {
         </div>
 
         <div style={{
-          position: 'absolute', bottom: 132, left: 0, right: 0, textAlign: 'center', padding: '0 44px', pointerEvents: 'none',
-          font: '400 11.5px/1.55 Inter,sans-serif', color: 'rgba(147,151,171,.9)',
-          opacity: ph === 'settled' && !coachSeen && !state.shareNote ? 1 : 0,
-          transition: `opacity 900ms linear ${ph === 'settled' ? '900ms' : '0ms'}`,
-        }}>That's a reflection. Sit with it as long as you like.</div>
-
-        <div style={{
           position: 'absolute', bottom: 132, left: 0, right: 0, textAlign: 'center', pointerEvents: 'none',
           font: '400 11px/1 ui-monospace,Menlo,monospace', letterSpacing: '.08em', textTransform: 'uppercase', color: 'rgba(242,193,78,.8)',
           opacity: state.shareNote ? 1 : 0,
           transition: 'opacity 260ms linear',
         }}>{state.shareNote || ''}</div>
       </div>
+
+      <Spotlight
+        targetRef={pillsRef}
+        show={ph === 'idle' && !pillIntroSeen && !state.infoOpen}
+        text="These decide what you get asked. Set them once, or change them whenever you like."
+        place="above"
+        onDismiss={actions.dismissPillIntro}
+      />
+      <Spotlight
+        targetRef={promptRef}
+        show={ph === 'settled' && !coachSeen && !state.shareNote}
+        text="That's a reflection. Sit with it as long as you like."
+        place="below"
+        onDismiss={actions.dismissCoach}
+      />
     </div>
   );
 }
