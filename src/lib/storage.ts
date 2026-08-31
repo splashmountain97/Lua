@@ -2,6 +2,7 @@
 
 const SEEN_KEY = 'lua.hasOpenedBefore';
 const COACH_SEEN_KEY = 'lua.coachSeen';
+const PILL_INTRO_KEY = 'lua.pillIntroSeen';
 const UNLOCKED_KEY = 'lua.unlocked';
 const STREAK_DAYS_KEY = 'lua.streakDays';
 const STREAK_LAST_KEY = 'lua.streakLastOpen';
@@ -26,6 +27,13 @@ export function getCoachSeen(): boolean {
 }
 export function markCoachSeen() {
   safeSet(COACH_SEEN_KEY, '1');
+}
+
+export function getPillIntroSeen(): boolean {
+  return !!safeGet(PILL_INTRO_KEY);
+}
+export function markPillIntroSeen() {
+  safeSet(PILL_INTRO_KEY, '1');
 }
 
 export function getUnlocked(): boolean {

@@ -4,8 +4,8 @@ import { IDLE_FIRST, IDLE_RETURN } from '../data/content';
 import { PHASES, REVEAL_MS, type Phase } from '../lib/phases';
 import { shareOrCopy } from '../lib/share';
 import {
-  getCoachSeen, getPrefs, getUnlocked, hasOpenedBefore,
-  markCoachSeen, markOpened, rollStreakOnOpen, savePrefs, setUnlocked as persistUnlocked,
+  getCoachSeen, getPillIntroSeen, getPrefs, getUnlocked, hasOpenedBefore,
+  markCoachSeen, markOpened, markPillIntroSeen, rollStreakOnOpen, savePrefs, setUnlocked as persistUnlocked,
 } from '../lib/storage';
 
 export type Screen = 'onboard1' | 'home' | 'streak' | 'unlock';
@@ -58,6 +58,7 @@ export function useLua() {
 
   const [streakDays] = useState(() => rollStreakOnOpen());
   const [coachSeen, setCoachSeenState] = useState(getCoachSeen());
+  const [pillIntroSeen, setPillIntroSeenState] = useState(getPillIntroSeen());
 
   const stateRef = useRef(state);
   useEffect(() => { stateRef.current = state; }, [state]);
@@ -188,6 +189,21 @@ export function useLua() {
     });
   }
 
+  // Both coach moments are dismissed by their own overlay rather than by the
+  // gesture underneath it, so the tap that puts the dim away is not also the
+  // tap that puts the question away.
+  function dismissCoach() {
+    if (coachSeen) return;
+    setCoachSeenState(true);
+    markCoachSeen();
+  }
+
+  function dismissPillIntro() {
+    if (pillIntroSeen) return;
+    setPillIntroSeenState(true);
+    markPillIntroSeen();
+  }
+
   function dismiss(e?: React.SyntheticEvent) {
     e?.stopPropagation();
     clearTimers();
@@ -250,10 +266,11 @@ export function useLua() {
   function doUnlock() { persistUnlocked(true); patch({ unlocked: true }); go('home', 'idle'); }
 
   return {
-    state, streakDays, coachSeen, quiet: QUIET_PILLS,
+    state, streakDays, coachSeen, pillIntroSeen, quiet: QUIET_PILLS,
     actions: {
       askMotion, onDown, onMove, onUp, dismiss, again, share,
       toggleCategory, toggleInfo, setWeight, goStreak, goHome, doUnlock,
+      dismissCoach, dismissPillIntro,
     },
   };
 }
