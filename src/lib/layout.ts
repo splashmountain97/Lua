@@ -37,7 +37,12 @@ const TITLE_H = 60;
 const GAP_TITLE_MOON = 41;
 const MOON_H = 210;
 const GAP_MOON_LINE = 21;
-const LINE_H = 16;
+// Three lines. The tips below the moon are full sentences, and the longest wraps
+// to three at 11px on a narrow screen — reserving one let it run into the filter
+// labels once the composition compressed. The design's own clearance from the
+// line down to the chrome is exactly the minimum held back below, so the
+// reference coordinates still come out unchanged at the design height.
+const LINE_H = 49;
 
 // The design leaves 53 between the idle line and the chrome. Squeezing the
 // group is fine, but it must not squeeze that clearance to nothing, or on a

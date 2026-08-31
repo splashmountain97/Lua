@@ -244,8 +244,8 @@ export const IDLE_FIRST = [
   'Tap the moon to start',
   'Tap the moon and get out of your comfort zone',
 ];
-// Longer lines for the same slot, drawn a quarter of the time so the nudge
-// stays the norm and the tip stays a small surprise.
+// The line below the moon. Shorter nudge above, longer thought below — both
+// present on every open.
 export const IDLE_TIPS = [
   'Journaling is said to help untangle thoughts you didn’t know you were carrying.',
   'People have kept some version of this ritual for thousands of years, long before notebooks existed.',
@@ -262,9 +262,6 @@ export const IDLE_TIPS = [
   'Some people write pages. Some just sit with it for a second. Both count.',
   'What would you tell a stranger about today, if they actually asked?',
 ];
-
-/** How often the line under the moon is a tip rather than a nudge. */
-export const TIP_CHANCE = 0.25;
 
 // Shown while the object is settling, in place of the one line that used to
 // carry that whole beat.
