@@ -20,6 +20,8 @@ interface LuaState {
   tiltX: number; tiltY: number; energy: number;
   /** A question arrived at through a share link, held back for the next reveal. */
   pinnedIx: number | null;
+  /** The last question actually put on screen, so the next draw can avoid it. */
+  lastShownIx: number;
   unlocked: boolean;
   holding: boolean;
   shareNote: string | null;
@@ -39,12 +41,17 @@ const INTRO_DONE = 2;
 const TILT_AMT = 1;
 const QUIET_PILLS = true;
 
-function pick(s: Pick<LuaState, 'selected' | 'weight'>): number {
+function pick(s: Pick<LuaState, 'selected' | 'weight' | 'lastShownIx'>): number {
   const sel = s.selected.length ? s.selected : CATS.map(c => c.id);
   const w = s.weight;
   let pool = PROMPTS.filter(p => sel.includes(p.c) && (w === null || p.w === w));
   if (!pool.length) pool = PROMPTS.filter(p => sel.includes(p.c));
-  const p = pool[Math.floor(Math.random() * pool.length)] || PROMPTS[0];
+  // Never hand back the question just shown. Drawing blind from the whole pool
+  // repeats often enough to read as a bug, and a filter narrowing the pool to a
+  // couple of dozen makes it common rather than rare.
+  const last = PROMPTS[s.lastShownIx];
+  const fresh = pool.length > 1 ? pool.filter(p => p !== last) : pool;
+  const p = fresh[Math.floor(Math.random() * fresh.length)] || PROMPTS[0];
   return PROMPTS.indexOf(p);
 }
 
@@ -65,6 +72,7 @@ export function useLua() {
     promptIx: sharedIx ?? 0,
     tiltX: 0, tiltY: 0, energy: 0,
     pinnedIx: startedOpen ? null : sharedIx,
+    lastShownIx: startedOpen && sharedIx !== null ? sharedIx : -1,
     unlocked: getUnlocked(),
     holding: false,
     shareNote: null,
@@ -176,6 +184,7 @@ export function useLua() {
       energy: phase === 'anticipate' || phase === 'agitate' ? 1 : 0,
       promptIx: phase === 'settled' ? (s.pinnedIx ?? pick(s)) : s.promptIx,
       pinnedIx: phase === 'settled' ? null : s.pinnedIx,
+      lastShownIx: phase === 'settled' ? (s.pinnedIx ?? s.lastShownIx) : s.lastShownIx,
     }));
   }
 
@@ -204,7 +213,10 @@ export function useLua() {
     if (stateRef.current.screen !== 'home' || !stateRef.current.holding) return;
     patch({ holding: false, phase: 'anticipate', tiltX: 0, tiltY: 0 });
     after(PHASES.anticipate.dur + 720, () => {
-      patch(s => ({ phase: 'reveal', promptIx: s.pinnedIx ?? pick(s), pinnedIx: null }));
+      patch(s => {
+        const ix = s.pinnedIx ?? pick(s);
+        return { phase: 'reveal', promptIx: ix, pinnedIx: null, lastShownIx: ix };
+      });
       after(REVEAL_MS, () => patch({ phase: 'settled' }));
     });
   }
@@ -247,7 +259,10 @@ export function useLua() {
       after(700, () => {
         patch({ phase: 'anticipate' });
         after(PHASES.anticipate.dur + 620, () => {
-          patch(s => ({ phase: 'reveal', promptIx: s.pinnedIx ?? pick(s), pinnedIx: null }));
+          patch(s => {
+        const ix = s.pinnedIx ?? pick(s);
+        return { phase: 'reveal', promptIx: ix, pinnedIx: null, lastShownIx: ix };
+      });
           after(REVEAL_MS, () => patch({ phase: 'settled' }));
         });
       });
