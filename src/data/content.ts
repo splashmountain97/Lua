@@ -207,8 +207,6 @@ export const PROMPTS: Prompt[] = [
   { id: 140, c: 'world', w: 3, t: 'What do you take for a universal truth that is really just a norm of your own culture?' },
   { id: 141, c: 'world', w: 3, t: 'Why do you think we are here?' },
   { id: 142, c: 'world', w: 3, t: 'Do you have more free will than the universe does?' },
-  { id: 143, c: 'world', w: 3, t: 'Are you the same person you were a decade ago, or a different one wearing their memories?' },
-  { id: 144, c: 'world', w: 3, t: 'What’s something wonderful about being alive sitting right next to something terrible about it?' },
   { id: 145, c: 'world', w: 3, t: 'If this really is your only shot at existing, is it going the way you’d want a story to go?' },
   { id: 146, c: 'world', w: 3, t: 'Would you trade the freedom to choose your life for the certainty of just surviving it?' },
   { id: 184, c: 'world', w: 3, t: 'Replace every plank of a boat, one at a time, and it’s still called the same boat. Are you still the same person you were at ten?' },
