@@ -5,6 +5,7 @@ import { CATS, PROMPTS, WEIGHTS, WEIGHT_ANY_NOTE, WEIGHT_NOTE } from '../data/co
 import { PHASES, EASE_IN, EASE_OUT, M, CX, WX, WY, WPX, AP_R, apertureY, targetY } from '../lib/phases';
 import { useStageLayout } from '../lib/layout';
 import Spotlight from './Spotlight';
+import Wall from './Wall';
 import type { useLua } from '../hooks/useLua';
 
 type Lua = ReturnType<typeof useLua>;
@@ -15,7 +16,7 @@ const wdotStyle = (i: number, pw: number): React.CSSProperties => ({
 });
 
 export default function Home({ lua }: { lua: Lua }) {
-  const { state, streakDays, coachSeen, introStep, quiet, actions } = lua;
+  const { state, streakDays, coachSeen, introStep, quiet, freePerDay, actions } = lua;
   const { titleY, moonCY, lineY, height: stageH } = useStageLayout();
   const promptRef = useRef<HTMLDivElement>(null);
   const catsRef = useRef<HTMLDivElement>(null);
@@ -278,7 +279,12 @@ export default function Home({ lua }: { lua: Lua }) {
           transition: `opacity 700ms linear ${ph === 'settled' ? '300ms' : '0ms'}`,
         }}>
           <button type="button" onClick={actions.dismiss} style={{ background: 'none', border: 0, padding: '16px 14px', cursor: 'pointer', font: '400 12px/1 Inter,sans-serif', letterSpacing: '.05em', color: '#9397ab' }}>I'm done</button>
-          <button type="button" onClick={actions.again} style={{ background: 'none', border: '1px solid rgba(145,132,217,.42)', borderRadius: 100, padding: '15px 18px', cursor: 'pointer', font: '400 12px/1 Inter,sans-serif', letterSpacing: '.05em', color: '#b5abfc' }}>Another</button>
+          <button type="button" onClick={actions.again} style={{ display: 'flex', alignItems: 'center', gap: 7, background: 'none', border: '1px solid rgba(145,132,217,.42)', borderRadius: 100, padding: '15px 18px', cursor: 'pointer', font: '400 12px/1 Inter,sans-serif', letterSpacing: '.05em', color: '#b5abfc' }}>
+            Another
+            <span style={{ font: '400 10.5px/1 ui-monospace,Menlo,monospace', letterSpacing: '.02em', color: 'rgba(181,171,252,.55)' }}>
+              {Math.min(state.revealsToday, freePerDay)}/{freePerDay}
+            </span>
+          </button>
           <button type="button" onClick={actions.share} aria-label="Send this question to someone" style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 0, padding: '16px 14px', cursor: 'pointer', font: '400 12px/1 Inter,sans-serif', letterSpacing: '.05em', color: '#9397ab' }}>
             <span style={{ display: 'block', width: 5, height: 5, borderRadius: '50%', background: 'rgba(242,193,78,.55)' }} />Send to a friend
           </button>
@@ -313,6 +319,8 @@ export default function Home({ lua }: { lua: Lua }) {
         place="below"
         onDismiss={actions.dismissCoach}
       />
+
+      {state.wall && <Wall wall={state.wall} onClose={actions.closeWall} />}
     </div>
   );
 }

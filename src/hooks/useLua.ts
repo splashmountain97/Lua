@@ -3,9 +3,10 @@ import { CATS, PROMPTS, promptIndexById, type CategoryId, type Weight, shareText
 import { IDLE_FIRST, IDLE_RETURN } from '../data/content';
 import { PHASES, REVEAL_MS, type Phase } from '../lib/phases';
 import { shareOrCopy, sharedPromptId } from '../lib/share';
-import { trackPromptShown } from '../lib/analytics';
+import { trackPromptShown, trackWallHit } from '../lib/analytics';
+import { FREE_CATEGORY, FREE_REVEALS_PER_DAY, WALL_FOR_CATEGORY, type Wall } from '../lib/premium';
 import {
-  getCoachSeen, getPillIntroSeen, getPrefs, getUnlocked, hasOpenedBefore,
+  bumpRevealsToday, getCoachSeen, getPillIntroSeen, getPrefs, getRevealsToday, getUnlocked, hasOpenedBefore,
   markCoachSeen, markOpened, markPillIntroSeen, rollStreakOnOpen, savePrefs, setUnlocked as persistUnlocked,
 } from '../lib/storage';
 
@@ -23,6 +24,10 @@ interface LuaState {
   pinnedIx: number | null;
   /** The last question actually put on screen, so the next draw can avoid it. */
   lastShownIx: number;
+  /** Questions revealed today, against the free daily allowance. */
+  revealsToday: number;
+  /** Which premium wall is open, if any. */
+  wall: Wall | null;
   unlocked: boolean;
   holding: boolean;
   shareNote: string | null;
@@ -63,7 +68,10 @@ export function useLua() {
   // newcomer can answer from their own week, not out at the edge of the
   // existential. It is one tap away, and only the default changes — anyone who
   // has already set their filters keeps what they chose.
-  const initialPrefs = getPrefs({ selected: ['you', 'life'], weight: null });
+  // The premium test makes the other two categories doors rather than options,
+  // so a stored selection is narrowed to what a free reader may actually draw
+  // from. The weight filter is untouched — that stays free.
+  const initialPrefs = getPrefs({ selected: [FREE_CATEGORY], weight: null });
 
   const [state, setState] = useState<LuaState>(() => ({
     screen: startedOpen ? 'home' : 'onboard1',
@@ -71,13 +79,17 @@ export function useLua() {
     // gets the welcome screen — the share is the pitch — and the question is
     // held until they are through it.
     phase: startedOpen && sharedIx !== null ? 'settled' : 'idle',
-    selected: initialPrefs.selected as CategoryId[],
+    selected: (initialPrefs.selected.filter(c => c === FREE_CATEGORY).length
+      ? initialPrefs.selected.filter(c => c === FREE_CATEGORY)
+      : [FREE_CATEGORY]) as CategoryId[],
     weight: initialPrefs.weight as Weight | null,
     infoOpen: null,
     promptIx: sharedIx ?? 0,
     tiltX: 0, tiltY: 0, energy: 0,
     pinnedIx: startedOpen ? null : sharedIx,
     lastShownIx: startedOpen && sharedIx !== null ? sharedIx : -1,
+    revealsToday: getRevealsToday(),
+    wall: null,
     unlocked: getUnlocked(),
     holding: false,
     shareNote: null,
@@ -113,6 +125,28 @@ export function useLua() {
   }
   useEffect(() => clearTimers, []);
 
+  function openWall(wall: Wall) {
+    clearTimers();
+    trackWallHit(wall);
+    // Put the stage back to rest first. The daily wall is reached from the
+    // settled screen, where the moon is pushed in and a question is still on
+    // it; opening over that leaves the old question bleeding through the wall
+    // and the moon mid-flight behind it.
+    patch({
+      wall, holding: false, infoOpen: null,
+      phase: 'idle', energy: 0, tiltX: 0, tiltY: 0,
+    });
+  }
+
+  function closeWall() {
+    patch({ wall: null });
+  }
+
+  /** Whether a free reader has any of today's allowance left. */
+  function allowanceLeft() {
+    return stateRef.current.revealsToday < FREE_REVEALS_PER_DAY;
+  }
+
   function rollIdleLine() {
     const returning = idleShownOnceRef.current || hasOpenedBefore();
     idleShownOnceRef.current = true;
@@ -146,6 +180,7 @@ export function useLua() {
       last = now;
       if (stateRef.current.screen !== 'home') return;
       if (stateRef.current.phase === 'idle') {
+        if (!allowanceLeft()) { openWall('daily_limit'); return; }
         clearTimers();
         patch({ holding: true, phase: 'agitate', energy: 0.6 });
         after(900, () => { if (stateRef.current.holding) onUp(); });
@@ -200,6 +235,7 @@ export function useLua() {
     const ph = state.phase;
     if (ph === 'settled') { dismiss(); return; }
     if (ph !== 'idle') return;
+    if (!allowanceLeft()) { openWall('daily_limit'); return; }
     clearTimers();
     patch({ holding: true, phase: 'agitate', energy: .5, infoOpen: null });
   }
@@ -220,7 +256,7 @@ export function useLua() {
   function reveal() {
     const s = stateRef.current;
     const ix = s.pinnedIx ?? pick(s);
-    patch({ phase: 'reveal', promptIx: ix, pinnedIx: null, lastShownIx: ix });
+    patch({ phase: 'reveal', promptIx: ix, pinnedIx: null, lastShownIx: ix, revealsToday: bumpRevealsToday() });
     trackPromptShown(PROMPTS[ix]);
     after(REVEAL_MS, () => patch({ phase: 'settled' }));
   }
@@ -258,6 +294,7 @@ export function useLua() {
 
   function again(e?: React.SyntheticEvent) {
     e?.stopPropagation();
+    if (!allowanceLeft()) { openWall('daily_limit'); return; }
     clearTimers();
     // The unlock screen is parked until there is something to sell: it takes no
     // payment, and the offer on it (six hundred questions, one a day) describes
@@ -284,6 +321,8 @@ export function useLua() {
 
   function toggleCategory(id: CategoryId, e?: React.SyntheticEvent) {
     e?.stopPropagation();
+    const wall = WALL_FOR_CATEGORY[id];
+    if (wall) { openWall(wall); return; }
     patch(s => {
       const next = s.selected.includes(id) ? s.selected.filter(x => x !== id) : [...s.selected, id];
       const selected = next.length ? next : s.selected;
@@ -308,10 +347,11 @@ export function useLua() {
 
   return {
     state, streakDays, coachSeen, introStep, quiet: QUIET_PILLS,
+    freePerDay: FREE_REVEALS_PER_DAY,
     actions: {
       askMotion, onDown, onMove, onUp, dismiss, again, share,
       toggleCategory, toggleInfo, setWeight, goStreak, goHome, doUnlock,
-      dismissCoach, advanceIntro,
+      dismissCoach, advanceIntro, closeWall,
     },
   };
 }
