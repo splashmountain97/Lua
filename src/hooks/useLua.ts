@@ -6,7 +6,7 @@ import { copyOnly, shareOrCopy, sharedPromptId } from '../lib/share';
 import { trackPromptShown } from '../lib/analytics';
 import {
   getCoachSeen, getPillIntroSeen, getPrefs, getUnlocked, hasOpenedBefore,
-  markCoachSeen, markOpened, markPillIntroSeen, rollStreakOnOpen, savePrefs, setUnlocked as persistUnlocked,
+  markCoachSeen, markOpened, markPillIntroSeen, markStreakToday, readStreak, savePrefs, setUnlocked as persistUnlocked,
 } from '../lib/storage';
 
 export type Screen = 'onboard1' | 'home' | 'streak' | 'unlock';
@@ -94,7 +94,7 @@ export function useLua() {
     motionGranted: false,
   }));
 
-  const [streakDays] = useState(() => rollStreakOnOpen());
+  const [streakDays, setStreakDays] = useState(readStreak);
   const [coachSeen, setCoachSeenState] = useState(getCoachSeen());
   // The filter intro runs as two beats — subject, then difficulty — kept under
   // one flag because it is one moment, not a tour to be resumed part-way.
@@ -246,6 +246,9 @@ export function useLua() {
     const s = stateRef.current;
     const ix = s.pinnedIx ?? pick(s);
     patch({ phase: 'reveal', promptIx: ix, pinnedIx: null, lastShownIx: ix });
+    // The day counts here, where a question is actually opened — once, however
+    // many are opened after it.
+    setStreakDays(markStreakToday());
     trackPromptShown(PROMPTS[ix]);
     after(REVEAL_MS, () => patch({ phase: 'settled' }));
   }
