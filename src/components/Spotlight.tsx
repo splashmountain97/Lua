@@ -8,9 +8,19 @@ const PAD_X = 14;
 const PAD_Y = 12;
 /** Gap between the lit area and the callout pointing at it. */
 const GAP = 14;
+/** How close the callout may come to the edge of the stage. */
+const MARGIN = 26;
 const NOTCH = 7;
 
-interface Rect { x: number; y: number; w: number; h: number }
+interface Rect {
+  x: number; y: number; w: number; h: number;
+  /** Where the notch sits along the callout, aimed at the middle of the target. */
+  notch: number | null;
+  /** How far the callout slides off centre to reach a target near the edge. */
+  shift: number;
+}
+
+const round = (n: number) => Math.round(n * 100) / 100;
 
 interface SpotlightProps {
   /** The element to keep lit. Everything else on the stage dims behind it. */
@@ -35,6 +45,7 @@ interface SpotlightProps {
 // width over the design width gives the stage scale.
 export default function Spotlight({ targetRef, show, text, place, onDismiss }: SpotlightProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
+  const calloutRef = useRef<HTMLDivElement>(null);
   const [rect, setRect] = useState<Rect | null>(null);
 
   const measure = useCallback(() => {
@@ -45,12 +56,39 @@ export default function Spotlight({ targetRef, show, text, place, onDismiss }: S
     const t = target.getBoundingClientRect();
     if (!o.width || !t.width) return;
     const scale = o.width / STAGE_W;
-    setRect({
-      x: (t.left - o.left) / scale - PAD_X,
-      y: (t.top - o.top) / scale - PAD_Y,
-      w: t.width / scale + PAD_X * 2,
-      h: t.height / scale + PAD_Y * 2,
-    });
+    const next = {
+      x: round((t.left - o.left) / scale - PAD_X),
+      y: round((t.top - o.top) / scale - PAD_Y),
+      w: round(t.width / scale + PAD_X * 2),
+      h: round(t.height / scale + PAD_Y * 2),
+    };
+    // A callout centred on the stage with a notch fixed at its middle only
+    // happens to point at the target when the target is central. The share icon
+    // and the streak counter are both near an edge, so the callout slides
+    // towards them as far as the stage margin allows and the notch takes up the
+    // rest of the distance, staying clear of the callout's own corners.
+    //
+    // Only the callout's *width* is read here. Sliding it is a transform, which
+    // leaves the width alone, so this settles in one pass instead of chasing
+    // its own last position.
+    let notch: number | null = null;
+    let shift = 0;
+    const cal = calloutRef.current;
+    if (cal) {
+      const calW = cal.getBoundingClientRect().width / scale;
+      const centred = (STAGE_W - calW) / 2;
+      const cx = next.x + next.w / 2;
+      const min = MARGIN - centred;
+      const max = STAGE_W - MARGIN - calW - centred;
+      shift = round(Math.max(Math.min(min, max), Math.min(max, cx - centred - calW / 2)));
+      notch = round(Math.max(14, Math.min(calW - 14, cx - centred - shift)));
+    }
+    // Bail when nothing moved: the callout is measured on a second pass, and
+    // without this the state change would loop it round again.
+    setRect(prev => (prev && prev.x === next.x && prev.y === next.y
+      && prev.w === next.w && prev.h === next.h
+      && prev.notch === notch && prev.shift === shift)
+      ? prev : { ...next, notch, shift });
   }, [targetRef]);
 
   useLayoutEffect(() => {
@@ -58,8 +96,13 @@ export default function Spotlight({ targetRef, show, text, place, onDismiss }: S
     const ro = new ResizeObserver(measure);
     if (overlayRef.current) ro.observe(overlayRef.current);
     if (targetRef.current) ro.observe(targetRef.current);
+    if (calloutRef.current) ro.observe(calloutRef.current);
     return () => ro.disconnect();
-  }, [measure, targetRef]);
+    // `rect` and `show` are both here for the callout's second pass: it only
+    // renders once there is a rect *and* the spotlight is shown, so the first
+    // measure has nothing to aim the notch at. Re-running on each gets the
+    // callout measured in the commit that puts it on the screen.
+  }, [measure, targetRef, rect, show]);
 
   const lit = show && rect;
   const calloutStyle: React.CSSProperties = place === 'above'
@@ -99,14 +142,15 @@ export default function Spotlight({ targetRef, show, text, place, onDismiss }: S
           animation: 'lua-rise .32s cubic-bezier(.33,1,.68,1) both',
           ...calloutStyle,
         }}>
-          <div style={{
+          <div ref={calloutRef} style={{
             position: 'relative', maxWidth: 268,
+            transform: rect?.shift ? `translateX(${rect.shift}px)` : undefined,
             padding: '10px 13px 11px', borderRadius: 8, background: '#20222f',
             boxShadow: '0 0 0 1px #3f424d, 0 10px 26px rgba(0,0,0,.6)',
           }}>
             <div style={{ font: '400 11.5px/1.55 Inter,sans-serif', color: '#cfd3e5' }}>{text}</div>
             <div style={{
-              position: 'absolute', left: '50%', width: NOTCH, height: NOTCH,
+              position: 'absolute', left: rect?.notch ?? '50%', width: NOTCH, height: NOTCH,
               marginLeft: -NOTCH / 2, background: '#20222f', transform: 'rotate(45deg)',
               ...(place === 'above'
                 ? { bottom: -NOTCH / 2, boxShadow: '1px 1px 0 0 #3f424d' }

@@ -6,7 +6,9 @@ import { copyOnly, shareOrCopy, sharedPromptId } from '../lib/share';
 import { trackPromptShown } from '../lib/analytics';
 import {
   getCoachSeen, getPillIntroSeen, getPrefs, getUnlocked, hasOpenedBefore,
-  markCoachSeen, markOpened, markPillIntroSeen, markStreakToday, readStreak, savePrefs, setUnlocked as persistUnlocked,
+  bumpRevealsTotal, getRevealsTotal, getShareCoachSeen, getStreakCoachSeen,
+  markCoachSeen, markOpened, markPillIntroSeen, markShareCoachSeen, markStreakCoachSeen,
+  markStreakToday, readStreak, savePrefs, setUnlocked as persistUnlocked,
 } from '../lib/storage';
 
 export type Screen = 'onboard1' | 'home' | 'streak' | 'unlock';
@@ -99,6 +101,9 @@ export function useLua() {
   // The filter intro runs as two beats — subject, then difficulty — kept under
   // one flag because it is one moment, not a tour to be resumed part-way.
   const [introStep, setIntroStep] = useState(() => (getPillIntroSeen() ? INTRO_DONE : 0));
+  const [revealsTotal, setRevealsTotal] = useState(getRevealsTotal);
+  const [shareCoachSeen, setShareCoachSeenState] = useState(getShareCoachSeen);
+  const [streakCoachSeen, setStreakCoachSeenState] = useState(getStreakCoachSeen);
 
   const stateRef = useRef(state);
   useEffect(() => { stateRef.current = state; }, [state]);
@@ -255,6 +260,7 @@ export function useLua() {
     // The day counts here, where a question is actually opened — once, however
     // many are opened after it.
     setStreakDays(markStreakToday());
+    setRevealsTotal(bumpRevealsTotal());
     trackPromptShown(PROMPTS[ix]);
     after(REVEAL_MS, () => patch({ phase: 'settled' }));
   }
@@ -275,6 +281,18 @@ export function useLua() {
     if (coachSeen) return;
     setCoachSeenState(true);
     markCoachSeen();
+  }
+
+  function dismissShareCoach() {
+    if (shareCoachSeen) return;
+    setShareCoachSeenState(true);
+    markShareCoachSeen();
+  }
+
+  function dismissStreakCoach() {
+    if (streakCoachSeen) return;
+    setStreakCoachSeenState(true);
+    markStreakCoachSeen();
   }
 
   function advanceIntro() {
@@ -362,11 +380,11 @@ export function useLua() {
   function doUnlock() { persistUnlocked(true); patch({ unlocked: true }); go('home', 'idle'); }
 
   return {
-    state, streakDays, coachSeen, introStep, quiet: QUIET_PILLS,
+    state, streakDays, coachSeen, introStep, revealsTotal, shareCoachSeen, streakCoachSeen, quiet: QUIET_PILLS,
     actions: {
       askMotion, onDown, onMove, onUp, dismiss, again, share,
       toggleCategory, toggleInfo, setWeight, goStreak, goHome, doUnlock, writeItDown,
-      dismissCoach, advanceIntro,
+      dismissCoach, advanceIntro, dismissShareCoach, dismissStreakCoach,
     },
   };
 }
