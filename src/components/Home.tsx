@@ -36,6 +36,9 @@ export default function Home({ lua }: { lua: Lua }) {
   const tx = state.tiltX * (big ? .06 : 1);
   const ty = state.tiltY * (big ? .06 : 1);
   const jitterOn = ph === 'agitate';
+  // The breathing and its ground belong to the resting object only — never
+  // through the shake, the push-in, or while a question is being read.
+  const idle = ph === 'idle';
   // The moon's vertical anchor moves with the stage, so the distance it travels
   // to reach the centre has to be measured rather than baked into the phase.
   const pushY = v.push ? targetY(stageH) - apertureY(moonCY) : 0;
@@ -179,6 +182,17 @@ export default function Home({ lua }: { lua: Lua }) {
         transform: `translate3d(${v.tx + tx}px, ${pushY + v.ty + ty}px, 0) scale(${v.k})`,
         transition: `transform ${dur}ms ${ease}`,
       }}>
+        <div style={{
+          position: 'absolute', left: '-22%', top: '-8%', width: '144%', height: '144%',
+          borderRadius: '50%', pointerEvents: 'none',
+          background: 'radial-gradient(closest-side, rgba(5,5,10,.62) 0%, rgba(5,5,10,.4) 44%, rgba(5,5,10,0) 74%)',
+          // The animation drives opacity while resting; with it gone the inline
+          // value takes over and the ground fades out rather than cutting.
+          opacity: idle ? undefined : 0,
+          transition: 'opacity 600ms linear',
+          animation: idle ? 'lua-ground 5.2s ease-in-out infinite' : undefined,
+        }} />
+        <div style={{ position: 'absolute', inset: 0, animation: idle ? 'lua-pulse 5.2s ease-in-out infinite' : undefined }}>
         <div style={{ position: 'absolute', inset: 0, animation: jitterOn ? `lua-jitter ${(0.72 - state.energy * 0.3).toFixed(2)}s ease-in-out infinite` : undefined }}>
           <img src={moonBody} alt="" draggable={false} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block' }} />
           <div style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', borderRadius: '50%', boxShadow: 'inset 0 0 34px 6px rgba(9,8,14,.5)', pointerEvents: 'none' }} />
@@ -213,6 +227,7 @@ export default function Home({ lua }: { lua: Lua }) {
             boxShadow: '0 0 26px 5px rgba(142,63,168,.42), 0 0 60px 14px rgba(107,46,134,.2)',
             transition: `opacity ${dur}ms ${ease}`,
           }} />
+        </div>
         </div>
       </div>
 
