@@ -9,6 +9,15 @@ import type { useLua } from '../hooks/useLua';
 
 type Lua = ReturnType<typeof useLua>;
 
+// The two flanking actions are deliberately quiet: same size, same weight, no
+// fill. 'Another' carries a border and a ground so it reads as the primary
+// action from its appearance rather than from sitting in the middle.
+const iconAction: React.CSSProperties = {
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+  width: 44, height: 44, padding: 0,
+  background: 'none', border: 0, cursor: 'pointer', color: '#9397ab',
+};
+
 const wdotStyle = (i: number, pw: number): React.CSSProperties => ({
   display: 'block', width: 4, height: 4, borderRadius: '50%',
   background: i <= pw ? 'rgba(242,193,78,.72)' : 'rgba(233,237,245,.16)',
@@ -274,15 +283,43 @@ export default function Home({ lua }: { lua: Lua }) {
           }}>{prompt.t}</p>
         </div>
 
+        <button type="button" onClick={actions.dismiss} aria-label="Close this question" title="Close" style={{
+          position: 'absolute', top: 34, right: 16, width: 44, height: 44,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'none', border: 0, cursor: 'pointer', color: 'rgba(147,151,171,.8)',
+          opacity: ph === 'settled' ? 1 : 0,
+          pointerEvents: ph === 'settled' ? 'auto' : 'none',
+          transition: `opacity 700ms linear ${ph === 'settled' ? '300ms' : '0ms'}`,
+        }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
+            <path d="M6.4 6.4l11.2 11.2M17.6 6.4L6.4 17.6" />
+          </svg>
+        </button>
+
         <div style={{
-          position: 'absolute', bottom: 74, left: 0, right: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+          position: 'absolute', bottom: 74, left: 0, right: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 20,
           opacity: ph === 'settled' ? 1 : 0,
           transition: `opacity 700ms linear ${ph === 'settled' ? '300ms' : '0ms'}`,
         }}>
-          <button type="button" onClick={actions.dismiss} style={{ background: 'none', border: 0, padding: '16px 14px', cursor: 'pointer', font: '400 12px/1 Inter,sans-serif', letterSpacing: '.05em', color: '#9397ab' }}>I'm done</button>
-          <button type="button" onClick={actions.again} style={{ background: 'none', border: '1px solid rgba(145,132,217,.42)', borderRadius: 100, padding: '15px 18px', cursor: 'pointer', font: '400 12px/1 Inter,sans-serif', letterSpacing: '.05em', color: '#b5abfc' }}>Another</button>
-          <button type="button" onClick={actions.share} aria-label="Send this question to someone" style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 0, padding: '16px 14px', cursor: 'pointer', font: '400 12px/1 Inter,sans-serif', letterSpacing: '.05em', color: '#9397ab' }}>
-            <span style={{ display: 'block', width: 5, height: 5, borderRadius: '50%', background: 'rgba(242,193,78,.55)' }} />Send to a friend
+          <button type="button" onClick={actions.writeItDown} aria-label="Write about this question" title="Write about it" style={iconAction}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <rect x="3" y="4" width="9.5" height="16" rx="1.4" />
+              <path d="M5.8 4v16" />
+              <path d="M7.7 9h3.2M7.7 12.5h3.2" />
+              <path d="M20.6 8.2l-1.6-1.6a.85.85 0 0 0-1.2 0l-4.4 4.4-.85 2.65 2.65-.85 4.4-4.4a.85.85 0 0 0 0-1.2z" />
+              <path d="M16.9 8.1l1.7 1.7" />
+            </svg>
+          </button>
+          <button type="button" onClick={actions.again} style={{
+            background: 'rgba(145,132,217,.10)', border: '1px solid rgba(145,132,217,.55)', borderRadius: 100,
+            padding: '17px 34px', cursor: 'pointer', font: '400 15px/1 Inter,sans-serif',
+            letterSpacing: '.03em', color: '#d2cefd',
+          }}>Another</button>
+          <button type="button" onClick={actions.share} aria-label="Send this question to someone" title="Send to a friend" style={iconAction}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M20.5 3.5L10.8 13.2" />
+              <path d="M20.5 3.5l-6.2 17-3.5-7.3-7.3-3.5 17-6.2z" />
+            </svg>
           </button>
         </div>
 

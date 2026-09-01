@@ -47,23 +47,37 @@ function todayKey(d = new Date()): string {
   return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
 }
 
+const DAY_MS = 86400000;
+
 /**
- * Real consecutive-day streak, derived from the last date the app was opened.
- * The design prototype only ever showed a static tweak (`streakDays`); this is
- * the real thing it was standing in for — same today, +1 from yesterday,
- * reset to 1 after any gap.
+ * The streak as it stands, without touching it. A run is alive while the last
+ * day counted is today or yesterday; once a whole day passes uncounted it is
+ * broken, and reads as nothing until the next question is opened.
  */
-export function rollStreakOnOpen(): number {
+export function readStreak(): number {
+  const last = safeGet(STREAK_LAST_KEY);
+  const days = Number(safeGet(STREAK_DAYS_KEY) || '0');
+  if (!last || !days) return 0;
+  return last === todayKey() || last === todayKey(new Date(Date.now() - DAY_MS)) ? days : 0;
+}
+
+/**
+ * Count today towards the streak, at most once. Called when a question is
+ * actually opened, not when the app is: the number is meant to say how many
+ * days running someone has sat with a question, and merely arriving is not
+ * that. A fifth question on the same day changes nothing.
+ */
+export function markStreakToday(): number {
   const today = todayKey();
   const last = safeGet(STREAK_LAST_KEY);
-  const prevDays = Number(safeGet(STREAK_DAYS_KEY) || '0');
-  if (last === today) return prevDays || 1;
+  const days = Number(safeGet(STREAK_DAYS_KEY) || '0');
+  if (last === today) return days || 1;
 
-  const yesterday = todayKey(new Date(Date.now() - 86400000));
-  const days = last === yesterday ? prevDays + 1 : 1;
-  safeSet(STREAK_DAYS_KEY, String(days));
+  const yesterday = todayKey(new Date(Date.now() - DAY_MS));
+  const next = last === yesterday ? days + 1 : 1;
+  safeSet(STREAK_DAYS_KEY, String(next));
   safeSet(STREAK_LAST_KEY, today);
-  return days;
+  return next;
 }
 
 export interface Prefs {
