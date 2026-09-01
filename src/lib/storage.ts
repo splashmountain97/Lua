@@ -3,6 +3,9 @@
 const SEEN_KEY = 'lua.hasOpenedBefore';
 const COACH_SEEN_KEY = 'lua.coachSeen';
 const PILL_INTRO_KEY = 'lua.pillIntroSeen';
+const SHARE_COACH_KEY = 'lua.shareCoachSeen';
+const STREAK_COACH_KEY = 'lua.streakCoachSeen';
+const REVEALS_TOTAL_KEY = 'lua.revealsTotal';
 const UNLOCKED_KEY = 'lua.unlocked';
 const STREAK_DAYS_KEY = 'lua.streakDays';
 const STREAK_LAST_KEY = 'lua.streakLastOpen';
@@ -34,6 +37,33 @@ export function getPillIntroSeen(): boolean {
 }
 export function markPillIntroSeen() {
   safeSet(PILL_INTRO_KEY, '1');
+}
+
+export function getShareCoachSeen(): boolean {
+  return !!safeGet(SHARE_COACH_KEY);
+}
+export function markShareCoachSeen() {
+  safeSet(SHARE_COACH_KEY, '1');
+}
+
+export function getStreakCoachSeen(): boolean {
+  return !!safeGet(STREAK_COACH_KEY);
+}
+export function markStreakCoachSeen() {
+  safeSet(STREAK_COACH_KEY, '1');
+}
+
+/**
+ * Questions revealed ever, not today — the share coach waits for the second
+ * one, and a per-day count would offer it again on every new day.
+ */
+export function getRevealsTotal(): number {
+  return Number(safeGet(REVEALS_TOTAL_KEY) || '0');
+}
+export function bumpRevealsTotal(): number {
+  const next = getRevealsTotal() + 1;
+  safeSet(REVEALS_TOTAL_KEY, String(next));
+  return next;
 }
 
 export function getUnlocked(): boolean {

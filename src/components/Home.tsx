@@ -24,10 +24,12 @@ const wdotStyle = (i: number, pw: number): React.CSSProperties => ({
 });
 
 export default function Home({ lua }: { lua: Lua }) {
-  const { state, streakDays, coachSeen, introStep, quiet, actions } = lua;
+  const { state, streakDays, coachSeen, introStep, revealsTotal, shareCoachSeen, streakCoachSeen, quiet, actions } = lua;
   const { titleY, moonCY, lineY, height: stageH } = useStageLayout();
   const promptRef = useRef<HTMLDivElement>(null);
   const catsRef = useRef<HTMLDivElement>(null);
+  const shareRef = useRef<HTMLButtonElement>(null);
+  const streakRef = useRef<HTMLButtonElement>(null);
   const weightsRef = useRef<HTMLDivElement>(null);
   const ph = state.phase;
   const v = PHASES[ph];
@@ -61,7 +63,7 @@ export default function Home({ lua }: { lua: Lua }) {
         transition: `opacity ${Math.round(dur * 0.5)}ms linear`,
       }}>
         <div style={{ position: 'absolute', top: 70, left: 0, right: 0, display: 'flex', justifyContent: 'flex-end', padding: '0 14px' }}>
-          <button type="button" onClick={actions.goStreak} aria-label="Streak" style={{
+          <button ref={streakRef} type="button" onClick={actions.goStreak} aria-label="Streak" style={{
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
             width: 46, height: 46, background: 'none', border: 0, padding: 0, cursor: 'pointer',
           }}>
@@ -315,7 +317,7 @@ export default function Home({ lua }: { lua: Lua }) {
             padding: '17px 34px', cursor: 'pointer', font: '400 15px/1 Inter,sans-serif',
             letterSpacing: '.03em', color: '#d2cefd',
           }}>Another</button>
-          <button type="button" onClick={actions.share} aria-label="Send this question to someone" title="Send to a friend" style={iconAction}>
+          <button ref={shareRef} type="button" onClick={actions.share} aria-label="Send this question to someone" title="Send to a friend" style={iconAction}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M20.5 3.5L10.8 13.2" />
               <path d="M20.5 3.5l-6.2 17-3.5-7.3-7.3-3.5 17-6.2z" />
@@ -351,6 +353,25 @@ export default function Home({ lua }: { lua: Lua }) {
         text="That's a reflection. Sit with it as long as you like."
         place="below"
         onDismiss={actions.dismissCoach}
+      />
+
+      {/* Waits for the second question: the first already carries the reflection
+          mark, and two coach marks on one screen teach neither. */}
+      <Spotlight
+        targetRef={shareRef}
+        show={ph === 'settled' && coachSeen && !shareCoachSeen && revealsTotal >= 2 && !state.shareNote}
+        text="Send a question to someone — they’ll get the prompt, no app required to open it."
+        place="above"
+        onDismiss={actions.dismissShareCoach}
+      />
+      {/* Held until the streak means something. It is counted during the reveal,
+          when the chrome is hidden, so this lands back on the idle screen. */}
+      <Spotlight
+        targetRef={streakRef}
+        show={ph === 'idle' && introStep >= 2 && !streakCoachSeen && streakDays >= 2}
+        text="Two days. That’s the start of a streak — come back tomorrow to keep it going."
+        place="below"
+        onDismiss={actions.dismissStreakCoach}
       />
     </div>
   );
