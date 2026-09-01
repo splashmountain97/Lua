@@ -364,6 +364,16 @@ export const IDLE_TIPS = [
 
 // Shown while the object is settling, in place of the one line that used to
 // carry that whole beat.
+// Shown on every write tap after the first, one at a time. They all argue the
+// same thing from a different side — that the absence of a text box is the
+// point — because the modal has to earn being in the way more than once.
+export const WRITE_TIPS = [
+  'Paper slows you down enough to actually think.',
+  'No autocorrect, no undo — just what you actually meant.',
+  'A blank page is more private than any app.',
+  'Some of the best thinking happens with a pen in hand.',
+] as const;
+
 export const SETTLING = [
   'Let it settle',
   'Almost.',

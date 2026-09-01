@@ -6,6 +6,7 @@ const PILL_INTRO_KEY = 'lua.pillIntroSeen';
 const SHARE_COACH_KEY = 'lua.shareCoachSeen';
 const STREAK_COACH_KEY = 'lua.streakCoachSeen';
 const REVEALS_TOTAL_KEY = 'lua.revealsTotal';
+const WRITE_INTRO_KEY = 'lua.writeIntroSeen';
 const UNLOCKED_KEY = 'lua.unlocked';
 const STREAK_DAYS_KEY = 'lua.streakDays';
 const STREAK_LAST_KEY = 'lua.streakLastOpen';
@@ -44,6 +45,17 @@ export function getShareCoachSeen(): boolean {
 }
 export function markShareCoachSeen() {
   safeSet(SHARE_COACH_KEY, '1');
+}
+
+/**
+ * Whether the write modal has explained itself once. The first tap gets the
+ * long form with the illustration; every tap after gets the short one.
+ */
+export function getWriteIntroSeen(): boolean {
+  return !!safeGet(WRITE_INTRO_KEY);
+}
+export function markWriteIntroSeen() {
+  safeSet(WRITE_INTRO_KEY, '1');
 }
 
 export function getStreakCoachSeen(): boolean {

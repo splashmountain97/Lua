@@ -1,14 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 import { CATS, PROMPTS, promptIndexById, type CategoryId, type Weight, shareText } from '../data/content';
-import { IDLE_FIRST, IDLE_RETURN, IDLE_TIPS, SETTLING } from '../data/content';
+import { IDLE_FIRST, IDLE_RETURN, IDLE_TIPS, SETTLING, WRITE_TIPS } from '../data/content';
 import { PHASES, REVEAL_MS, type Phase } from '../lib/phases';
 import { copyOnly, shareOrCopy, sharedPromptId } from '../lib/share';
+import type { WriteTier } from '../components/WriteModal';
 import { trackPromptShown } from '../lib/analytics';
 import {
   getCoachSeen, getPillIntroSeen, getPrefs, getUnlocked, hasOpenedBefore,
   bumpRevealsTotal, getRevealsTotal, getShareCoachSeen, getStreakCoachSeen,
   markCoachSeen, markOpened, markPillIntroSeen, markShareCoachSeen, markStreakCoachSeen,
   markStreakToday, readStreak, savePrefs, setUnlocked as persistUnlocked,
+  getWriteIntroSeen, markWriteIntroSeen,
 } from '../lib/storage';
 
 export type Screen = 'onboard1' | 'home' | 'streak' | 'unlock';
@@ -28,6 +30,10 @@ interface LuaState {
   unlocked: boolean;
   holding: boolean;
   shareNote: string | null;
+  /** Which tier of the write modal is up, if any — 1 the first ever tap, 2 after. */
+  writeModal: WriteTier;
+  /** The tier-2 tip, drawn per open and never the same one twice running. */
+  writeTip: string;
   /** The nudge above the moon, in the slot 'Ready to begin?' used to hold. */
   idleLine: string;
   /** The longer tip below the moon. Always present, alongside the nudge above. */
@@ -90,6 +96,8 @@ export function useLua() {
     unlocked: getUnlocked(),
     holding: false,
     shareNote: null,
+    writeModal: null,
+    writeTip: WRITE_TIPS[0],
     idleLine: IDLE_FIRST[0],
     tipLine: IDLE_TIPS[0],
     settlingLine: SETTLING[0],
@@ -328,13 +336,45 @@ export function useLua() {
     });
   }
 
-  /** Take the question away to answer in your own words, wherever you keep them. */
+  function noteCopy(t: string) {
+    patch({ shareNote: t });
+    after(2400, () => patch({ shareNote: null }));
+  }
+
+  /**
+   * Take the question away to answer in your own words, wherever you keep them.
+   *
+   * This used to copy silently and raise a toast, which says that something
+   * happened without saying what, or why there is nowhere in Lua to type. It
+   * now opens a modal that says so — at length once, briefly thereafter.
+   *
+   * The first tier explains a copy that has already happened, so the clipboard
+   * is written here, on open, and its toast is held back until the reader
+   * dismisses the card. The second tier changes nothing about when the copy
+   * happens: its button still does it, exactly as this function used to.
+   */
   async function writeItDown(e?: React.SyntheticEvent) {
     e?.stopPropagation();
-    await copyOnly(PROMPTS[stateRef.current.promptIx].t, (t) => {
-      patch({ shareNote: t });
-      after(2400, () => patch({ shareNote: null }));
-    });
+    if (getWriteIntroSeen()) {
+      // Drawn here rather than in the modal: the draw is a side effect, and
+      // this is the event that causes it. Doing it in a mount effect would run
+      // twice under StrictMode and swap the sentence out from under the reader.
+      patch({ writeModal: 2, writeTip: drawLine([...WRITE_TIPS], stateRef.current.writeTip) });
+      return;
+    }
+    markWriteIntroSeen();
+    patch({ writeModal: 1 });
+    // The note is swallowed: closeWrite raises it on the way out instead.
+    await copyOnly(PROMPTS[stateRef.current.promptIx].t, () => {});
+  }
+
+  function closeWrite() {
+    if (stateRef.current.writeModal === 1) noteCopy('Copied');
+    patch({ writeModal: null });
+  }
+
+  async function copyFromModal() {
+    await copyOnly(PROMPTS[stateRef.current.promptIx].t, noteCopy);
   }
 
   async function share(e?: React.SyntheticEvent) {
@@ -346,10 +386,7 @@ export function useLua() {
     // expires on its own, so the worst case is a moment of ignored taps.
     shareGuardUntilRef.current = Date.now() + 1500;
     try {
-      await shareOrCopy(msg, (t) => {
-        patch({ shareNote: t });
-        after(2400, () => patch({ shareNote: null }));
-      });
+      await shareOrCopy(msg, noteCopy);
     } finally {
       shareGuardUntilRef.current = Date.now() + 800;
     }
@@ -384,6 +421,7 @@ export function useLua() {
     actions: {
       askMotion, onDown, onMove, onUp, dismiss, again, share,
       toggleCategory, toggleInfo, setWeight, goStreak, goHome, doUnlock, writeItDown,
+      closeWrite, copyFromModal,
       dismissCoach, advanceIntro, dismissShareCoach, dismissStreakCoach,
     },
   };
