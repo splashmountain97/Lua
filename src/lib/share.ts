@@ -11,6 +11,31 @@ export function sharedPromptId(): number | null {
   return Number.isSafeInteger(id) ? id : null;
 }
 
+/**
+ * Puts text on the clipboard without opening the share sheet — for taking a
+ * question away to write about, which is a private act, not a send.
+ */
+export async function copyOnly(text: string, note: (t: string) => void) {
+  try {
+    await navigator.clipboard.writeText(text);
+    note('Copied');
+    return;
+  } catch { /* fall through to the legacy path */ }
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.cssText = 'position:fixed;top:-1000px;opacity:0';
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    note(ok ? 'Copied' : 'Couldn\u2019t copy');
+  } catch {
+    note('Couldn\u2019t copy');
+  }
+}
+
 export async function shareOrCopy(
   message: string,
   note: (text: string) => void,
