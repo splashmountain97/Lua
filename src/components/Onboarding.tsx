@@ -89,6 +89,12 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
 
   const cfg = SCREENS[screen];
   const text = COPY[screen].slice(0, typed);
+  // The rest of the line is rendered from the first frame, invisible. The block
+  // is laid out for the finished sentence throughout, so the line breaks are
+  // settled before a character appears and nothing re-wraps as it fills in —
+  // text-wrap: pretty was rebalancing every break on every keystroke, which is
+  // what made the paragraph move around under the reader.
+  const rest = COPY[screen].slice(typed);
   const caret = done ? 0 : 1;
   const dot = (i: number) =>
     i === screen ? 'rgba(145,132,217,.95)' : screen === 0 ? 'rgba(46,42,48,.22)' : 'rgba(233,237,245,.2)';
@@ -189,14 +195,14 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
         <div style={{
           position: 'absolute', left: 32, right: 32, top: stageH - UP_FROM_BOTTOM.loud,
           font: '300 31px/1.26 Inter,sans-serif', letterSpacing: '-.03em', color: '#2e2a30', textWrap: 'pretty',
-        }}>{text}<span style={caretStyle('.86em', 5, '-.06em', '#6d5f8a')} /></div>
+        }}>{text}<span style={caretStyle('.86em', 5, '-.06em', '#6d5f8a')} /><span aria-hidden="true" style={{ opacity: 0 }}>{rest}</span></div>
       )}
 
       {screen === 1 && (
         <div style={{
           position: 'absolute', left: 32, right: 32, top: stageH - UP_FROM_BOTTOM.room,
           font: '400 15px/1.68 Inter,sans-serif', letterSpacing: '.002em', color: '#b2b6ca', textWrap: 'pretty',
-        }}>{text}<span style={caretStyle('.9em', 4, '-.1em', '#9184d9')} /></div>
+        }}>{text}<span style={caretStyle('.9em', 4, '-.1em', '#9184d9')} /><span aria-hidden="true" style={{ opacity: 0 }}>{rest}</span></div>
       )}
 
       {screen === 2 && (
@@ -208,14 +214,14 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
           <div style={{
             position: 'absolute', left: 32, right: 32, top: stageH - UP_FROM_BOTTOM.tagline,
             font: '300 27px/1.24 Inter,sans-serif', letterSpacing: '-.025em', color: '#cfd3e5', textWrap: 'pretty',
-          }}>{text}<span style={caretStyle('.86em', 5, '-.06em', '#9184d9')} /></div>
+          }}>{text}<span style={caretStyle('.86em', 5, '-.06em', '#9184d9')} /><span aria-hidden="true" style={{ opacity: 0 }}>{rest}</span></div>
           {done && (
             <button type="button" onClick={(e) => { e.stopPropagation(); onDone(); }} style={{
               position: 'absolute', left: 32, right: 32, bottom: 56, padding: 15, borderRadius: 100, cursor: 'pointer',
               border: '1px solid rgba(145,132,217,.5)', background: 'rgba(145,132,217,.06)',
               color: '#d2cefd', font: '400 14.5px/1 Inter,sans-serif', letterSpacing: '.02em',
               animation: `lua-rise 620ms ${EASE} both`,
-            }}>Pick it up</button>
+            }}>Start now</button>
           )}
         </>
       )}
