@@ -5,6 +5,7 @@ import { CATS, PROMPTS, WEIGHTS, WEIGHT_ANY_NOTE, WEIGHT_NOTE } from '../data/co
 import { PHASES, EASE_IN, EASE_OUT, M, CX, WX, WY, WPX, AP_R, apertureY, targetY } from '../lib/phases';
 import { useStageLayout } from '../lib/layout';
 import Spotlight from './Spotlight';
+import WriteModal from './WriteModal';
 import type { useLua } from '../hooks/useLua';
 
 type Lua = ReturnType<typeof useLua>;
@@ -28,6 +29,7 @@ export default function Home({ lua }: { lua: Lua }) {
   const { titleY, moonCY, lineY, height: stageH } = useStageLayout();
   const promptRef = useRef<HTMLDivElement>(null);
   const catsRef = useRef<HTMLDivElement>(null);
+  const writeRef = useRef<HTMLButtonElement>(null);
   const shareRef = useRef<HTMLButtonElement>(null);
   const streakRef = useRef<HTMLButtonElement>(null);
   const weightsRef = useRef<HTMLDivElement>(null);
@@ -318,7 +320,7 @@ export default function Home({ lua }: { lua: Lua }) {
           opacity: ph === 'settled' ? 1 : 0,
           transition: `opacity 700ms linear ${ph === 'settled' ? '300ms' : '0ms'}`,
         }}>
-          <button type="button" onClick={actions.writeItDown} aria-label="Write about this question" title="Write about it" style={iconAction}>
+          <button ref={writeRef} type="button" onClick={actions.writeItDown} aria-label="Write about this question" title="Write about it" style={iconAction}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <rect x="3" y="4" width="9.5" height="16" rx="1.4" />
               <path d="M5.8 4v16" />
@@ -340,13 +342,25 @@ export default function Home({ lua }: { lua: Lua }) {
           </button>
         </div>
 
-        <div style={{
-          position: 'absolute', bottom: 132, left: 0, right: 0, textAlign: 'center', pointerEvents: 'none',
-          font: '400 11px/1 ui-monospace,Menlo,monospace', letterSpacing: '.08em', textTransform: 'uppercase', color: 'rgba(242,193,78,.8)',
-          opacity: state.shareNote ? 1 : 0,
-          transition: 'opacity 260ms linear',
-        }}>{state.shareNote || ''}</div>
       </div>
+
+      {/* Lifted out of the prompt layer: that layer carries its own opacity and
+          transform, which make a stacking context the toast could not rise out
+          of, and the write modal has to pass underneath this. */}
+      <div style={{
+        position: 'absolute', zIndex: 42, bottom: 132, left: 0, right: 0, textAlign: 'center', pointerEvents: 'none',
+        font: '400 11px/1 ui-monospace,Menlo,monospace', letterSpacing: '.08em', textTransform: 'uppercase', color: 'rgba(242,193,78,.8)',
+        opacity: state.shareNote ? 1 : 0,
+        transition: 'opacity 260ms linear',
+      }}>{state.shareNote || ''}</div>
+
+      <WriteModal
+        tier={state.writeModal}
+        tip={state.writeTip}
+        onClose={actions.closeWrite}
+        onCopy={actions.copyFromModal}
+        returnFocusRef={writeRef}
+      />
 
       <Spotlight
         targetRef={catsRef}

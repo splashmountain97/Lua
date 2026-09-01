@@ -34,6 +34,13 @@ body {
 button { font-family: inherit; }
 ::selection { background: rgba(145, 132, 217, .3); }
 
+/* The write modal is the one place in the app with a keyboard trap, so it is
+   the one place that has to show where the focus is. */
+[role="dialog"] button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
 @keyframes lua-jitter {
   0%   { transform: translate3d(0,0,0) rotate(0deg); }
   18%  { transform: translate3d(-3.5px,1.5px,0) rotate(-1.1deg); }
