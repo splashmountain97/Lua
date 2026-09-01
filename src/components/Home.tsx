@@ -10,7 +10,7 @@ import type { useLua } from '../hooks/useLua';
 type Lua = ReturnType<typeof useLua>;
 
 // The two flanking actions are deliberately quiet: same size, same weight, no
-// fill. 'Another' carries a border and a ground so it reads as the primary
+// fill. 'Shake again' carries a border and a ground so it reads as the primary
 // action from its appearance rather than from sitting in the middle.
 const iconAction: React.CSSProperties = {
   display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -314,7 +314,7 @@ export default function Home({ lua }: { lua: Lua }) {
             background: 'rgba(145,132,217,.10)', border: '1px solid rgba(145,132,217,.55)', borderRadius: 100,
             padding: '17px 34px', cursor: 'pointer', font: '400 15px/1 Inter,sans-serif',
             letterSpacing: '.03em', color: '#d2cefd',
-          }}>Another</button>
+          }}>Shake again</button>
           <button type="button" onClick={actions.share} aria-label="Send this question to someone" title="Send to a friend" style={iconAction}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M20.5 3.5L10.8 13.2" />
