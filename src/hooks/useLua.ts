@@ -106,6 +106,7 @@ export function useLua() {
   const idleShownOnceRef = useRef(startedOpen);
   const shakeBoundRef = useRef(false);
   const motionAskedRef = useRef(false);
+  const shareGuardUntilRef = useRef(0);
   const timersRef = useRef<number[]>([]);
 
   function patch(p: Partial<LuaState> | ((s: LuaState) => Partial<LuaState>)) {
@@ -221,6 +222,11 @@ export function useLua() {
   function onDown(e: React.PointerEvent) {
     if (state.screen !== 'home') return;
     if ((e.target as HTMLElement)?.closest?.('button')) return;
+    // The tap that dismisses the system share sheet lands on the page behind
+    // it. Without this it reaches the stage as a tap on the question and closes
+    // it, so backing out of sharing threw the question away. Checked after the
+    // button test so the close control and the actions are never held off.
+    if (Date.now() < shareGuardUntilRef.current) return;
     requestMotionPermission();
     const ph = state.phase;
     if (ph === 'settled') { dismiss(); return; }
@@ -316,10 +322,19 @@ export function useLua() {
   async function share(e?: React.SyntheticEvent) {
     e?.stopPropagation();
     const msg = shareText(PROMPTS[stateRef.current.promptIx]);
-    await shareOrCopy(msg, (t) => {
-      patch({ shareNote: t });
-      after(2400, () => patch({ shareNote: null }));
-    });
+    // A deadline rather than a flag. The share promise is at the mercy of the
+    // platform sheet and may never settle; a flag cleared in a finally would
+    // then stay set and leave the question impossible to tap away. A deadline
+    // expires on its own, so the worst case is a moment of ignored taps.
+    shareGuardUntilRef.current = Date.now() + 1500;
+    try {
+      await shareOrCopy(msg, (t) => {
+        patch({ shareNote: t });
+        after(2400, () => patch({ shareNote: null }));
+      });
+    } finally {
+      shareGuardUntilRef.current = Date.now() + 800;
+    }
   }
 
   function toggleCategory(id: CategoryId, e?: React.SyntheticEvent) {
