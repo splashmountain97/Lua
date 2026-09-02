@@ -92,9 +92,46 @@ export function trackShake() {
   send('moon_shaken');
 }
 
-/** One question was revealed. Aggregate only — see the note above. */
-export function trackPromptShown(prompt: Prompt) {
-  send('prompt_shown', { category: prompt.c, weight: prompt.w });
+/**
+ * Coarse on purpose.
+ *
+ * A raw count is a sharper thing than it looks. Events carry no identity and
+ * cannot be joined across visits, but within one visit they all belong to one
+ * person, and in a small readership 'day 23' is a cohort of one. Banding keeps
+ * every value a group rather than a person, and still answers the question the
+ * bands were made for.
+ */
+function band(n: number): string {
+  if (n <= 0) return '0';
+  if (n <= 2) return String(n);
+  if (n <= 6) return '3-6';
+  if (n <= 13) return '7-13';
+  if (n <= 29) return '14-29';
+  return '30+';
+}
+
+/**
+ * One question was revealed.
+ *
+ * The two counts are how this app can say anything about coming back without
+ * keeping an identity to recognise anyone by. Retention normally needs
+ * something durable on the device to join one visit to the next; that is the
+ * one thing this will not keep. But the device has already worked out the
+ * answer for its own reasons — the streak is literally how many days running
+ * someone has come back — so the answer travels instead of the identity, in
+ * bands, attached to the question rather than the reader.
+ *
+ * It buys the distribution, not the path: how many questions are opened by
+ * people on day one against day seven, never whether these two events are the
+ * same person. That distribution is the whole of what was being asked.
+ */
+export function trackPromptShown(prompt: Prompt, streakDays: number, lifetimeReveals: number) {
+  send('prompt_shown', {
+    category: prompt.c,
+    weight: prompt.w,
+    streak_day: band(streakDays),
+    lifetime_reveals: band(lifetimeReveals),
+  });
 }
 
 /** Did anyone ever change the defaults the filters ship with? */
