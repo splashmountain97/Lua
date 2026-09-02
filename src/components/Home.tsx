@@ -93,9 +93,15 @@ export default function Home({ lua }: { lua: Lua }) {
           </button>
         )}
 
-        <div style={{ position: 'absolute', top: 70, left: 0, right: 0, display: 'flex', justifyContent: 'flex-end', padding: '0 14px' }}>
-          <button ref={streakRef} type="button" onClick={actions.goStreak}
-            aria-label={`Streak: ${streakDays} ${streakDays === 1 ? 'day' : 'days'}`} style={{
+        {/* Placed by its own corner rather than by a full-width flex row. The
+            row was invisible but 402 wide, sat at the same height as the
+            bookmark in the opposite corner, and came after it — so it took
+            every tap along the top of the screen. Being a div and not a
+            button, it also passed the stage's tap test, and a tap meant for
+            the bookmark shook the moon instead. */}
+        <button ref={streakRef} type="button" onClick={actions.goStreak}
+          aria-label={`Streak: ${streakDays} ${streakDays === 1 ? 'day' : 'days'}`} style={{
+            position: 'absolute', top: 70, right: 14,
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
             width: 46, height: 46, background: 'none', border: 0, padding: 0, cursor: 'pointer',
           }}>
@@ -107,9 +113,8 @@ export default function Home({ lua }: { lua: Lua }) {
               display: 'block',
               font: '15px/1 "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif',
             }}>{moonPhase(streakDays)}</span>
-            <span style={{ font: '400 10px/1 ui-monospace,Menlo,monospace', color: '#9397ab', letterSpacing: '.02em' }}>{streakDays}d</span>
-          </button>
-        </div>
+          <span style={{ font: '400 10px/1 ui-monospace,Menlo,monospace', color: '#9397ab', letterSpacing: '.02em' }}>{streakDays}d</span>
+        </button>
 
         <div style={{ position: 'absolute', top: titleY, left: 0, right: 0, textAlign: 'center', padding: '0 32px' }}>
           <div style={{ font: '300 25px/1.2 Inter,sans-serif', letterSpacing: '-.028em', color: '#f0eef2' }}>{hintTitle}</div>
