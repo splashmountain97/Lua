@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { trackOnboarding } from '../lib/analytics';
 import astronaut from '../assets/onboard-astronaut-2048.jpg';
 import moonBody from '../assets/moon-body.png';
 import glassSwirl from '../assets/glass-swirl.png';
@@ -48,6 +49,7 @@ const illoFit = (stageH: number) =>
 const MOON_ABOVE_WORDMARK = 376;
 
 export default function Onboarding({ onDone }: { onDone: () => void }) {
+  const leave = (outcome: 'completed' | 'skipped') => { trackOnboarding(outcome); onDone(); };
   const { height: stageH } = useStageLayout();
   const [screen, setScreen] = useState(0);
   const [typed, setTyped] = useState(0);
@@ -216,7 +218,7 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
             font: '300 27px/1.24 Inter,sans-serif', letterSpacing: '-.025em', color: '#cfd3e5', textWrap: 'pretty',
           }}>{text}<span style={caretStyle('.86em', 5, '-.06em', '#9184d9')} /><span aria-hidden="true" style={{ opacity: 0 }}>{rest}</span></div>
           {done && (
-            <button type="button" onClick={(e) => { e.stopPropagation(); onDone(); }} style={{
+            <button type="button" onClick={(e) => { e.stopPropagation(); leave('completed'); }} style={{
               position: 'absolute', left: 32, right: 32, bottom: 56, padding: 15, borderRadius: 100, cursor: 'pointer',
               border: '1px solid rgba(145,132,217,.5)', background: 'rgba(145,132,217,.06)',
               color: '#d2cefd', font: '400 14.5px/1 Inter,sans-serif', letterSpacing: '.02em',
@@ -227,8 +229,8 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
       )}
 
       {/* Two Skips, crossing over with the ground beneath them: ink on paper, then light on dark. */}
-      <button type="button" onClick={(e) => { e.stopPropagation(); onDone(); }} style={skip(cfg.paper, '#6a6472')}>Skip</button>
-      <button type="button" onClick={(e) => { e.stopPropagation(); onDone(); }} style={skip(screen === 0 ? 0 : 1, '#8d90a3')}>Skip</button>
+      <button type="button" onClick={(e) => { e.stopPropagation(); leave('skipped'); }} style={skip(cfg.paper, '#6a6472')}>Skip</button>
+      <button type="button" onClick={(e) => { e.stopPropagation(); leave('skipped'); }} style={skip(screen === 0 ? 0 : 1, '#8d90a3')}>Skip</button>
 
       <div style={{ position: 'absolute', left: 0, right: 0, bottom: 26, display: 'flex', justifyContent: 'center', gap: 7, pointerEvents: 'none' }}>
         {[0, 1, 2].map(i => (
