@@ -13,8 +13,9 @@ import {
   markCoachSeen, markOpened, markPillIntroSeen, markShareCoachSeen, markStreakCoachSeen,
   markStreakToday, readStreak, savePrefs, setUnlocked as persistUnlocked,
   getWriteIntroSeen, markWriteIntroSeen, getSaved, setSaved,
-  getDayCount, bumpDayCount, joinWaitlist as persistWaitlist,
+  getDayCount, bumpDayCount,
 } from '../lib/storage';
+import { sendWaitlist } from '../lib/waitlist';
 import type { SavedEntry } from '../lib/storage';
 
 export type Screen = 'onboard1' | 'home' | 'streak' | 'unlock';
@@ -495,7 +496,10 @@ export function useLua() {
   }
 
   function joinWaitlist(door: Door, email: string) {
-    persistWaitlist({ email, door, at: Date.now() });
+    // Not awaited: the card has already confirmed, and sendWaitlist keeps the
+    // address on the device if the send fails rather than losing it.
+    void sendWaitlist(email, door);
+    // The door, never the address — see the note in analytics.
     trackWaitlist(door);
   }
 
