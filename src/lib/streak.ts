@@ -18,3 +18,18 @@ export function moonPhase(streakDays: number): string {
   if (streakDays <= 0) return PHASES[0];
   return PHASES[Math.min(PHASES.length - 1, Math.floor((streakDays - 1) / 6))];
 }
+
+/**
+ * The moon that goes out with a shared question.
+ *
+ * Two states, not five: it is read by someone who has never opened the app,
+ * with no counter beside it and no idea a sequence is running, so a waxing
+ * gibbous would be a private joke. It says the ordinary moon, or the full one
+ * once the sender's own is.
+ *
+ * Derived from moonPhase rather than from a number of its own, so the message
+ * and the glyph in the corner cannot come to disagree about what full means.
+ */
+export function shareMoon(streakDays: number): string {
+  return moonPhase(streakDays) === PHASES[PHASES.length - 1] ? PHASES[PHASES.length - 1] : '🌙';
+}
