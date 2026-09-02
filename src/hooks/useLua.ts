@@ -304,9 +304,13 @@ export function useLua() {
     patch({ phase: 'reveal', promptIx: ix, pinnedIx: null, lastShownIx: ix });
     // The day counts here, where a question is actually opened — once, however
     // many are opened after it.
-    setStreakDays(markStreakToday());
-    setRevealsTotal(bumpRevealsTotal());
-    trackPromptShown(PROMPTS[ix]);
+    const streak = markStreakToday();
+    const lifetime = bumpRevealsTotal();
+    setStreakDays(streak);
+    setRevealsTotal(lifetime);
+    // Both are read after their increment: this reveal is the one being
+    // counted, so day one should report as day one and not as day zero.
+    trackPromptShown(PROMPTS[ix], streak, lifetime);
     // Counted here rather than at each entry point: this is the one place a
     // question actually reaches the reader, so it catches the shake, the tap
     // and 'Shake again' alike and cannot be double-counted by a re-run.
