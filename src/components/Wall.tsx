@@ -29,7 +29,7 @@ const DOORS: Record<Door, DoorCopy> = {
     cta: 'Tell me when it opens', dismiss: 'Stay with Self for now',
   },
   world: {
-    kicker: 'World · not open yet', head: 'Not open yet', body: LOCKED,
+    kicker: 'Beyond You · not open yet', head: 'Not open yet', body: LOCKED,
     cta: 'Tell me when it opens', dismiss: 'Stay with Self for now',
   },
   day: {

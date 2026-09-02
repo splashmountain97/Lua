@@ -9,10 +9,14 @@ export interface Category {
   desc: string;
 }
 
+// The ids are the record. They are written into lua.saved and lua.prefs and
+// sent with every prompt_shown, so 'world' stays 'world' however the pill is
+// labelled — renaming one would orphan saved questions and split a year of
+// counts in two.
 export const CATS: Category[] = [
-  { id: 'you', label: 'Self', desc: 'Who you are, right now: your feelings, your character, the day you just lived.' },
-  { id: 'life', label: 'Life', desc: 'What you do with your time: work, direction, relationships, how you spend the years.' },
-  { id: 'world', label: 'World', desc: 'Bigger than you: curiosity, the existential, the questions without an obvious answer.' },
+  { id: 'you', label: 'Self', desc: 'Who you are, right now — your feelings, your character, the day you just lived.' },
+  { id: 'life', label: 'Life', desc: 'What you do with your time — work, relationships, family, the dreams you’re chasing or postponing, how you’re spending the years you have.' },
+  { id: 'world', label: 'Beyond You', desc: 'Bigger than you — curiosity, existence, the universe, the questions nobody has a clean answer to.' },
 ];
 
 export interface Prompt {
