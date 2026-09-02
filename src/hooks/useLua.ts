@@ -6,6 +6,7 @@ import { copyOnly, shareOrCopy, sharedPromptId } from '../lib/share';
 import type { WriteTier } from '../components/WriteModal';
 import type { Door } from '../components/Wall';
 import { DAY_CAP, SAVE_CAP } from '../lib/limits';
+import { shareMoon } from '../lib/streak';
 import { trackPromptShown, trackShake, trackFilter, trackAction, trackSavedOpened, trackWallShown, trackWaitlist } from '../lib/analytics';
 import {
   getCoachSeen, getPillIntroSeen, getPrefs, getUnlocked, hasOpenedBefore,
@@ -526,7 +527,7 @@ export function useLua() {
   async function share(e?: React.SyntheticEvent) {
     e?.stopPropagation();
     trackAction('share');
-    const msg = shareText(PROMPTS[stateRef.current.promptIx]);
+    const msg = shareText(PROMPTS[stateRef.current.promptIx], shareMoon(streakDays));
     // A deadline rather than a flag. The share promise is at the mercy of the
     // platform sheet and may never settle; a flag cleared in a finally would
     // then stay set and leave the question impossible to tap away. A deadline

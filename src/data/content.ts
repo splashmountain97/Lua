@@ -422,5 +422,6 @@ export function promptIndexById(id: number): number {
   return PROMPTS.findIndex(p => p.id === id);
 }
 
-export const shareText = (prompt: Prompt) =>
-  `Lua asked me: “${prompt.t}” — thought of you 🌙\n${shareUrl(prompt.id)}`;
+/** The moon is passed in rather than worked out here: this file is the library, and the sender's streak is not part of it. */
+export const shareText = (prompt: Prompt, moon = '🌙') =>
+  `Lua asked me: “${prompt.t}” — thought of you ${moon}\n${shareUrl(prompt.id)}`;
