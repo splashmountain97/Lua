@@ -399,11 +399,15 @@ export default function Home({ lua }: { lua: Lua }) {
 
       {/* Lifted out of the prompt layer: that layer carries its own opacity and
           transform, which make a stacking context the toast could not rise out
-          of, and the write modal has to pass underneath this. */}
+          of, and the write modal has to pass underneath this.
+          It cost the toast its old ride, though — inside that layer it faded
+          out with the question whatever its own state said. Out here nothing
+          hides it but itself, so it is held to the settled screen it belongs
+          to and cannot paint over the moon. */}
       <div style={{
         position: 'absolute', zIndex: 42, bottom: 182, left: 0, right: 0, textAlign: 'center', pointerEvents: 'none',
         font: '400 11px/1 ui-monospace,Menlo,monospace', letterSpacing: '.08em', textTransform: 'uppercase', color: 'rgba(242,193,78,.8)',
-        opacity: state.shareNote ? 1 : 0,
+        opacity: state.shareNote && ph === 'settled' ? 1 : 0,
         transition: 'opacity 260ms linear',
       }}>{state.shareNote || ''}</div>
 

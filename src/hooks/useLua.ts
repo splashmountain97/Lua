@@ -335,7 +335,7 @@ export function useLua() {
     e?.stopPropagation();
     trackAction('close');
     clearTimers();
-    patch({ phase: 'dismiss' });
+    patch({ phase: 'dismiss', shareNote: null });
     if (!coachSeen) { setCoachSeenState(true); markCoachSeen(); }
     after(PHASES.dismiss.dur, () => { patch({ phase: 'idle' }); rollIdleLine(); });
   }
@@ -348,7 +348,7 @@ export function useLua() {
     // payment, and the offer on it (six hundred questions, one a day) describes
     // neither the pool the app ships with nor a limit anything enforces. Restore
     // this guard to put it back in the flow.
-    patch({ phase: 'dismiss' });
+    patch({ phase: 'dismiss', shareNote: null });
     after(520, () => {
       patch({ phase: 'agitate', energy: 1 });
       after(700, () => {
@@ -358,6 +358,15 @@ export function useLua() {
     });
   }
 
+  /**
+   * The little amber line under the question — copied, saved, sent.
+   *
+   * It clears itself after a moment, but that timer lives in the same pool
+   * clearTimers empties, and leaving the question empties it. So the note is
+   * also cleared wherever the question is left: without that, closing within
+   * the two and a half seconds cancels the only thing that would have taken it
+   * down, and it stays up for good.
+   */
   function noteCopy(t: string) {
     patch({ shareNote: t });
     after(2400, () => patch({ shareNote: null }));
