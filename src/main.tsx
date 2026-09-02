@@ -3,6 +3,10 @@ import { createRoot } from 'react-dom/client'
 import { Analytics } from '@vercel/analytics/react'
 import './index.css'
 import App from './App.tsx'
+import { initAnalytics } from './lib/analytics'
+
+// No key, no analytics — see the note in lib/analytics.
+initAnalytics()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

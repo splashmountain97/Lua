@@ -4,7 +4,7 @@ import { IDLE_FIRST, IDLE_RETURN, IDLE_TIPS, SETTLING, WRITE_TIPS } from '../dat
 import { PHASES, REVEAL_MS, type Phase } from '../lib/phases';
 import { copyOnly, shareOrCopy, sharedPromptId } from '../lib/share';
 import type { WriteTier } from '../components/WriteModal';
-import { trackPromptShown } from '../lib/analytics';
+import { trackPromptShown, trackShake, trackFilter, trackAction, trackSavedOpened } from '../lib/analytics';
 import {
   getCoachSeen, getPillIntroSeen, getPrefs, getUnlocked, hasOpenedBefore,
   bumpRevealsTotal, getRevealsTotal, getShareCoachSeen, getStreakCoachSeen,
@@ -204,6 +204,7 @@ export function useLua() {
       if (stateRef.current.screen !== 'home') return;
       if (stateRef.current.phase === 'idle') {
         clearTimers();
+        trackShake();
         patch({ holding: true, phase: 'agitate', energy: 0.6 });
         after(900, () => { if (stateRef.current.holding) onUp(); });
       } else if (stateRef.current.phase === 'agitate') {
@@ -263,6 +264,7 @@ export function useLua() {
     if (ph === 'settled') { dismiss(); return; }
     if (ph !== 'idle') return;
     clearTimers();
+    trackShake();
     patch({ holding: true, phase: 'agitate', energy: .5, infoOpen: null });
   }
 
@@ -331,6 +333,7 @@ export function useLua() {
 
   function dismiss(e?: React.SyntheticEvent) {
     e?.stopPropagation();
+    trackAction('close');
     clearTimers();
     patch({ phase: 'dismiss' });
     if (!coachSeen) { setCoachSeenState(true); markCoachSeen(); }
@@ -339,6 +342,7 @@ export function useLua() {
 
   function again(e?: React.SyntheticEvent) {
     e?.stopPropagation();
+    trackAction('again');
     clearTimers();
     // The unlock screen is parked until there is something to sell: it takes no
     // payment, and the offer on it (six hundred questions, one a day) describes
@@ -373,6 +377,7 @@ export function useLua() {
    */
   async function writeItDown(e?: React.SyntheticEvent) {
     e?.stopPropagation();
+    trackAction('write');
     if (getWriteIntroSeen()) {
       // Drawn here rather than in the modal: the draw is a side effect, and
       // this is the event that causes it. Doing it in a mount effect would run
@@ -407,6 +412,7 @@ export function useLua() {
     e?.stopPropagation();
     const id = PROMPTS[stateRef.current.promptIx].id;
     const already = saved.some(r => r.id === id);
+    trackAction(already ? 'unsave' : 'save');
     const next = already ? saved.filter(r => r.id !== id) : [{ id, done: false }, ...saved];
     setSavedRows(next);
     if (already) patch({ shareNote: null });
@@ -439,6 +445,7 @@ export function useLua() {
 
   function openPanel(e?: React.SyntheticEvent) {
     e?.stopPropagation();
+    trackSavedOpened(saved.filter(r => !r.done).length, saved.filter(r => r.done).length);
     patch({ panelOpen: true });
   }
 
@@ -449,6 +456,7 @@ export function useLua() {
 
   async function share(e?: React.SyntheticEvent) {
     e?.stopPropagation();
+    trackAction('share');
     const msg = shareText(PROMPTS[stateRef.current.promptIx]);
     // A deadline rather than a flag. The share promise is at the mercy of the
     // platform sheet and may never settle; a flag cleared in a finally would
@@ -464,6 +472,9 @@ export function useLua() {
 
   function toggleCategory(id: CategoryId, e?: React.SyntheticEvent) {
     e?.stopPropagation();
+    // Outside the updater: StrictMode invokes those twice, which would double
+    // every event sent from inside one.
+    trackFilter('category', id);
     patch(s => {
       const next = s.selected.includes(id) ? s.selected.filter(x => x !== id) : [...s.selected, id];
       const selected = next.length ? next : s.selected;
@@ -479,6 +490,7 @@ export function useLua() {
 
   function setWeight(w: Weight | null, e?: React.SyntheticEvent) {
     e?.stopPropagation();
+    trackFilter('weight', w ?? 'any');
     patch(s => { savePrefs({ selected: s.selected, weight: w }); return { weight: w, infoOpen: null }; });
   }
 
