@@ -4,6 +4,7 @@ import glassSwirl from '../assets/glass-swirl.png';
 import { CATS, PROMPTS, WEIGHTS, WEIGHT_ANY_NOTE, WEIGHT_NOTE } from '../data/content';
 import { PHASES, EASE_IN, EASE_OUT, M, CX, WX, WY, WPX, AP_R, apertureY, targetY } from '../lib/phases';
 import { useStageLayout } from '../lib/layout';
+import { moonPhase } from '../lib/streak';
 import Spotlight from './Spotlight';
 import WriteModal from './WriteModal';
 import type { useLua } from '../hooks/useLua';
@@ -68,15 +69,19 @@ export default function Home({ lua }: { lua: Lua }) {
         transition: `opacity ${Math.round(dur * 0.5)}ms linear`,
       }}>
         <div style={{ position: 'absolute', top: 70, left: 0, right: 0, display: 'flex', justifyContent: 'flex-end', padding: '0 14px' }}>
-          <button ref={streakRef} type="button" onClick={actions.goStreak} aria-label="Streak" style={{
+          <button ref={streakRef} type="button" onClick={actions.goStreak}
+            aria-label={`Streak: ${streakDays} ${streakDays === 1 ? 'day' : 'days'}`} style={{
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
             width: 46, height: 46, background: 'none', border: 0, padding: 0, cursor: 'pointer',
           }}>
-            <span style={{
-              display: 'block', width: 11, height: 11, borderRadius: '50%',
-              background: `radial-gradient(circle at ${(96 - Math.min(78, streakDays * 3.1)).toFixed(0)}% 46%, rgba(242,193,78,.92) 0%, rgba(230,175,66,.8) 34%, rgba(63,66,77,1) 58%, rgba(47,50,60,1) 100%)`,
-              boxShadow: 'inset 0 0 0 1px rgba(233,233,237,.1)',
-            }} />
+            {/* Replaces an 11px gradient dot that waxed with the streak. It said
+                the same thing, but at that size almost nobody could see it was
+                saying anything. Decorative to a screen reader: the button's
+                label carries the count in words. */}
+            <span aria-hidden="true" style={{
+              display: 'block',
+              font: '15px/1 "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif',
+            }}>{moonPhase(streakDays)}</span>
             <span style={{ font: '400 10px/1 ui-monospace,Menlo,monospace', color: '#9397ab', letterSpacing: '.02em' }}>{streakDays}d</span>
           </button>
         </div>
