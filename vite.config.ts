@@ -7,7 +7,12 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      // 'prompt' rather than 'autoUpdate': not to prompt anyone, but because
+      // autoUpdate takes over whenever it likes and still cannot refresh the
+      // page that is already running. Waiting lets the app pick the moment —
+      // see lib/updates.
+      registerType: 'prompt',
+      injectRegister: null,
       manifest: {
         name: 'Lua — a question, once a day',
         short_name: 'Lua',

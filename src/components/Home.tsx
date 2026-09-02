@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import moonBody from '../assets/moon-body.png';
 import glassSwirl from '../assets/glass-swirl.png';
 import { CATS, PROMPTS, WEIGHTS, WEIGHT_ANY_NOTE, WEIGHT_NOTE } from '../data/content';
@@ -10,6 +10,7 @@ import WriteModal from './WriteModal';
 import SavedPanel from './SavedPanel';
 import Wall from './Wall';
 import { DAY_CAP, SAVE_CAP, DAY_COUNTER_FROM, dayLabel } from '../lib/limits';
+import { setSafeToUpdate } from '../lib/updates';
 import type { useLua } from '../hooks/useLua';
 
 type Lua = ReturnType<typeof useLua>;
@@ -93,6 +94,21 @@ export default function Home({ lua }: { lua: Lua }) {
   const hintTitle = ph === 'idle' ? state.idleLine : ph === 'agitate' ? '' : state.settlingLine;
   const infoCat = CATS.find(c => c.id === state.infoOpen);
   const promptCat = CATS.find(c => c.id === prompt.c)!;
+
+  // At rest, with nothing open over it: the only moment a reload costs nobody
+  // anything. A waiting update applies here and nowhere else.
+  //
+  // The screen has to be checked as well as the phase. Leaving for the streak
+  // screen keeps the phase at idle, and this component unmounts — so without
+  // the first clause the app would still be claiming to be at rest while
+  // someone read their streak, and without the cleanup that claim would
+  // outlive the component that made it.
+  const atRest = state.screen === 'home' && ph === 'idle' && !state.wall
+    && !state.panelOpen && state.writeModal === null && !state.infoOpen;
+  useEffect(() => {
+    setSafeToUpdate(atRest);
+    return () => setSafeToUpdate(false);
+  }, [atRest]);
 
   return (
     <div style={{ position: 'absolute', inset: 0 }}>
