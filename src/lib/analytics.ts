@@ -112,6 +112,20 @@ export function trackOnboarding(outcome: 'completed' | 'skipped') {
   send('onboarding', { outcome });
 }
 
+/**
+ * The wall was reached, and by which door. Per-door counts are the entire
+ * result of the test: which gate people actually hit, and which one they will
+ * leave an address for. The address itself is never sent here.
+ */
+export function trackWallShown(door: string) {
+  send('wall_shown', { door });
+}
+
+/** An address was left. Which door, never the address. */
+export function trackWaitlist(door: string) {
+  send('waitlist_joined', { door });
+}
+
 /** The saved drawer was opened, and how much was in it. */
 export function trackSavedOpened(saved: number, done: number) {
   send('saved_opened', { saved, done });

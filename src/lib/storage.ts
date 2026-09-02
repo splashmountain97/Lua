@@ -12,6 +12,8 @@ const UNLOCKED_KEY = 'lua.unlocked';
 const STREAK_DAYS_KEY = 'lua.streakDays';
 const STREAK_LAST_KEY = 'lua.streakLastOpen';
 const PREFS_KEY = 'lua.prefs';
+const DAY_COUNT_KEY = 'lua.dayCount';
+const WAITLIST_KEY = 'lua.waitlist';
 
 function safeGet(key: string): string | null {
   try { return localStorage.getItem(key); } catch { return null; }
@@ -118,7 +120,7 @@ export function setUnlocked(v: boolean) {
   safeSet(UNLOCKED_KEY, v ? '1' : '0');
 }
 
-function todayKey(d = new Date()): string {
+export function todayKey(d = new Date()): string {
   return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
 }
 
@@ -153,6 +155,47 @@ export function markStreakToday(): number {
   safeSet(STREAK_DAYS_KEY, String(next));
   safeSet(STREAK_LAST_KEY, today);
   return next;
+}
+
+/** Reveals opened today. Resets by itself: a count from another day reads 0. */
+export function getDayCount(): number {
+  const raw = safeGet(DAY_COUNT_KEY);
+  if (!raw) return 0;
+  try {
+    const v: unknown = JSON.parse(raw);
+    if (!v || typeof v !== 'object') return 0;
+    const { day, n } = v as { day?: unknown; n?: unknown };
+    if (day !== todayKey() || typeof n !== 'number' || !Number.isFinite(n)) return 0;
+    return Math.max(0, Math.floor(n));
+  } catch {
+    return 0;
+  }
+}
+
+export function bumpDayCount(): number {
+  const next = getDayCount() + 1;
+  safeSet(DAY_COUNT_KEY, JSON.stringify({ day: todayKey(), n: next }));
+  return next;
+}
+
+/**
+ * An address left at the wall, and which door it was left at.
+ *
+ * Local only: there is no backend, and this is a fake door. The one thing it
+ * must not become is a quiet account, so nothing else is kept — not which
+ * questions were seen, not when they were seen. Pointing this at a real
+ * endpoint later is a change to this one function.
+ */
+export interface WaitlistEntry { email: string; door: string; at: number }
+
+export function joinWaitlist(entry: WaitlistEntry) {
+  let list: WaitlistEntry[] = [];
+  try {
+    const raw = safeGet(WAITLIST_KEY);
+    const v: unknown = raw ? JSON.parse(raw) : [];
+    if (Array.isArray(v)) list = v as WaitlistEntry[];
+  } catch { /* a corrupt list is replaced, not repaired */ }
+  safeSet(WAITLIST_KEY, JSON.stringify([...list, entry]));
 }
 
 export interface Prefs {
