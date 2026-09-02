@@ -4,14 +4,18 @@ import { IDLE_FIRST, IDLE_RETURN, IDLE_TIPS, SETTLING, WRITE_TIPS } from '../dat
 import { PHASES, REVEAL_MS, type Phase } from '../lib/phases';
 import { copyOnly, shareOrCopy, sharedPromptId } from '../lib/share';
 import type { WriteTier } from '../components/WriteModal';
-import { trackPromptShown, trackShake, trackFilter, trackAction, trackSavedOpened } from '../lib/analytics';
+import type { Door } from '../components/Wall';
+import { DAY_CAP, SAVE_CAP } from '../lib/limits';
+import { trackPromptShown, trackShake, trackFilter, trackAction, trackSavedOpened, trackWallShown, trackWaitlist } from '../lib/analytics';
 import {
   getCoachSeen, getPillIntroSeen, getPrefs, getUnlocked, hasOpenedBefore,
   bumpRevealsTotal, getRevealsTotal, getShareCoachSeen, getStreakCoachSeen,
   markCoachSeen, markOpened, markPillIntroSeen, markShareCoachSeen, markStreakCoachSeen,
   markStreakToday, readStreak, savePrefs, setUnlocked as persistUnlocked,
   getWriteIntroSeen, markWriteIntroSeen, getSaved, setSaved,
+  getDayCount, bumpDayCount,
 } from '../lib/storage';
+import { sendWaitlist } from '../lib/waitlist';
 import type { SavedEntry } from '../lib/storage';
 
 export type Screen = 'onboard1' | 'home' | 'streak' | 'unlock';
@@ -37,6 +41,8 @@ interface LuaState {
   writeTip: string;
   /** Whether the saved drawer is open. */
   panelOpen: boolean;
+  /** Which door of the wall is up, if any. Nothing here unlocks anything. */
+  wall: Door | null;
   /** The nudge above the moon, in the slot 'Ready to begin?' used to hold. */
   idleLine: string;
   /** The longer tip below the moon. Always present, alongside the nudge above. */
@@ -102,6 +108,7 @@ export function useLua() {
     writeModal: null,
     writeTip: WRITE_TIPS[0],
     panelOpen: false,
+    wall: null,
     idleLine: IDLE_FIRST[0],
     tipLine: IDLE_TIPS[0],
     settlingLine: SETTLING[0],
@@ -119,6 +126,8 @@ export function useLua() {
 
   // Entries whose id no longer exists in PROMPTS are dropped on read: the pool
   // is edited over time, and a saved row pointing at nothing cannot be drawn.
+  const [dayUsed, setDayUsed] = useState(getDayCount);
+
   const [saved, setSavedState] = useState<SavedEntry[]>(
     () => getSaved().filter(r => promptIndexById(r.id) >= 0));
 
@@ -129,6 +138,12 @@ export function useLua() {
   // a removal is waiting behind its undo — see removeSaved.
   const savedRef = useRef(saved);
   useEffect(() => { savedRef.current = saved; }, [saved]);
+
+  // The motion listener is registered once and closes over the state of that
+  // render, so it reads the count through a ref or it would still be seeing
+  // zero on the sixth shake of the day.
+  const dayUsedRef = useRef(dayUsed);
+  useEffect(() => { dayUsedRef.current = dayUsed; }, [dayUsed]);
   function setSavedRows(rows: SavedEntry[]) {
     setSavedState(rows);
     setSaved(rows);
@@ -204,6 +219,7 @@ export function useLua() {
       if (stateRef.current.screen !== 'home') return;
       if (stateRef.current.phase === 'idle') {
         clearTimers();
+        if (dayUsedRef.current >= DAY_CAP) { openWall('day'); return; }
         trackShake();
         patch({ holding: true, phase: 'agitate', energy: 0.6 });
         after(900, () => { if (stateRef.current.holding) onUp(); });
@@ -263,6 +279,7 @@ export function useLua() {
     const ph = state.phase;
     if (ph === 'settled') { dismiss(); return; }
     if (ph !== 'idle') return;
+    if (daySpent()) { openWall('day'); return; }
     clearTimers();
     trackShake();
     patch({ holding: true, phase: 'agitate', energy: .5, infoOpen: null });
@@ -290,6 +307,10 @@ export function useLua() {
     setStreakDays(markStreakToday());
     setRevealsTotal(bumpRevealsTotal());
     trackPromptShown(PROMPTS[ix]);
+    // Counted here rather than at each entry point: this is the one place a
+    // question actually reaches the reader, so it catches the shake, the tap
+    // and 'Shake again' alike and cannot be double-counted by a re-run.
+    setDayUsed(bumpDayCount());
     after(REVEAL_MS, () => patch({ phase: 'settled' }));
   }
 
@@ -342,6 +363,10 @@ export function useLua() {
 
   function again(e?: React.SyntheticEvent) {
     e?.stopPropagation();
+    // The other way to spend a reveal, so it carries the same gate as the
+    // shake — otherwise the limit is invisible on the screen where people
+    // actually press for more.
+    if (daySpent()) { openWall('day', e); return; }
     trackAction('again');
     clearTimers();
     // The unlock screen is parked until there is something to sell: it takes no
@@ -421,6 +446,9 @@ export function useLua() {
     e?.stopPropagation();
     const id = PROMPTS[stateRef.current.promptIx].id;
     const already = saved.some(r => r.id === id);
+    // Only adding is refused. Un-saving stays open at the cap, or the state
+    // would have no way out of itself.
+    if (!already && saved.length >= SAVE_CAP) { openWall('save', e); return; }
     trackAction(already ? 'unsave' : 'save');
     const next = already ? saved.filter(r => r.id !== id) : [{ id, done: false }, ...saved];
     setSavedRows(next);
@@ -452,6 +480,34 @@ export function useLua() {
     setSaved(savedRef.current);
   }
 
+  /**
+   * Open the wall. Nothing about it grants, sells, or unlocks — the whole
+   * outcome is whether an address gets left, which is the result being
+   * measured. lua.unlocked is deliberately untouched.
+   */
+  function openWall(door: Door, e?: React.SyntheticEvent) {
+    e?.stopPropagation();
+    trackWallShown(door);
+    patch({ wall: door });
+  }
+
+  function closeWall() {
+    patch({ wall: null });
+  }
+
+  function joinWaitlist(door: Door, email: string) {
+    // Not awaited: the card has already confirmed, and sendWaitlist keeps the
+    // address on the device if the send fails rather than losing it.
+    void sendWaitlist(email, door);
+    // The door, never the address — see the note in analytics.
+    trackWaitlist(door);
+  }
+
+  /** Whether a reveal is still available today. Self is not exempt. */
+  function daySpent() {
+    return dayUsed >= DAY_CAP;
+  }
+
   function openPanel(e?: React.SyntheticEvent) {
     e?.stopPropagation();
     trackSavedOpened(saved.filter(r => !r.done).length, saved.filter(r => r.done).length);
@@ -481,6 +537,8 @@ export function useLua() {
 
   function toggleCategory(id: CategoryId, e?: React.SyntheticEvent) {
     e?.stopPropagation();
+    // Not open yet: tapping is how the wall is reached, so the pill stays live.
+    if (id === 'life' || id === 'world') { openWall(id, e); return; }
     // Outside the updater: StrictMode invokes those twice, which would double
     // every event sent from inside one.
     trackFilter('category', id);
@@ -508,12 +566,13 @@ export function useLua() {
   function doUnlock() { persistUnlocked(true); patch({ unlocked: true }); go('home', 'idle'); }
 
   return {
-    state, streakDays, coachSeen, introStep, revealsTotal, shareCoachSeen, streakCoachSeen, saved, quiet: QUIET_PILLS,
+    state, streakDays, coachSeen, introStep, revealsTotal, shareCoachSeen, streakCoachSeen, saved, dayUsed, quiet: QUIET_PILLS,
     actions: {
       askMotion, onDown, onMove, onUp, dismiss, again, share,
       toggleCategory, toggleInfo, setWeight, goStreak, goHome, doUnlock, writeItDown,
       closeWrite, copyFromModal,
       saveCurrent, toggleDone, removeSaved, restoreSaved, commitSaved, openPanel, closePanel,
+      openWall, closeWall, joinWaitlist,
       dismissCoach, advanceIntro, dismissShareCoach, dismissStreakCoach,
     },
   };

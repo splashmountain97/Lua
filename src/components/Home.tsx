@@ -8,6 +8,8 @@ import { moonPhase } from '../lib/streak';
 import Spotlight from './Spotlight';
 import WriteModal from './WriteModal';
 import SavedPanel from './SavedPanel';
+import Wall from './Wall';
+import { DAY_CAP, SAVE_CAP, DAY_COUNTER_FROM, dayLabel } from '../lib/limits';
 import type { useLua } from '../hooks/useLua';
 
 type Lua = ReturnType<typeof useLua>;
@@ -27,12 +29,13 @@ const wdotStyle = (i: number, pw: number): React.CSSProperties => ({
 });
 
 export default function Home({ lua }: { lua: Lua }) {
-  const { state, streakDays, coachSeen, introStep, revealsTotal, shareCoachSeen, streakCoachSeen, saved, quiet, actions } = lua;
+  const { state, streakDays, coachSeen, introStep, revealsTotal, shareCoachSeen, streakCoachSeen, saved, dayUsed, quiet, actions } = lua;
   const { titleY, moonCY, lineY, height: stageH } = useStageLayout();
   const promptRef = useRef<HTMLDivElement>(null);
   const catsRef = useRef<HTMLDivElement>(null);
   const writeRef = useRef<HTMLButtonElement>(null);
   const savedRef = useRef<HTMLButtonElement>(null);
+  const wallFromRef = useRef<HTMLButtonElement>(null);
   const shareRef = useRef<HTMLButtonElement>(null);
   const streakRef = useRef<HTMLButtonElement>(null);
   const weightsRef = useRef<HTMLDivElement>(null);
@@ -43,6 +46,30 @@ export default function Home({ lua }: { lua: Lua }) {
   // when there is nothing at all behind it.
   const savedCount = saved.filter(r => !r.done).length;
   const savedNow = saved.some(r => r.id === PROMPTS[state.promptIx].id);
+  const savedFull = saved.length >= SAVE_CAP;
+  const daySpent = dayUsed >= DAY_CAP;
+  // Silent for the first three: a counter present from the first shake makes
+  // the limit the subject of the app rather than the question.
+  const showDay = dayUsed >= DAY_COUNTER_FROM;
+  const dayColour = daySpent ? 'rgba(242,193,78,.85)' : '#75798c';
+  const dayCounter: React.CSSProperties = {
+    font: '400 10px/1 ui-monospace,Menlo,monospace', letterSpacing: '.1em',
+    opacity: showDay ? 1 : 0, color: dayColour,
+    transition: 'opacity 300ms linear, color 300ms linear',
+  };
+  // The line below the moon says where you stand once it matters, and stands
+  // down again tomorrow. No time-of-day word anywhere near it: someone opens
+  // this over breakfast as readily as at midnight, so 'today' and 'tomorrow'
+  // are the only safe ones.
+  const dayNote = daySpent
+    ? 'That’s five today. Come back tomorrow.'
+    : dayUsed === DAY_CAP - 1 ? 'One question left today.' : null;
+  const lockGlyph = (size: number, w: number) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={w} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="4.5" y="10.5" width="15" height="10" rx="1.6" />
+      <path d="M8 10.5V7.4a4 4 0 0 1 8 0v3.1" />
+    </svg>
+  );
   const v = PHASES[ph];
   const big = ph === 'reveal' || ph === 'settled';
   const ease = ph === 'reveal' ? EASE_IN : EASE_OUT;
@@ -84,14 +111,22 @@ export default function Home({ lua }: { lua: Lua }) {
             aria-label={`Saved questions: ${savedCount}`} style={{
               position: 'absolute', top: 70, left: 14,
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
-              width: 46, height: 46, background: 'none', border: 0, padding: 0, cursor: 'pointer', color: '#9397ab',
+              width: 46, height: 46, background: 'none', border: 0, padding: 0, cursor: 'pointer',
+              color: savedFull ? 'rgba(242,193,78,.85)' : '#9397ab',
             }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M6.5 4.5h11a1 1 0 0 1 1 1v14.2l-6.5-4.4-6.5 4.4V5.5a1 1 0 0 1 1-1z" />
             </svg>
-            <span style={{ font: '400 10px/1 ui-monospace,Menlo,monospace', letterSpacing: '.02em', color: '#9397ab' }}>{savedCount}</span>
+            <span style={{ font: '400 10px/1 ui-monospace,Menlo,monospace', letterSpacing: '.02em', color: 'inherit' }}>{savedCount}</span>
           </button>
         )}
+
+        {/* A third quiet counter, centred between the other two, so the row
+            reads as three of a kind rather than a new sort of thing. */}
+        <div style={{
+          position: 'absolute', top: 78, left: 0, right: 0, textAlign: 'center',
+          pointerEvents: 'none', ...dayCounter,
+        }}>{dayLabel(dayUsed)}</div>
 
         {/* Placed by its own corner rather than by a full-width flex row. The
             row was invisible but 402 wide, sat at the same height as the
@@ -124,7 +159,7 @@ export default function Home({ lua }: { lua: Lua }) {
           font: '400 11px/1.5 ui-monospace,Menlo,monospace', letterSpacing: '.06em', color: 'rgba(147,151,171,.9)',
           animation: 'lua-hint 5.2s ease-in-out infinite',
           display: infoCat ? 'none' : 'block',
-        }}>{state.tipLine}</div>
+        }}>{dayNote ?? state.tipLine}</div>
 
         <div style={{ position: 'absolute', bottom: 46, left: 0, right: 0, padding: '0 20px' }}>
           {infoCat && (
@@ -150,22 +185,35 @@ export default function Home({ lua }: { lua: Lua }) {
             <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               {CATS.map(c => {
                 const on = state.selected.includes(c.id);
+                // Not open yet. The pill keeps its exact resting geometry and
+                // swaps the dot for a padlock, so nothing reflows and it reads
+                // as present-but-shut rather than missing. Still focusable and
+                // still tappable: tapping is how the wall is reached.
+                const shut = c.id === 'life' || c.id === 'world';
                 return (
                   <div key={c.id} style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                    <button type="button" onClick={(e) => actions.toggleCategory(c.id, e)} style={{ display: 'flex', alignItems: 'center', height: 46, padding: 0, background: 'none', border: 0, cursor: 'pointer' }}>
+                    <button type="button" onClick={(e) => actions.toggleCategory(c.id, e)}
+                      aria-disabled={shut || undefined}
+                      aria-label={shut ? `${c.label} — not open yet` : undefined}
+                      ref={shut ? wallFromRef : undefined}
+                      style={{ display: 'flex', alignItems: 'center', height: 46, padding: 0, background: 'none', border: 0, cursor: 'pointer' }}>
                       <span style={{
                         display: 'flex', alignItems: 'center', height: 32, padding: '0 10px 0 11px', borderRadius: '100px 0 0 100px',
                         font: '400 12.5px/1 Inter,sans-serif', letterSpacing: '.012em', transition: 'all .18s',
-                        border: `1px solid ${on ? `rgba(145,132,217,${quiet ? .34 : .6})` : 'rgba(147,151,171,.16)'}`,
+                        border: `1px solid ${on && !shut ? `rgba(145,132,217,${quiet ? .34 : .6})` : 'rgba(147,151,171,.16)'}`,
                         borderRight: 0,
-                        background: on ? `rgba(145,132,217,${quiet ? .05 : .13})` : 'transparent',
-                        color: on ? (quiet ? '#b5abfc' : '#d2cefd') : '#9397ab',
+                        background: on && !shut ? `rgba(145,132,217,${quiet ? .05 : .13})` : 'transparent',
+                        color: shut ? '#75798c' : on ? (quiet ? '#b5abfc' : '#d2cefd') : '#9397ab',
                       }}>
-                        <span style={{
-                          display: 'block', flex: 'none', width: 8, height: 8, marginRight: 7, borderRadius: '50%', transition: 'all .18s',
-                          boxShadow: `inset 0 0 0 1px ${on ? 'rgba(181,171,252,.9)' : 'rgba(147,151,171,.5)'}`,
-                          background: on ? '#b5abfc' : 'transparent',
-                        }} />
+                        {shut ? (
+                          <span style={{ display: 'flex', flex: 'none', marginRight: 7 }}>{lockGlyph(9, 2)}</span>
+                        ) : (
+                          <span style={{
+                            display: 'block', flex: 'none', width: 8, height: 8, marginRight: 7, borderRadius: '50%', transition: 'all .18s',
+                            boxShadow: `inset 0 0 0 1px ${on ? 'rgba(181,171,252,.9)' : 'rgba(147,151,171,.5)'}`,
+                            background: on ? '#b5abfc' : 'transparent',
+                          }} />
+                        )}
                         {c.label}
                       </span>
                     </button>
@@ -356,7 +404,7 @@ export default function Home({ lua }: { lua: Lua }) {
             equal quiet actions and the pill reads as primary from its own
             appearance rather than from being flanked. */}
         <div style={{
-          position: 'absolute', bottom: 122, left: 0, right: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 30,
+          position: 'absolute', bottom: 158, left: 0, right: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 30,
           opacity: ph === 'settled' ? 1 : 0,
           pointerEvents: ph === 'settled' ? 'auto' : 'none',
           transition: `opacity 700ms linear ${ph === 'settled' ? '300ms' : '0ms'}`,
@@ -370,14 +418,28 @@ export default function Home({ lua }: { lua: Lua }) {
               <path d="M16.9 8.1l1.7 1.7" />
             </svg>
           </button>
+          {/* At the cap it keeps its glyph and gains a padlock badge on a
+              ground dark enough to read over it — the control is the same one,
+              shut, rather than a different control. */}
           <button type="button" onClick={actions.saveCurrent}
             aria-pressed={savedNow}
-            aria-label={savedNow ? 'Remove this question from saved' : 'Save this question for later'}
-            title={savedNow ? 'Saved' : 'Save for later'}
-            style={{ ...iconAction, color: savedNow ? 'rgba(242,193,78,.9)' : '#9397ab', transition: 'color .2s' }}>
+            aria-label={savedFull && !savedNow
+              ? 'Saved list full — remove one to save another'
+              : savedNow ? 'Remove this question from saved' : 'Save this question for later'}
+            title={savedNow ? 'Saved' : savedFull ? 'Saved list full' : 'Save for later'}
+            style={{
+              ...iconAction, position: 'relative', transition: 'color .2s',
+              color: savedNow ? 'rgba(242,193,78,.9)' : savedFull ? 'rgba(242,193,78,.85)' : '#9397ab',
+            }}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill={savedNow ? 'rgba(242,193,78,.9)' : 'none'} stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M6.5 4.5h11a1 1 0 0 1 1 1v14.2l-6.5-4.4-6.5 4.4V5.5a1 1 0 0 1 1-1z" />
             </svg>
+            {savedFull && !savedNow && (
+              <span style={{
+                position: 'absolute', right: 4, bottom: 5, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: 13, height: 13, borderRadius: '50%', background: '#0e0f18',
+              }}>{lockGlyph(9, 2.4)}</span>
+            )}
           </button>
           <button ref={shareRef} type="button" onClick={actions.share} aria-label="Send this question to someone" title="Send to a friend" style={iconAction}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -388,16 +450,39 @@ export default function Home({ lua }: { lua: Lua }) {
         </div>
 
         <div style={{
-          position: 'absolute', bottom: 52, left: 0, right: 0, display: 'flex', justifyContent: 'center',
+          position: 'absolute', bottom: 52, left: 0, right: 0,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 9,
           opacity: ph === 'settled' ? 1 : 0,
           pointerEvents: ph === 'settled' ? 'auto' : 'none',
           transition: `opacity 700ms linear ${ph === 'settled' ? '300ms' : '0ms'}`,
         }}>
-          <button type="button" onClick={actions.again} style={{
-            background: 'rgba(145,132,217,.10)', border: '1px solid rgba(145,132,217,.55)', borderRadius: 100,
-            padding: '17px 40px', cursor: 'pointer', font: '400 15px/1 Inter,sans-serif',
-            letterSpacing: '.03em', color: '#d2cefd',
-          }}>Shake again</button>
+          {/* Still tappable when spent — tapping is how the wall is reached.
+              The padlock grows into the pill from nothing rather than appearing
+              beside the label, so the button keeps one identity through the
+              change instead of becoming a different control. */}
+          <button type="button" onClick={actions.again}
+            aria-label={daySpent ? 'Shake again — five a day is the free limit' : undefined}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 9,
+              background: daySpent ? 'none' : 'rgba(145,132,217,.10)',
+              border: `1px solid ${daySpent ? 'rgba(147,151,171,.22)' : 'rgba(145,132,217,.55)'}`,
+              borderRadius: 100, padding: '17px 34px', cursor: 'pointer',
+              font: '400 15px/1 Inter,sans-serif', letterSpacing: '.03em',
+              color: daySpent ? '#75798c' : '#d2cefd',
+              transition: 'color .2s, border-color .2s, background .2s',
+            }}>
+            <span style={{
+              display: 'flex', alignItems: 'center', overflow: 'hidden',
+              width: daySpent ? 13 : 0, opacity: daySpent ? 1 : 0,
+              transition: 'width .25s, opacity .25s',
+            }}>{lockGlyph(13, 1.9)}</span>
+            Shake again
+          </button>
+          {/* Reading the count directly under the control that spends one is
+              where it does the most good. Note the off-by-one: the question in
+              front of you is already counted, so 4/5 means this yields your
+              fifth. */}
+          <div style={{ minHeight: 12, ...dayCounter }}>{dayLabel(dayUsed)}</div>
         </div>
 
       </div>
@@ -410,11 +495,18 @@ export default function Home({ lua }: { lua: Lua }) {
           hides it but itself, so it is held to the settled screen it belongs
           to and cannot paint over the moon. */}
       <div style={{
-        position: 'absolute', zIndex: 42, bottom: 182, left: 0, right: 0, textAlign: 'center', pointerEvents: 'none',
+        position: 'absolute', zIndex: 42, bottom: 214, left: 0, right: 0, textAlign: 'center', pointerEvents: 'none',
         font: '400 11px/1 ui-monospace,Menlo,monospace', letterSpacing: '.08em', textTransform: 'uppercase', color: 'rgba(242,193,78,.8)',
         opacity: state.shareNote && ph === 'settled' ? 1 : 0,
         transition: 'opacity 260ms linear',
       }}>{state.shareNote || ''}</div>
+
+      <Wall
+        door={state.wall}
+        onClose={actions.closeWall}
+        onJoin={actions.joinWaitlist}
+        returnFocusRef={wallFromRef}
+      />
 
       <SavedPanel
         open={state.panelOpen}

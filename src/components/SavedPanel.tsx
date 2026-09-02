@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { CATS, PROMPTS, promptIndexById } from '../data/content';
 import type { SavedEntry } from '../lib/storage';
+import { SAVE_CAP } from '../lib/limits';
 
 const OPEN_X = -84;
 /** A little rubber-band past the stop, so the drag has somewhere to go. */
@@ -294,8 +295,16 @@ export default function SavedPanel({
               </svg>
             </button>
           </div>
-          <p style={{ margin: '12px 0 0', font: '400 12px/1.55 Inter,sans-serif', color: '#9397ab', maxWidth: 250 }}>
-            Only the question is kept — never what you did with it.
+          {/* At the cap the subtitle says why, because this is where the fix
+              is: the list always opens, and being full is a reason you cannot
+              add another, never a reason you cannot look at the twenty. */}
+          <p style={{
+            margin: '12px 0 0', font: '400 12px/1.55 Inter,sans-serif',
+            color: rows.length >= SAVE_CAP ? '#b2b6ca' : '#9397ab', maxWidth: 250,
+          }}>
+            {rows.length >= SAVE_CAP
+              ? 'Twenty is the free limit. Remove one to make room for another.'
+              : 'Only the question is kept — never what you did with it.'}
           </p>
         </div>
 
