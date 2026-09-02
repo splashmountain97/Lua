@@ -10,8 +10,9 @@ import {
   bumpRevealsTotal, getRevealsTotal, getShareCoachSeen, getStreakCoachSeen,
   markCoachSeen, markOpened, markPillIntroSeen, markShareCoachSeen, markStreakCoachSeen,
   markStreakToday, readStreak, savePrefs, setUnlocked as persistUnlocked,
-  getWriteIntroSeen, markWriteIntroSeen,
+  getWriteIntroSeen, markWriteIntroSeen, getSaved, setSaved,
 } from '../lib/storage';
+import type { SavedEntry } from '../lib/storage';
 
 export type Screen = 'onboard1' | 'home' | 'streak' | 'unlock';
 
@@ -34,6 +35,8 @@ interface LuaState {
   writeModal: WriteTier;
   /** The tier-2 tip, drawn per open and never the same one twice running. */
   writeTip: string;
+  /** Whether the saved drawer is open. */
+  panelOpen: boolean;
   /** The nudge above the moon, in the slot 'Ready to begin?' used to hold. */
   idleLine: string;
   /** The longer tip below the moon. Always present, alongside the nudge above. */
@@ -98,6 +101,7 @@ export function useLua() {
     shareNote: null,
     writeModal: null,
     writeTip: WRITE_TIPS[0],
+    panelOpen: false,
     idleLine: IDLE_FIRST[0],
     tipLine: IDLE_TIPS[0],
     settlingLine: SETTLING[0],
@@ -113,8 +117,22 @@ export function useLua() {
   const [shareCoachSeen, setShareCoachSeenState] = useState(getShareCoachSeen);
   const [streakCoachSeen, setStreakCoachSeenState] = useState(getStreakCoachSeen);
 
+  // Entries whose id no longer exists in PROMPTS are dropped on read: the pool
+  // is edited over time, and a saved row pointing at nothing cannot be drawn.
+  const [saved, setSavedState] = useState<SavedEntry[]>(
+    () => getSaved().filter(r => promptIndexById(r.id) >= 0));
+
   const stateRef = useRef(state);
   useEffect(() => { stateRef.current = state; }, [state]);
+
+  // The list is written through in the ordinary case, and held back only while
+  // a removal is waiting behind its undo — see removeSaved.
+  const savedRef = useRef(saved);
+  useEffect(() => { savedRef.current = saved; }, [saved]);
+  function setSavedRows(rows: SavedEntry[]) {
+    setSavedState(rows);
+    setSaved(rows);
+  }
 
   const idleShownOnceRef = useRef(startedOpen);
   const shakeBoundRef = useRef(false);
@@ -377,6 +395,58 @@ export function useLua() {
     await copyOnly(PROMPTS[stateRef.current.promptIx].t, noteCopy);
   }
 
+  /**
+   * Put the question aside, or take it back off the pile.
+   *
+   * Deliberately not a dismissing action: the reveal screen stays exactly
+   * where it is, because wanting to keep a question is not the same as being
+   * finished with it. The confirmation is the toast the copy action already
+   * uses, so nothing new appears on screen.
+   */
+  function saveCurrent(e?: React.SyntheticEvent) {
+    e?.stopPropagation();
+    const id = PROMPTS[stateRef.current.promptIx].id;
+    const already = saved.some(r => r.id === id);
+    const next = already ? saved.filter(r => r.id !== id) : [{ id, done: false }, ...saved];
+    setSavedRows(next);
+    if (already) patch({ shareNote: null });
+    else noteCopy('Saved for later');
+  }
+
+  function toggleDone(id: number) {
+    setSavedRows(saved.map(r => (r.id === id ? { ...r, done: !r.done } : r)));
+  }
+
+  /**
+   * Drops the row from the list but not yet from storage. The panel holds it
+   * for a few seconds behind an undo, and calls commitSaved when that window
+   * lapses — so a removal interrupted by closing the app is a removal that
+   * never happened, which is the forgiving reading of an undone action.
+   */
+  function removeSaved(id: number) {
+    setSavedState(saved.filter(r => r.id !== id));
+  }
+
+  function restoreSaved(row: SavedEntry, at: number) {
+    const next = saved.slice();
+    next.splice(at, 0, row);
+    setSavedState(next);
+  }
+
+  function commitSaved() {
+    setSaved(savedRef.current);
+  }
+
+  function openPanel(e?: React.SyntheticEvent) {
+    e?.stopPropagation();
+    patch({ panelOpen: true });
+  }
+
+  function closePanel() {
+    commitSaved();
+    patch({ panelOpen: false });
+  }
+
   async function share(e?: React.SyntheticEvent) {
     e?.stopPropagation();
     const msg = shareText(PROMPTS[stateRef.current.promptIx]);
@@ -417,11 +487,12 @@ export function useLua() {
   function doUnlock() { persistUnlocked(true); patch({ unlocked: true }); go('home', 'idle'); }
 
   return {
-    state, streakDays, coachSeen, introStep, revealsTotal, shareCoachSeen, streakCoachSeen, quiet: QUIET_PILLS,
+    state, streakDays, coachSeen, introStep, revealsTotal, shareCoachSeen, streakCoachSeen, saved, quiet: QUIET_PILLS,
     actions: {
       askMotion, onDown, onMove, onUp, dismiss, again, share,
       toggleCategory, toggleInfo, setWeight, goStreak, goHome, doUnlock, writeItDown,
       closeWrite, copyFromModal,
+      saveCurrent, toggleDone, removeSaved, restoreSaved, commitSaved, openPanel, closePanel,
       dismissCoach, advanceIntro, dismissShareCoach, dismissStreakCoach,
     },
   };

@@ -7,6 +7,7 @@ const SHARE_COACH_KEY = 'lua.shareCoachSeen';
 const STREAK_COACH_KEY = 'lua.streakCoachSeen';
 const REVEALS_TOTAL_KEY = 'lua.revealsTotal';
 const WRITE_INTRO_KEY = 'lua.writeIntroSeen';
+const SAVED_KEY = 'lua.saved';
 const UNLOCKED_KEY = 'lua.unlocked';
 const STREAK_DAYS_KEY = 'lua.streakDays';
 const STREAK_LAST_KEY = 'lua.streakLastOpen';
@@ -45,6 +46,38 @@ export function getShareCoachSeen(): boolean {
 }
 export function markShareCoachSeen() {
   safeSet(SHARE_COACH_KEY, '1');
+}
+
+/**
+ * A question put aside, and whether it has been reflected on. That is the
+ * whole record: the text, its category and its weight are looked up from
+ * PROMPTS by id when the list is drawn, never written down. Nothing about
+ * what someone thought, wrote, or did with a question is kept, which is the
+ * same bargain the rest of the app makes.
+ */
+export interface SavedEntry { id: number; done: boolean }
+
+export function getSaved(): SavedEntry[] {
+  const raw = safeGet(SAVED_KEY);
+  if (!raw) return [];
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    // Anything that is not the shape above is dropped rather than repaired:
+    // this is a convenience list, and a half-understood entry is worth less
+    // than a clean one.
+    return parsed.filter((r): r is SavedEntry =>
+      !!r && typeof r === 'object'
+      && typeof (r as SavedEntry).id === 'number'
+      && Number.isSafeInteger((r as SavedEntry).id)
+      && typeof (r as SavedEntry).done === 'boolean');
+  } catch {
+    return [];
+  }
+}
+
+export function setSaved(rows: SavedEntry[]) {
+  safeSet(SAVED_KEY, JSON.stringify(rows));
 }
 
 /**

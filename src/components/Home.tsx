@@ -7,6 +7,7 @@ import { useStageLayout } from '../lib/layout';
 import { moonPhase } from '../lib/streak';
 import Spotlight from './Spotlight';
 import WriteModal from './WriteModal';
+import SavedPanel from './SavedPanel';
 import type { useLua } from '../hooks/useLua';
 
 type Lua = ReturnType<typeof useLua>;
@@ -26,15 +27,22 @@ const wdotStyle = (i: number, pw: number): React.CSSProperties => ({
 });
 
 export default function Home({ lua }: { lua: Lua }) {
-  const { state, streakDays, coachSeen, introStep, revealsTotal, shareCoachSeen, streakCoachSeen, quiet, actions } = lua;
+  const { state, streakDays, coachSeen, introStep, revealsTotal, shareCoachSeen, streakCoachSeen, saved, quiet, actions } = lua;
   const { titleY, moonCY, lineY, height: stageH } = useStageLayout();
   const promptRef = useRef<HTMLDivElement>(null);
   const catsRef = useRef<HTMLDivElement>(null);
   const writeRef = useRef<HTMLButtonElement>(null);
+  const savedRef = useRef<HTMLButtonElement>(null);
   const shareRef = useRef<HTMLButtonElement>(null);
   const streakRef = useRef<HTMLButtonElement>(null);
   const weightsRef = useRef<HTMLDivElement>(null);
   const ph = state.phase;
+  // The number is what is still put aside, matching the panel's own 'Saved'
+  // header — a question reflected on is history, not a pending one. The button
+  // survives a zero there so that history stays reachable, and only disappears
+  // when there is nothing at all behind it.
+  const savedCount = saved.filter(r => !r.done).length;
+  const savedNow = saved.some(r => r.id === PROMPTS[state.promptIx].id);
   const v = PHASES[ph];
   const big = ph === 'reveal' || ph === 'settled';
   const ease = ph === 'reveal' ? EASE_IN : EASE_OUT;
@@ -68,6 +76,23 @@ export default function Home({ lua }: { lua: Lua }) {
         pointerEvents: v.chrome > .8 ? 'auto' : 'none',
         transition: `opacity ${Math.round(dur * 0.5)}ms linear`,
       }}>
+        {/* The mirror of the streak button in the opposite corner: two quiet
+            counters, one composition, no new pattern. Hidden at zero — there is
+            nothing to open, and it keeps the first-run screen bare. */}
+        {saved.length > 0 && (
+          <button ref={savedRef} type="button" onClick={actions.openPanel}
+            aria-label={`Saved questions: ${savedCount}`} style={{
+              position: 'absolute', top: 70, left: 14,
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
+              width: 46, height: 46, background: 'none', border: 0, padding: 0, cursor: 'pointer', color: '#9397ab',
+            }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M6.5 4.5h11a1 1 0 0 1 1 1v14.2l-6.5-4.4-6.5 4.4V5.5a1 1 0 0 1 1-1z" />
+            </svg>
+            <span style={{ font: '400 10px/1 ui-monospace,Menlo,monospace', letterSpacing: '.02em', color: '#9397ab' }}>{savedCount}</span>
+          </button>
+        )}
+
         <div style={{ position: 'absolute', top: 70, left: 0, right: 0, display: 'flex', justifyContent: 'flex-end', padding: '0 14px' }}>
           <button ref={streakRef} type="button" onClick={actions.goStreak}
             aria-label={`Streak: ${streakDays} ${streakDays === 1 ? 'day' : 'days'}`} style={{
@@ -320,9 +345,15 @@ export default function Home({ lua }: { lua: Lua }) {
           </svg>
         </button>
 
+        {/* Two rows rather than four items in one. A fourth element makes the
+            old arrangement — two quiet icons balanced around a wide pill —
+            lopsided whichever side it lands on. Split, the icons read as three
+            equal quiet actions and the pill reads as primary from its own
+            appearance rather than from being flanked. */}
         <div style={{
-          position: 'absolute', bottom: 74, left: 0, right: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 20,
+          position: 'absolute', bottom: 122, left: 0, right: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 30,
           opacity: ph === 'settled' ? 1 : 0,
+          pointerEvents: ph === 'settled' ? 'auto' : 'none',
           transition: `opacity 700ms linear ${ph === 'settled' ? '300ms' : '0ms'}`,
         }}>
           <button ref={writeRef} type="button" onClick={actions.writeItDown} aria-label="Write about this question" title="Write about it" style={iconAction}>
@@ -334,11 +365,15 @@ export default function Home({ lua }: { lua: Lua }) {
               <path d="M16.9 8.1l1.7 1.7" />
             </svg>
           </button>
-          <button type="button" onClick={actions.again} style={{
-            background: 'rgba(145,132,217,.10)', border: '1px solid rgba(145,132,217,.55)', borderRadius: 100,
-            padding: '17px 34px', cursor: 'pointer', font: '400 15px/1 Inter,sans-serif',
-            letterSpacing: '.03em', color: '#d2cefd',
-          }}>Shake again</button>
+          <button type="button" onClick={actions.saveCurrent}
+            aria-pressed={savedNow}
+            aria-label={savedNow ? 'Remove this question from saved' : 'Save this question for later'}
+            title={savedNow ? 'Saved' : 'Save for later'}
+            style={{ ...iconAction, color: savedNow ? 'rgba(242,193,78,.9)' : '#9397ab', transition: 'color .2s' }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill={savedNow ? 'rgba(242,193,78,.9)' : 'none'} stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M6.5 4.5h11a1 1 0 0 1 1 1v14.2l-6.5-4.4-6.5 4.4V5.5a1 1 0 0 1 1-1z" />
+            </svg>
+          </button>
           <button ref={shareRef} type="button" onClick={actions.share} aria-label="Send this question to someone" title="Send to a friend" style={iconAction}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M20.5 3.5L10.8 13.2" />
@@ -347,17 +382,41 @@ export default function Home({ lua }: { lua: Lua }) {
           </button>
         </div>
 
+        <div style={{
+          position: 'absolute', bottom: 52, left: 0, right: 0, display: 'flex', justifyContent: 'center',
+          opacity: ph === 'settled' ? 1 : 0,
+          pointerEvents: ph === 'settled' ? 'auto' : 'none',
+          transition: `opacity 700ms linear ${ph === 'settled' ? '300ms' : '0ms'}`,
+        }}>
+          <button type="button" onClick={actions.again} style={{
+            background: 'rgba(145,132,217,.10)', border: '1px solid rgba(145,132,217,.55)', borderRadius: 100,
+            padding: '17px 40px', cursor: 'pointer', font: '400 15px/1 Inter,sans-serif',
+            letterSpacing: '.03em', color: '#d2cefd',
+          }}>Shake again</button>
+        </div>
+
       </div>
 
       {/* Lifted out of the prompt layer: that layer carries its own opacity and
           transform, which make a stacking context the toast could not rise out
           of, and the write modal has to pass underneath this. */}
       <div style={{
-        position: 'absolute', zIndex: 42, bottom: 132, left: 0, right: 0, textAlign: 'center', pointerEvents: 'none',
+        position: 'absolute', zIndex: 42, bottom: 182, left: 0, right: 0, textAlign: 'center', pointerEvents: 'none',
         font: '400 11px/1 ui-monospace,Menlo,monospace', letterSpacing: '.08em', textTransform: 'uppercase', color: 'rgba(242,193,78,.8)',
         opacity: state.shareNote ? 1 : 0,
         transition: 'opacity 260ms linear',
       }}>{state.shareNote || ''}</div>
+
+      <SavedPanel
+        open={state.panelOpen}
+        rows={saved}
+        onClose={actions.closePanel}
+        onToggleDone={actions.toggleDone}
+        onRemove={actions.removeSaved}
+        onRestore={actions.restoreSaved}
+        onCommit={actions.commitSaved}
+        returnFocusRef={savedRef}
+      />
 
       <WriteModal
         tier={state.writeModal}
