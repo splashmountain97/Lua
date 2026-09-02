@@ -17,6 +17,11 @@ import type { CategoryId, Prompt, Weight } from '../data/content';
 //   autocapture: false      — the default records every click and input in the
 //     DOM. Far too much, and impossible to promise anything about.
 //   disable_session_recording — no replay, ever.
+//   disable_external_dependency_loading — PostHog fetches extra scripts on its
+//     own say-so, enabled by remote config rather than by anything here. A
+//     first load pulled in surveys, dead-click autocapture and web vitals
+//     unasked. Surveys are the serious one: that is a channel for putting a
+//     dialog nobody here wrote on top of someone's question. Nothing loads.
 //
 // What this buys, honestly: it answers what happens inside one visit — whether
 // someone who arrives actually shakes, whether the filters get touched, which
@@ -54,6 +59,19 @@ export function initAnalytics() {
       disable_session_recording: true,
       capture_pageview: true,
       capture_pageleave: false,
+      // Everything below is off by default in this app but ON by default in
+      // PostHog, and several are switched on remotely rather than from here.
+      // Left alone, a fresh project fetches surveys, dead-click autocapture and
+      // web vitals on first load — none of which were asked for, and one of
+      // which can put a dialog of someone else's choosing on top of a
+      // question. The last line is the backstop: no external script at all.
+      disable_surveys: true,
+      disable_web_experiments: true,
+      capture_dead_clicks: false,
+      capture_performance: false,
+      capture_heatmaps: false,
+      advanced_disable_feature_flags: true,
+      disable_external_dependency_loading: true,
     });
     ph = posthog;
     // A shake can easily beat the download; without this the first one is lost,
