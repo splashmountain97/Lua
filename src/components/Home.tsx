@@ -97,9 +97,18 @@ export default function Home({ lua }: { lua: Lua }) {
 
   // At rest, with nothing open over it: the only moment a reload costs nobody
   // anything. A waiting update applies here and nowhere else.
-  const atRest = ph === 'idle' && !state.wall && !state.panelOpen
-    && state.writeModal === null && !state.infoOpen;
-  useEffect(() => { setSafeToUpdate(atRest); }, [atRest]);
+  //
+  // The screen has to be checked as well as the phase. Leaving for the streak
+  // screen keeps the phase at idle, and this component unmounts — so without
+  // the first clause the app would still be claiming to be at rest while
+  // someone read their streak, and without the cleanup that claim would
+  // outlive the component that made it.
+  const atRest = state.screen === 'home' && ph === 'idle' && !state.wall
+    && !state.panelOpen && state.writeModal === null && !state.infoOpen;
+  useEffect(() => {
+    setSafeToUpdate(atRest);
+    return () => setSafeToUpdate(false);
+  }, [atRest]);
 
   return (
     <div style={{ position: 'absolute', inset: 0 }}>
