@@ -23,6 +23,7 @@ import { registerSW } from 'virtual:pwa-register';
 const CHECK_MS = 20 * 60 * 1000;
 
 let applyUpdate: ((reload?: boolean) => Promise<void>) | null = null;
+let check: (() => void) | null = null;
 let waiting = false;
 let safe = false;
 
@@ -38,19 +39,28 @@ export function watchForUpdates() {
     onNeedRefresh() { waiting = true; maybeApply(); },
     onRegisteredSW(_url, registration) {
       if (!registration) return;
-      const check = () => { void registration.update().catch(() => {}); };
-      setInterval(check, CHECK_MS);
+      const ask = () => { void registration.update().catch(() => {}); };
+      check = ask;
+      setInterval(ask, CHECK_MS);
       // A tab comes back to the front far more often than it navigates, and
       // that is the moment someone is about to look at it.
       document.addEventListener('visibilitychange', () => {
-        if (!document.hidden) check();
+        if (!document.hidden) ask();
       });
     },
   });
 }
 
-/** The app is at rest and nothing is open over it. */
+/**
+ * The app is at rest and nothing is open over it.
+ *
+ * Coming to rest is also a good moment to go looking: someone who has just put
+ * a question down is between things, which is exactly when a reload costs
+ * nothing and exactly when the timer is most likely to be halfway through.
+ */
 export function setSafeToUpdate(value: boolean) {
+  const cameToRest = value && !safe;
   safe = value;
+  if (cameToRest) check?.();
   maybeApply();
 }
