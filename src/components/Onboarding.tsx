@@ -132,6 +132,11 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
     border: 0, background: 'none', cursor: 'pointer',
     font: '400 12.5px/1 Inter,sans-serif', letterSpacing: '.07em',
     transition: 'opacity 900ms', opacity, color,
+    // Two Skips share this corner and cross-fade, so one of them is always
+    // invisible and, without this, always on top of the other — taking the tap.
+    // They do the same thing today, so nothing was broken by it; the day they
+    // stop doing the same thing, something would be, silently.
+    pointerEvents: opacity ? 'auto' : 'none',
   });
 
   return (
