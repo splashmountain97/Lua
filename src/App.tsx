@@ -1,5 +1,6 @@
 import Stage from './components/Stage';
 import Onboarding from './components/Onboarding';
+import Arrival from './components/Arrival';
 import Home from './components/Home';
 import Streak from './components/Streak';
 import Unlock from './components/Unlock';
@@ -26,6 +27,7 @@ export default function App() {
       onPointerUp={actions.onUp}
     >
       {state.screen === 'onboard1' && <Onboarding onDone={actions.askMotion} />}
+      {state.screen === 'arrival' && <Arrival onContinue={actions.openShared} />}
       {onHome && <Home lua={lua} />}
       {state.screen === 'streak' && <Streak streakDays={streakDays} onBack={actions.goHome} />}
       {state.screen === 'unlock' && (

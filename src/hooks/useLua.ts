@@ -19,7 +19,7 @@ import {
 import { sendWaitlist } from '../lib/waitlist';
 import type { SavedEntry } from '../lib/storage';
 
-export type Screen = 'onboard1' | 'home' | 'streak' | 'unlock';
+export type Screen = 'onboard1' | 'arrival' | 'home' | 'streak' | 'unlock';
 
 interface LuaState {
   screen: Screen;
@@ -90,18 +90,27 @@ export function useLua() {
 
   const [state, setState] = useState<LuaState>(() => ({
     // A shared link opens on the question, full stop. Sending a first-time
-    // visitor to the welcome screen first meant someone handed a specific
-    // question arrived at a pitch and had to go looking for it — and a link
-    // opened in a private tab, where nobody counts as returning, always landed
-    // there. The welcome screen is still what a cold visitor to the root gets.
-    screen: sharedIx !== null || startedOpen ? 'home' : 'onboard1',
-    phase: sharedIx !== null ? 'settled' : 'idle',
+    // visitor to the prologue first meant someone handed a specific question
+    // arrived at a pitch and had to go looking for it — and a link opened in a
+    // private tab, where nobody counts as returning, always landed there. The
+    // prologue is still what a cold visitor to the root gets.
+    //
+    // One beat first, to say a person chose it: the question is the same
+    // question either way, but arriving with no sign anyone sent it is colder
+    // than it needs to be.
+    screen: sharedIx !== null ? 'arrival' : startedOpen ? 'home' : 'onboard1',
+    phase: 'idle',
     selected: initialPrefs.selected as CategoryId[],
     weight: initialPrefs.weight as Weight | null,
     infoOpen: null,
     promptIx: sharedIx ?? 0,
     tiltX: 0, tiltY: 0, energy: 0,
-    pinnedIx: null,
+    // The sent question is pinned, not just shown. Leaving it only in promptIx
+    // worked while a share opened straight onto the reveal; going by way of the
+    // beat means go('home', 'settled') runs afterwards, and that reads pinnedIx
+    // and draws at random when it is empty — which quietly handed people a
+    // question nobody had sent them.
+    pinnedIx: sharedIx,
     lastShownIx: sharedIx ?? -1,
     unlocked: getUnlocked(),
     holding: false,
@@ -247,6 +256,11 @@ export function useLua() {
     } else {
       finish(!!DME);
     }
+  }
+
+  /** Leave the beat and open the question it was announcing. */
+  function openShared() {
+    requestMotionPermission(() => { rollIdleLine(); go('home', 'settled'); });
   }
 
   function askMotion() {
@@ -574,7 +588,7 @@ export function useLua() {
     state, streakDays, coachSeen, introStep, revealsTotal, shareCoachSeen, streakCoachSeen, saved, dayUsed, quiet: QUIET_PILLS,
     actions: {
       askMotion, onDown, onMove, onUp, dismiss, again, share,
-      toggleCategory, toggleInfo, setWeight, goStreak, goHome, doUnlock, writeItDown,
+      toggleCategory, toggleInfo, setWeight, goStreak, goHome, doUnlock, writeItDown, openShared,
       closeWrite, copyFromModal,
       saveCurrent, toggleDone, removeSaved, restoreSaved, commitSaved, openPanel, closePanel,
       openWall, closeWall, joinWaitlist,
