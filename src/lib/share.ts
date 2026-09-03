@@ -5,9 +5,15 @@
  * question rather than a random one.
  */
 export function sharedPromptId(): number | null {
-  const m = /^\/q\/(\d+)\/?$/.exec(window.location.pathname);
-  if (!m) return null;
-  const id = Number(m[1]);
+  const path = /^\/q\/(\d+)\/?$/.exec(window.location.pathname);
+  // ?p= is accepted as well as /q/<id>, so a hand-written or hand-edited link
+  // still finds its question. Links are not made this way: /q/<id> is a real
+  // page built at deploy time carrying that question's own preview, and a
+  // query on the root would fall back to the generic one.
+  const query = new URLSearchParams(window.location.search).get('p');
+  const raw = path ? path[1] : query;
+  if (!raw || !/^\d+$/.test(raw)) return null;
+  const id = Number(raw);
   return Number.isSafeInteger(id) ? id : null;
 }
 

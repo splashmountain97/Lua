@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import astronaut from '../assets/onboard-astronaut-2048.jpg';
-import glassSwirl from '../assets/glass-swirl.png';
+import AstronautBust from './AstronautBust';
 
 /** 1 the first time the write icon is ever tapped, 2 every time after. */
 export type WriteTier = 1 | 2 | null;
@@ -35,12 +34,6 @@ const CLOSE_BTN: React.CSSProperties = {
   position: 'absolute', width: 44, height: 44,
   display: 'flex', alignItems: 'center', justifyContent: 'center',
   background: 'none', border: 0, cursor: 'pointer', color: 'rgba(147,151,171,.8)',
-};
-
-/** The visor, twice: the swirl inside it, then the glass ring over the top. */
-const VISOR: React.CSSProperties = {
-  position: 'absolute', left: '44.3%', top: '37.4%', width: '59.6%', height: '49.1%',
-  transform: 'translate(-50%,-50%)', borderRadius: '50%',
 };
 
 const reduced = () =>
@@ -167,32 +160,7 @@ export default function WriteModal({ tier, tip, onClose, onCopy, returnFocusRef 
       >
         {tier === 1 ? (
           <>
-            {/* The prologue's astronaut, cropped to the bust. The drawing is
-                graphite on cream, so it is inverted to white line on near-black
-                and then lightened into the card — which drops the near-black
-                out and leaves no rectangle edge to cut around. */}
-            <div style={{ width: 70, height: 78, margin: '0 auto 18px', position: 'relative', mixBlendMode: 'lighten' }}>
-              <div style={{
-                position: 'absolute', inset: 0,
-                backgroundImage: `url(${astronaut})`,
-                backgroundSize: '340% auto', backgroundPosition: '52.3% 42.7%',
-                filter: 'invert(1) grayscale(1) brightness(.92) contrast(1.08)',
-              }} />
-              <div style={{
-                ...VISOR, overflow: 'hidden',
-                background: 'radial-gradient(120% 120% at 34% 24%, #2a1c3f 0%, #150e22 70%, #0d0916 100%)',
-              }}>
-                {/* Still, unlike the moon's. Nothing here is asking to be watched. */}
-                <img src={glassSwirl} alt="" style={{
-                  position: 'absolute', left: '-9%', top: '-9%', width: '118%', height: '118%',
-                  filter: 'blur(.5px) saturate(.95) brightness(.92)',
-                }} />
-              </div>
-              <div style={{
-                ...VISOR,
-                boxShadow: 'inset 0 3px 8px rgba(233,237,245,.22), inset 0 -10px 18px rgba(0,0,0,.6), inset 0 0 0 1px rgba(233,237,245,.08)',
-              }} />
-            </div>
+            <div style={{ margin: '0 0 18px' }}><AstronautBust size={70} /></div>
 
             <div style={{
               font: '400 11px/1 ui-monospace,Menlo,monospace', letterSpacing: '.08em',
