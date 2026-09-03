@@ -9,11 +9,11 @@ import { DAY_CAP, SAVE_CAP } from '../lib/limits';
 import { shareMoon } from '../lib/streak';
 import { trackPromptShown, trackShake, trackFilter, trackAction, trackSavedOpened, trackWallShown, trackWaitlist } from '../lib/analytics';
 import {
-  getCoachSeen, getPillIntroSeen, getPrefs, getUnlocked, hasOpenedBefore,
+  getCoachSeen, getPrefs, getUnlocked, hasOpenedBefore,
   bumpRevealsTotal, getRevealsTotal, getShareCoachSeen, getStreakCoachSeen,
   markCoachSeen, markOpened, markPillIntroSeen, markShareCoachSeen, markStreakCoachSeen,
   markStreakToday, readStreak, savePrefs, setUnlocked as persistUnlocked,
-  getWriteIntroSeen, markWriteIntroSeen, getSaved, setSaved,
+  getWriteIntroSeen, markWriteIntroSeen, getSaved, setSaved, getIntroStep, setIntroStep,
   getDayCount, bumpDayCount,
 } from '../lib/storage';
 import { sendWaitlist } from '../lib/waitlist';
@@ -60,7 +60,19 @@ function sharedIndex(): number | null {
   return ix >= 0 ? ix : null;
 }
 
-const INTRO_DONE = 2;
+/**
+ * The first run, as a sequence.
+ *
+ * Five while the first question is on the screen, and four more once it has
+ * been put down — the filters are not worth explaining until someone has seen
+ * what they filter. Each step is gated on the phase it belongs to, so the
+ * question steps wait for the question and the rest wait for the idle screen.
+ */
+export const INTRO = {
+  reflection: 0, close: 1, share: 2, write: 3, again: 4,
+  cats: 5, weights: 6, saved: 7, streak: 8, done: 9,
+} as const;
+const INTRO_DONE = INTRO.done;
 
 const TILT_AMT = 1;
 const QUIET_PILLS = true;
@@ -82,11 +94,17 @@ function pick(s: Pick<LuaState, 'selected' | 'weight' | 'lastShownIx'>): number 
 export function useLua() {
   const startedOpen = hasOpenedBefore();
   const [sharedIx] = useState(sharedIndex);
-  // World is off to begin with: the first question should land somewhere a
-  // newcomer can answer from their own week, not out at the edge of the
-  // existential. It is one tap away, and only the default changes — anyone who
-  // has already set their filters keeps what they chose.
-  const initialPrefs = getPrefs({ selected: ['you', 'life'], weight: null });
+  // Self alone, and Medium.
+  //
+  // Life used to be on by default, which quietly undid the wall in front of it:
+  // the pill said not open yet while the filter behind it went on serving Life
+  // questions, so the one thing the test is measuring was never actually shut.
+  // Self is the free ground, so Self is what a new reader starts with.
+  //
+  // Medium because the first question should be a real one — light enough to
+  // answer on a Tuesday, heavy enough to be worth having asked. Only the
+  // default moves; anyone who has already chosen keeps what they chose.
+  const initialPrefs = getPrefs({ selected: ['you'], weight: 2 });
 
   const [state, setState] = useState<LuaState>(() => ({
     // A shared link opens on the question, full stop. Sending a first-time
@@ -129,7 +147,7 @@ export function useLua() {
   const [coachSeen, setCoachSeenState] = useState(getCoachSeen());
   // The filter intro runs as two beats — subject, then difficulty — kept under
   // one flag because it is one moment, not a tour to be resumed part-way.
-  const [introStep, setIntroStep] = useState(() => (getPillIntroSeen() ? INTRO_DONE : 0));
+  const [introStep, setIntroStepState] = useState(() => getIntroStep(INTRO_DONE));
   const [revealsTotal, setRevealsTotal] = useState(getRevealsTotal);
   const [shareCoachSeen, setShareCoachSeenState] = useState(getShareCoachSeen);
   const [streakCoachSeen, setStreakCoachSeenState] = useState(getStreakCoachSeen);
@@ -268,6 +286,14 @@ export function useLua() {
       const shared = stateRef.current.pinnedIx !== null;
       rollIdleLine();
       go('home', shared ? 'settled' : 'idle');
+      // Straight into a question. Everything the introduction has left to say
+      // is about what you can do with one, and none of it means anything with
+      // an empty screen underneath it.
+      //
+      // No guard on stateRef here: it is synced by an effect, so immediately
+      // after go() it still reports the screen we have just left, and reading
+      // it would cancel the shake every time.
+      if (!shared) after(420, autoShake);
     });
   }
 
@@ -364,10 +390,34 @@ export function useLua() {
   }
 
   function advanceIntro() {
-    setIntroStep(step => {
-      const next = step + 1;
-      if (next >= INTRO_DONE) markPillIntroSeen();
-      return next;
+    // Written outside the updater: StrictMode runs those twice, and a step that
+    // counted twice would skip whichever moment came next.
+    const next = Math.min(INTRO_DONE, introStep + 1);
+    setIntroStepState(next);
+    setIntroStep(next);
+    if (next >= INTRO_DONE) markPillIntroSeen();
+  }
+
+  /**
+   * The first shake, which nobody has to perform.
+   *
+   * A newcomer who has just read three screens about an object that answers
+   * when shaken should be shown it answering, not asked to work out the
+   * gesture. The same sequence a tap runs, minus the tap.
+   *
+   * Deliberately not counted as a shake. moon_shaken is there to say whether
+   * someone who arrived chose to use the thing, and an automatic one would
+   * answer yes on everyone's behalf.
+   */
+  function autoShake() {
+    clearTimers();
+    patch({ holding: true, phase: 'agitate', energy: .5, infoOpen: null });
+    after(760, () => {
+      patch({
+        holding: false, phase: 'anticipate', tiltX: 0, tiltY: 0,
+        settlingLine: drawLine(SETTLING, stateRef.current.settlingLine),
+      });
+      after(PHASES.anticipate.dur + 720, reveal);
     });
   }
 

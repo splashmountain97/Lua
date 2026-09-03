@@ -11,7 +11,7 @@ import SavedPanel from './SavedPanel';
 import Wall from './Wall';
 import { DAY_CAP, SAVE_CAP, DAY_COUNTER_FROM, dayLabel } from '../lib/limits';
 import { setSafeToUpdate } from '../lib/updates';
-import type { useLua } from '../hooks/useLua';
+import { INTRO, type useLua } from '../hooks/useLua';
 
 type Lua = ReturnType<typeof useLua>;
 
@@ -30,11 +30,13 @@ const wdotStyle = (i: number, pw: number): React.CSSProperties => ({
 });
 
 export default function Home({ lua }: { lua: Lua }) {
-  const { state, streakDays, coachSeen, introStep, revealsTotal, shareCoachSeen, streakCoachSeen, saved, dayUsed, quiet, actions } = lua;
+  const { state, streakDays, introStep, saved, dayUsed, quiet, actions } = lua;
   const { titleY, moonCY, lineY, height: stageH } = useStageLayout();
   const promptRef = useRef<HTMLDivElement>(null);
   const catsRef = useRef<HTMLDivElement>(null);
   const writeRef = useRef<HTMLButtonElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const againRef = useRef<HTMLButtonElement>(null);
   const savedRef = useRef<HTMLButtonElement>(null);
   const wallFromRef = useRef<HTMLButtonElement>(null);
   const shareRef = useRef<HTMLButtonElement>(null);
@@ -120,9 +122,11 @@ export default function Home({ lua }: { lua: Lua }) {
         transition: `opacity ${Math.round(dur * 0.5)}ms linear`,
       }}>
         {/* The mirror of the streak button in the opposite corner: two quiet
-            counters, one composition, no new pattern. Hidden at zero — there is
-            nothing to open, and it keeps the first-run screen bare. */}
-        {saved.length > 0 && (
+            counters, one composition, no new pattern. It used to hide at zero,
+            which cannot survive being pointed at during the first run: a
+            control explained and then gone is worse than one showing nothing
+            yet. */}
+        {(saved.length > 0 || introStep >= INTRO.saved) && (
           <button ref={savedRef} type="button" onClick={actions.openPanel}
             aria-label={`Saved questions: ${savedCount}`} style={{
               position: 'absolute', top: 70, left: 14,
@@ -401,7 +405,7 @@ export default function Home({ lua }: { lua: Lua }) {
           }}>{prompt.t}</p>
         </div>
 
-        <button type="button" onClick={actions.dismiss} aria-label="Close this question" title="Close" style={{
+        <button ref={closeRef} type="button" onClick={actions.dismiss} aria-label="Close this question" title="Close" style={{
           position: 'absolute', top: 34, right: 16, width: 44, height: 44,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           background: 'none', border: 0, cursor: 'pointer', color: 'rgba(147,151,171,.8)',
@@ -476,7 +480,7 @@ export default function Home({ lua }: { lua: Lua }) {
               The padlock grows into the pill from nothing rather than appearing
               beside the label, so the button keeps one identity through the
               change instead of becoming a different control. */}
-          <button type="button" onClick={actions.again}
+          <button ref={againRef} type="button" onClick={actions.again}
             aria-label={daySpent ? 'Shake again — five a day is the free limit' : undefined}
             style={{
               display: 'flex', alignItems: 'center', gap: 9,
@@ -543,45 +547,73 @@ export default function Home({ lua }: { lua: Lua }) {
         returnFocusRef={writeRef}
       />
 
+      {/* The first run, in order. Five while the question is up — it is the
+          thing they came for, so it gets a beat to itself before anything is
+          explained — then four more once it has been put down, because the
+          filters mean nothing until you have seen what they filter. */}
+      <Spotlight
+        targetRef={promptRef}
+        show={ph === 'settled' && introStep === INTRO.reflection && !state.shareNote}
+        text="That's a reflection. Sit with it as long as you like."
+        place="below"
+        onDismiss={actions.advanceIntro}
+      />
+      <Spotlight
+        targetRef={closeRef}
+        show={ph === 'settled' && introStep === INTRO.close && !state.shareNote}
+        text="Done with it? Close it here and the moon comes back."
+        place="below"
+        onDismiss={actions.advanceIntro}
+      />
+      <Spotlight
+        targetRef={writeRef}
+        show={ph === 'settled' && introStep === INTRO.write && !state.shareNote}
+        text="Copy it to your clipboard, to answer wherever you keep your words."
+        place="above"
+        onDismiss={actions.advanceIntro}
+      />
+      <Spotlight
+        targetRef={shareRef}
+        show={ph === 'settled' && introStep === INTRO.share && !state.shareNote}
+        text="Send a question to someone — they'll get the prompt, no app required to open it."
+        place="above"
+        onDismiss={actions.advanceIntro}
+      />
+      <Spotlight
+        targetRef={againRef}
+        show={ph === 'settled' && introStep === INTRO.again && !state.shareNote}
+        text="Not the one? Shake again for another."
+        place="above"
+        onDismiss={actions.advanceIntro}
+      />
+
       <Spotlight
         targetRef={catsRef}
-        show={ph === 'idle' && introStep === 0 && !state.infoOpen}
+        show={ph === 'idle' && introStep === INTRO.cats && !state.infoOpen}
         text="Pick the ground your question comes from — yourself, your life, or the world beyond it. Change it whenever you like."
         place="above"
         onDismiss={actions.advanceIntro}
       />
       <Spotlight
         targetRef={weightsRef}
-        show={ph === 'idle' && introStep === 1 && !state.infoOpen}
+        show={ph === 'idle' && introStep === INTRO.weights && !state.infoOpen}
         text="And how far you want to be pushed. Some questions are a passing thought, some stay with you for days."
         place="above"
         onDismiss={actions.advanceIntro}
       />
       <Spotlight
-        targetRef={promptRef}
-        show={ph === 'settled' && !coachSeen && !state.shareNote}
-        text="That's a reflection. Sit with it as long as you like."
+        targetRef={savedRef}
+        show={ph === 'idle' && introStep === INTRO.saved && !state.infoOpen}
+        text="Anything you put aside is kept here — the questions you liked when the moment was wrong."
         place="below"
-        onDismiss={actions.dismissCoach}
+        onDismiss={actions.advanceIntro}
       />
-
-      {/* Waits for the second question: the first already carries the reflection
-          mark, and two coach marks on one screen teach neither. */}
-      <Spotlight
-        targetRef={shareRef}
-        show={ph === 'settled' && coachSeen && !shareCoachSeen && revealsTotal >= 2 && !state.shareNote}
-        text="Send a question to someone — they’ll get the prompt, no app required to open it."
-        place="above"
-        onDismiss={actions.dismissShareCoach}
-      />
-      {/* Held until the streak means something. It is counted during the reveal,
-          when the chrome is hidden, so this lands back on the idle screen. */}
       <Spotlight
         targetRef={streakRef}
-        show={ph === 'idle' && introStep >= 2 && !streakCoachSeen && streakDays >= 2}
-        text="Two days. That’s the start of a streak — come back tomorrow to keep it going."
+        show={ph === 'idle' && introStep === INTRO.streak && !state.infoOpen}
+        text="The moon fills as you come back — a little more every few days, full at twenty-five."
         place="below"
-        onDismiss={actions.dismissStreakCoach}
+        onDismiss={actions.advanceIntro}
       />
     </div>
   );

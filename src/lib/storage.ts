@@ -3,6 +3,7 @@
 const SEEN_KEY = 'lua.hasOpenedBefore';
 const COACH_SEEN_KEY = 'lua.coachSeen';
 const PILL_INTRO_KEY = 'lua.pillIntroSeen';
+const INTRO_STEP_KEY = 'lua.introStep';
 const SHARE_COACH_KEY = 'lua.shareCoachSeen';
 const STREAK_COACH_KEY = 'lua.streakCoachSeen';
 const REVEALS_TOTAL_KEY = 'lua.revealsTotal';
@@ -86,6 +87,27 @@ export function setSaved(rows: SavedEntry[]) {
  * Whether the write modal has explained itself once. The first tap gets the
  * long form with the illustration; every tap after gets the short one.
  */
+/**
+ * How far through the first run someone has got.
+ *
+ * A number rather than a flag now, because the introduction is a sequence:
+ * five moments on the first question, then four more once they have put it
+ * down. Anyone who finished the old two-step introduction is counted as done,
+ * so nobody who has already been shown around gets shown around again.
+ */
+export function getIntroStep(done: number): number {
+  const raw = safeGet(INTRO_STEP_KEY);
+  if (raw !== null) {
+    const n = Number(raw);
+    return Number.isFinite(n) ? Math.max(0, Math.min(done, Math.floor(n))) : 0;
+  }
+  return safeGet(PILL_INTRO_KEY) ? done : 0;
+}
+
+export function setIntroStep(n: number) {
+  safeSet(INTRO_STEP_KEY, String(n));
+}
+
 export function getWriteIntroSeen(): boolean {
   return !!safeGet(WRITE_INTRO_KEY);
 }
