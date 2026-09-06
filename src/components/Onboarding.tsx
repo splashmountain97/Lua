@@ -1,30 +1,29 @@
 import { useEffect, useRef, useState } from 'react';
 import { trackOnboarding } from '../lib/analytics';
 import { useStageLayout } from '../lib/layout';
-import MoonMini from './MoonMini';
 import ob1 from '../assets/ob-1-ruins.jpeg';
 import ob2 from '../assets/ob-2-walking.jpeg';
 import { HEADS, BODY, type OnboardScreen } from '../data/onboarding';
 
-// Three screens: two hand-drawn "paper" photos (ruins, moonwalk), then the
-// real moon object — not a photographed visor. An earlier pass zoomed the
-// final screen into the astronaut helmet's own visor, but that visor's swirl
-// was baked into the photograph rather than drawn from glass-swirl.png, the
-// one texture every other purple-and-gold moment in the app actually shares —
-// so it could (and did) drift from the real brand colour. Screen three shows
-// the object itself instead, which cannot drift from itself.
+// Three screens, all the same hand-drawn "paper" photo treatment (ruins,
+// moonwalk, moonwalk again) — screen three reuses screen two's photo rather
+// than its own, since the design's photographed helmet visor baked in a swirl
+// colour that could (and did) drift from glass-swirl.png, the one texture
+// every other purple-and-gold moment in the app actually shares.
 
-const SWIRL_S = 30;
 const EASE = 'cubic-bezier(.28,1,.34,1)';
 
-// Text position is measured up from the stage's bottom edge rather than down
-// from its top, same reasoning throughout onboarding: the stage is 874 tall
-// design-wise but renders shorter once real browser chrome takes its cut, and
-// anchoring from the edge that's actually stable keeps the clearance to the
-// button intact instead of the text drifting into it.
-const TEXT_UP_FROM_BOTTOM = 412;
-const UP_FROM_BOTTOM = { wordmark: 326, tagline: 238 };
-const MOON_ABOVE_WORDMARK = 376;
+// The image, text and button row share one fixed-width (402px) stage whose
+// HEIGHT varies a lot by device — real browser chrome can leave it far short
+// of the 874px design reference (see lib/layout.ts). Text wraps identically
+// regardless of stageH since the width never changes, so the space the text
+// block and button row need is constant; only the photo should give up
+// height on a short stage. IMAGE_RESERVE is that constant (gap below the
+// photo + text block + button row) measured at the design height: 874 -
+// IMAGE_H_MAX(443) = 431.
+const IMAGE_H_MAX = 443;
+const IMAGE_H_MIN = 240;
+const IMAGE_RESERVE = 431;
 
 function Grain() {
   return (
@@ -110,44 +109,34 @@ export default function Onboarding({ onStart, onDone }: { onStart: () => void; o
     onDone();
   }
 
-  const dark = screen === 3;
-  const textTop = stageH - TEXT_UP_FROM_BOTTOM;
+  const imageH = Math.max(IMAGE_H_MIN, Math.min(IMAGE_H_MAX, stageH - IMAGE_RESERVE));
+  const seamTop = imageH - 80;
+  const textTop = imageH + 19;
 
-  const skipStyle = (opacity: number, color: string): React.CSSProperties => ({
-    position: 'absolute', top: 34, right: 16, minWidth: 64, height: 44,
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    border: 0, background: 'none', cursor: 'pointer',
-    font: '400 12.5px/1 "Source Sans 3",sans-serif', letterSpacing: '.07em',
-    transition: 'opacity 900ms', opacity, color,
-    // Two Skips share this corner and cross-fade, so one is always invisible
-    // and, without this, always on top of the other — taking the tap.
-    pointerEvents: opacity ? 'auto' : 'none',
-  });
-
-  const headline = (s: OnboardScreen, style: React.CSSProperties) => (
-    <span style={style}>
+  const headline = (s: OnboardScreen) => (
+    <span style={{ color: '#2A2724' }}>
       {HEADS[s].slice(0, n)}
       <span style={{
         display: 'inline-block', width: 2, height: '.86em', marginLeft: 5, verticalAlign: '-.06em',
-        background: style.color as string, opacity: done ? 0 : 1,
+        background: '#2A2724', opacity: done ? 0 : 1,
       }} />
     </span>
   );
 
   return (
-    <div style={{ position: 'absolute', inset: 0, background: dark ? '#161826' : '#F4EFE6', overflow: 'hidden' }}>
+    <div style={{ position: 'absolute', inset: 0, background: '#F4EFE6', overflow: 'hidden' }}>
 
       {screen === 1 && (
         <div style={{ position: 'absolute', inset: 0, animation: 'lua-dim 400ms linear both' }}>
           <img
             src={ob1} alt="" draggable={false}
-            style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 443, objectFit: 'cover', objectPosition: 'center 89%', display: 'block' }}
+            style={{ position: 'absolute', left: 0, right: 0, top: 0, height: imageH, objectFit: 'cover', objectPosition: 'center 89%', display: 'block' }}
           />
-          <div style={{ position: 'absolute', left: 0, right: 0, top: 363, height: 96, background: 'linear-gradient(rgba(244,239,230,0),#F4EFE6 74%)' }} />
+          <div style={{ position: 'absolute', left: 0, right: 0, top: seamTop, height: 96, background: 'linear-gradient(rgba(244,239,230,0),#F4EFE6 74%)' }} />
 
           <div onClick={finishTyping} style={{ position: 'absolute', left: 26, right: 26, top: textTop, cursor: 'pointer' }}>
             <h1 style={{ margin: '0 0 18px', font: '400 30px/1.2 Newsreader,Georgia,serif', letterSpacing: '-.011em', textWrap: 'pretty' }}>
-              {headline(1, { color: '#2A2724' })}
+              {headline(1)}
             </h1>
             <p style={{ margin: 0, maxWidth: '55ch', font: '400 17px/1.68 "Source Sans 3",sans-serif', color: '#46423C', textWrap: 'pretty', transition: 'opacity 420ms linear', opacity: done ? 1 : 0 }}>{BODY[1][0]}</p>
             <p style={{ margin: '15px 0 0', maxWidth: '55ch', font: '400 17px/1.68 "Source Sans 3",sans-serif', color: '#46423C', textWrap: 'pretty', transition: 'opacity 420ms linear', opacity: done ? 1 : 0 }}>{BODY[1][1]}</p>
@@ -171,13 +160,13 @@ export default function Onboarding({ onStart, onDone }: { onStart: () => void; o
         <div style={{ position: 'absolute', inset: 0, animation: 'lua-dim 400ms linear both' }}>
           <img
             src={ob2} alt="" draggable={false}
-            style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 443, objectFit: 'cover', objectPosition: 'center 72%', display: 'block' }}
+            style={{ position: 'absolute', left: 0, right: 0, top: 0, height: imageH, objectFit: 'cover', objectPosition: 'center 72%', display: 'block' }}
           />
-          <div style={{ position: 'absolute', left: 0, right: 0, top: 363, height: 96, background: 'linear-gradient(rgba(244,239,230,0),#F4EFE6 74%)' }} />
+          <div style={{ position: 'absolute', left: 0, right: 0, top: seamTop, height: 96, background: 'linear-gradient(rgba(244,239,230,0),#F4EFE6 74%)' }} />
 
           <div onClick={finishTyping} style={{ position: 'absolute', left: 26, right: 26, top: textTop, cursor: 'pointer' }}>
             <h1 style={{ margin: '0 0 18px', font: '400 30px/1.2 Newsreader,Georgia,serif', letterSpacing: '-.011em', textWrap: 'pretty' }}>
-              {headline(2, { color: '#2A2724' })}
+              {headline(2)}
             </h1>
             <p style={{ margin: 0, maxWidth: '55ch', font: '400 17px/1.68 "Source Sans 3",sans-serif', color: '#46423C', textWrap: 'pretty', transition: 'opacity 420ms linear', opacity: done ? 1 : 0 }}>{BODY[2][0]}</p>
             <p style={{ margin: '15px 0 0', maxWidth: '55ch', font: '400 17px/1.68 "Source Sans 3",sans-serif', color: '#46423C', textWrap: 'pretty', transition: 'opacity 420ms linear', opacity: done ? 1 : 0 }}>{BODY[2][1]}</p>
@@ -196,35 +185,38 @@ export default function Onboarding({ onStart, onDone }: { onStart: () => void; o
       )}
 
       {screen === 3 && (
-        <div style={{
-          position: 'absolute', inset: 0, animation: 'lua-dim 400ms linear both',
-          background: 'radial-gradient(120% 80% at 50% 34%, #1c1e2e 0%, #161826 46%, #0f101a 100%)',
-        }}>
-          <div style={{
-            position: 'absolute', left: 68, top: Math.max(24, stageH - UP_FROM_BOTTOM.wordmark - MOON_ABOVE_WORDMARK),
-          }}>
-            <MoonMini size={220} driftDur={15} swirlDur={SWIRL_S} glowAlpha={.34} breatheDur={6} />
+        <div style={{ position: 'absolute', inset: 0, animation: 'lua-dim 400ms linear both' }}>
+          <img
+            src={ob2} alt="" draggable={false}
+            style={{ position: 'absolute', left: 0, right: 0, top: 0, height: imageH, objectFit: 'cover', objectPosition: 'center 72%', display: 'block' }}
+          />
+          <div style={{ position: 'absolute', left: 0, right: 0, top: seamTop, height: 96, background: 'linear-gradient(rgba(244,239,230,0),#F4EFE6 74%)' }} />
+
+          <div onClick={finishTyping} style={{ position: 'absolute', left: 26, right: 26, top: textTop, cursor: 'pointer' }}>
+            <h1 style={{ margin: 0, font: '400 30px/1.2 Newsreader,Georgia,serif', letterSpacing: '-.011em', textWrap: 'pretty' }}>
+              {headline(3)}
+            </h1>
           </div>
 
-          <div style={{ position: 'absolute', left: 32, top: stageH - UP_FROM_BOTTOM.wordmark, font: '300 64px/1 Inter,sans-serif', letterSpacing: '-.045em', color: '#f0eef2' }}>Lua</div>
-          <div onClick={finishTyping} style={{ position: 'absolute', left: 32, right: 32, top: stageH - UP_FROM_BOTTOM.tagline, cursor: 'pointer' }}>
-            {headline(3, { font: '300 27px/1.24 Inter,sans-serif', letterSpacing: '-.025em', color: '#cfd3e5' } as React.CSSProperties)}
-          </div>
-
-          {done && (
+          <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '0 26px 42px' }}>
+            <Dots active={2} />
             <button type="button" onClick={(e) => { e.stopPropagation(); complete(); }} style={{
-              position: 'absolute', left: 32, right: 32, bottom: 56, padding: 15, borderRadius: 100, cursor: 'pointer',
-              border: '1px solid rgba(145,132,217,.5)', background: 'rgba(145,132,217,.06)',
-              color: '#d2cefd', font: '400 14.5px/1 Inter,sans-serif', letterSpacing: '.02em',
-              animation: `lua-rise 620ms ${EASE} both`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: 52,
+              border: '1px solid rgba(42,39,36,.34)', borderRadius: 999, cursor: 'pointer', background: '#2A2724',
+              color: '#F4EFE6', font: '500 17px/1 "Source Sans 3",sans-serif', letterSpacing: '.012em',
+              animation: done ? `lua-rise 620ms ${EASE} both` : undefined,
             }}>Start now</button>
-          )}
+          </div>
+          <Grain />
         </div>
       )}
 
-      {/* Two Skips, crossing over with the ground beneath them: ink on paper, then light on dark. */}
-      <button type="button" onClick={(e) => { e.stopPropagation(); skip(); }} style={skipStyle(dark ? 0 : 1, '#6a6472')}>Skip</button>
-      <button type="button" onClick={(e) => { e.stopPropagation(); skip(); }} style={skipStyle(dark ? 1 : 0, '#8d90a3')}>Skip</button>
+      <button type="button" onClick={(e) => { e.stopPropagation(); skip(); }} style={{
+        position: 'absolute', top: 34, right: 16, minWidth: 64, height: 44,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        border: 0, background: 'none', cursor: 'pointer',
+        font: '400 12.5px/1 "Source Sans 3",sans-serif', letterSpacing: '.07em', color: '#6a6472',
+      }}>Skip</button>
     </div>
   );
 }

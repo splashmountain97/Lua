@@ -1,7 +1,7 @@
 // Ported from the "Lua Onboarding Paper" design (Newsreader + Source Sans 3,
-// hand-drawn paper aesthetic). Screens one and two; screen three reverts to
-// the real moon object rather than the design's photographed visor — see the
-// comment at the top of Onboarding.tsx for why.
+// hand-drawn paper aesthetic). Screen three reuses screen two's photo rather
+// than the design's own photographed visor — see the comment at the top of
+// Onboarding.tsx for why.
 
 export type OnboardScreen = 1 | 2 | 3;
 
