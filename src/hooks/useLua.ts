@@ -299,6 +299,17 @@ export function useLua() {
     if (!shared) after(420, autoShake);
   }
 
+  // Same destination as finishOnboarding, without the idle moment or the
+  // demonstration shake in between. Screen three's own push into the
+  // helmet's visor already is the reveal gesture — Home re-enacting it a
+  // second time with the shake would just be the same beat played twice in
+  // a row, so this calls reveal() directly instead of autoShake's.
+  function finishOnboardingRevealed() {
+    rollIdleLine();
+    go('home', 'idle');
+    reveal();
+  }
+
   function go(screen: Screen, phase: Phase = 'idle') {
     clearTimers();
     patch(s => ({
@@ -639,7 +650,7 @@ export function useLua() {
   return {
     state, streakDays, coachSeen, introStep, revealsTotal, shareCoachSeen, streakCoachSeen, saved, dayUsed, quiet: QUIET_PILLS,
     actions: {
-      requestMotionPermission, finishOnboarding, onDown, onMove, onUp, dismiss, again, share,
+      requestMotionPermission, finishOnboarding, finishOnboardingRevealed, onDown, onMove, onUp, dismiss, again, share,
       toggleCategory, toggleInfo, setWeight, goStreak, goHome, doUnlock, writeItDown, openShared,
       closeWrite, copyFromModal,
       saveCurrent, toggleDone, removeSaved, restoreSaved, commitSaved, openPanel, closePanel,

@@ -67,7 +67,7 @@ function Dots({ active }: { active: 0 | 1 | 2 }) {
   );
 }
 
-export default function Onboarding({ onStart, onDone }: { onStart: () => void; onDone: () => void }) {
+export default function Onboarding({ onStart, onDone, onReveal }: { onStart: () => void; onDone: () => void; onReveal: () => void }) {
   const { height: stageH } = useStageLayout();
   const [screen, setScreen] = useState<OnboardScreen>(1);
   const [n, setN] = useState(0);
@@ -136,7 +136,7 @@ export default function Onboarding({ onStart, onDone }: { onStart: () => void; o
 
   function complete() {
     trackOnboarding('completed');
-    onDone();
+    onReveal();
   }
 
   function skip() {
@@ -150,8 +150,9 @@ export default function Onboarding({ onStart, onDone }: { onStart: () => void; o
   // The permission request fires here, synchronously in the tap, rather than
   // after the push animation — iOS only honours it inside the actual user
   // gesture. The push itself just buys the swirl reveal its own beat before
-  // handing straight to the real question (finishOnboarding, wired as
-  // onDone, does the "straight into a question" part already).
+  // handing straight to the real, already-open question (onReveal —
+  // finishOnboardingRevealed — skips Home's own idle-then-shake, since the
+  // push just played that beat).
   function handleStart() {
     onStart();
     clearTimeout(advanceTimer.current);
