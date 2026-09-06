@@ -27,7 +27,7 @@ const EASE = 'cubic-bezier(.28,1,.34,1)';
 // safety.
 const IMAGE_H_MAX = 443;
 const IMAGE_H_MIN = 240;
-const RESERVE: Record<OnboardScreen, number> = { 1: 425, 2: 360, 3: 185 };
+const RESERVE: Record<OnboardScreen, number> = { 1: 400, 2: 340, 3: 185 };
 
 function Grain() {
   return (
@@ -142,8 +142,8 @@ export default function Onboarding({ onStart, onDone }: { onStart: () => void; o
             <h1 style={{ margin: '0 0 18px', font: '400 30px/1.2 Newsreader,Georgia,serif', letterSpacing: '-.011em', textWrap: 'pretty' }}>
               {headline(1)}
             </h1>
-            <p style={{ margin: 0, maxWidth: '55ch', font: '400 17px/1.68 "Source Sans 3",sans-serif', color: '#46423C', textWrap: 'pretty', transition: 'opacity 420ms linear', opacity: done ? 1 : 0 }}>{BODY[1][0]}</p>
-            <p style={{ margin: '15px 0 0', maxWidth: '55ch', font: '400 17px/1.68 "Source Sans 3",sans-serif', color: '#46423C', textWrap: 'pretty', transition: 'opacity 420ms linear', opacity: done ? 1 : 0 }}>{BODY[1][1]}</p>
+            <p style={{ margin: 0, maxWidth: '55ch', font: '400 17px/1.5 "Source Sans 3",sans-serif', color: '#46423C', textWrap: 'pretty', transition: 'opacity 420ms linear', opacity: done ? 1 : 0 }}>{BODY[1][0]}</p>
+            <p style={{ margin: '10px 0 0', maxWidth: '55ch', font: '400 17px/1.5 "Source Sans 3",sans-serif', color: '#46423C', textWrap: 'pretty', transition: 'opacity 420ms linear', opacity: done ? 1 : 0 }}>{BODY[1][1]}</p>
           </div>
 
           <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '0 26px 42px' }}>
@@ -172,8 +172,8 @@ export default function Onboarding({ onStart, onDone }: { onStart: () => void; o
             <h1 style={{ margin: '0 0 18px', font: '400 30px/1.2 Newsreader,Georgia,serif', letterSpacing: '-.011em', textWrap: 'pretty' }}>
               {headline(2)}
             </h1>
-            <p style={{ margin: 0, maxWidth: '55ch', font: '400 17px/1.68 "Source Sans 3",sans-serif', color: '#46423C', textWrap: 'pretty', transition: 'opacity 420ms linear', opacity: done ? 1 : 0 }}>{BODY[2][0]}</p>
-            <p style={{ margin: '15px 0 0', maxWidth: '55ch', font: '400 17px/1.68 "Source Sans 3",sans-serif', color: '#46423C', textWrap: 'pretty', transition: 'opacity 420ms linear', opacity: done ? 1 : 0 }}>{BODY[2][1]}</p>
+            <p style={{ margin: 0, maxWidth: '55ch', font: '400 17px/1.5 "Source Sans 3",sans-serif', color: '#46423C', textWrap: 'pretty', transition: 'opacity 420ms linear', opacity: done ? 1 : 0 }}>{BODY[2][0]}</p>
+            <p style={{ margin: '10px 0 0', maxWidth: '55ch', font: '400 17px/1.5 "Source Sans 3",sans-serif', color: '#46423C', textWrap: 'pretty', transition: 'opacity 420ms linear', opacity: done ? 1 : 0 }}>{BODY[2][1]}</p>
           </div>
 
           <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '0 26px 42px' }}>
