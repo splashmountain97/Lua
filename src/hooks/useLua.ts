@@ -225,8 +225,8 @@ export function useLua() {
   }
 
   // A returning user skips the welcome screen (and so never calls
-  // rollIdleLine via askMotion) — roll the real line once on mount instead of
-  // leaving the idle placeholder showing.
+  // rollIdleLine via finishOnboarding) — roll the real line once on mount
+  // instead of leaving the idle placeholder showing.
   useEffect(() => {
     if (startedOpen) rollIdleLine();
     else if (sharedIx !== null) markOpened();
@@ -281,20 +281,22 @@ export function useLua() {
     requestMotionPermission(() => { rollIdleLine(); go('home', 'settled'); });
   }
 
-  function askMotion() {
-    requestMotionPermission(() => {
-      const shared = stateRef.current.pinnedIx !== null;
-      rollIdleLine();
-      go('home', shared ? 'settled' : 'idle');
-      // Straight into a question. Everything the introduction has left to say
-      // is about what you can do with one, and none of it means anything with
-      // an empty screen underneath it.
-      //
-      // No guard on stateRef here: it is synced by an effect, so immediately
-      // after go() it still reports the screen we have just left, and reading
-      // it would cancel the shake every time.
-      if (!shared) after(420, autoShake);
-    });
+  // The navigation half of finishing onboarding, split out from the
+  // permission request so a caller with its own exit animation can fire the
+  // (gesture-gated) permission request synchronously on tap and only run this
+  // once that animation has actually finished.
+  function finishOnboarding() {
+    const shared = stateRef.current.pinnedIx !== null;
+    rollIdleLine();
+    go('home', shared ? 'settled' : 'idle');
+    // Straight into a question. Everything the introduction has left to say
+    // is about what you can do with one, and none of it means anything with
+    // an empty screen underneath it.
+    //
+    // No guard on stateRef here: it is synced by an effect, so immediately
+    // after go() it still reports the screen we have just left, and reading
+    // it would cancel the shake every time.
+    if (!shared) after(420, autoShake);
   }
 
   function go(screen: Screen, phase: Phase = 'idle') {
@@ -637,7 +639,7 @@ export function useLua() {
   return {
     state, streakDays, coachSeen, introStep, revealsTotal, shareCoachSeen, streakCoachSeen, saved, dayUsed, quiet: QUIET_PILLS,
     actions: {
-      askMotion, onDown, onMove, onUp, dismiss, again, share,
+      requestMotionPermission, finishOnboarding, onDown, onMove, onUp, dismiss, again, share,
       toggleCategory, toggleInfo, setWeight, goStreak, goHome, doUnlock, writeItDown, openShared,
       closeWrite, copyFromModal,
       saveCurrent, toggleDone, removeSaved, restoreSaved, commitSaved, openPanel, closePanel,

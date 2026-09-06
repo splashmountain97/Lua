@@ -26,7 +26,9 @@ export default function App() {
       onPointerMove={actions.onMove}
       onPointerUp={actions.onUp}
     >
-      {state.screen === 'onboard1' && <Onboarding onDone={actions.askMotion} />}
+      {state.screen === 'onboard1' && (
+        <Onboarding onStart={() => actions.requestMotionPermission()} onDone={actions.finishOnboarding} />
+      )}
       {state.screen === 'arrival' && <Arrival onContinue={actions.openShared} />}
       {onHome && <Home lua={lua} />}
       {state.screen === 'streak' && <Streak streakDays={streakDays} onBack={actions.goHome} />}

@@ -1,247 +1,287 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { trackOnboarding } from '../lib/analytics';
-import astronaut from '../assets/onboard-astronaut-2048.jpg';
-import moonBody from '../assets/moon-body.png';
-import glassSwirl from '../assets/glass-swirl.png';
 import { useStageLayout } from '../lib/layout';
+import ob1 from '../assets/ob-1-ruins.jpeg';
+import ob2 from '../assets/ob-2-walking.jpeg';
+import ob3 from '../assets/ob-3-helmet.jpeg';
+import {
+  HEADS, BODY, SAMPLE_QUESTION, CAM_REST, CAM_FULL, VISOR_ORIGIN,
+  type OnboardScreen,
+} from '../data/onboarding';
 
-// Three screens, typed out one character at a time, replacing the old welcome.
-//
-// The illustration pivots on the astronaut's visor: the layer's transform-origin
-// sits exactly on it, so scaling the whole drawing between screens keeps the
-// visor pinned while everything around it recedes. The swirl inside that visor
-// is the same image the moon carries, which is what lets screen three hand over
-// to the object itself — the reader has been looking at it the whole time.
+// Three hand-drawn "paper" screens (ruins, moonwalk, helmet), replacing the
+// single-illustration onboarding. The helmet's visor carries the same glass
+// swirl the moon does, so screen three's camera push into it — ending in a
+// solid violet wash with a sample question — reads as hinting at the object
+// the reader is about to actually use, without borrowing its exact palette:
+// this violet (#3E2559) and Home's reveal amber are kept deliberately distinct,
+// and the handoff to Home is a plain crossfade rather than a chained zoom, so
+// the two "push into glass" moments never fight each other on screen at once.
 
-const COPY = [
-  'Earth is loud. The moon isn’t.',
-  'Up here, there’s room to hear yourself think. Some people make journaling sound like a lot of work — the right notebook, the right hour, someone doing it ‘properly.’ Lua skips all that. Just a quiet second and one honest question, however that works for you.',
-  'A question, once a day.',
-];
+type Phase = 'rest' | 'push' | 'question';
 
-const SCREENS = [
-  { paper: 1, dusk: 0, app: 0, light: 1, dark: 0, illo: 1, t: 'none' },
-  { paper: 0, dusk: 1, app: 0, light: .08, dark: .94, illo: 1, t: 'translateY(-26px) scale(.852)' },
-  { paper: 0, dusk: 0, app: 1, light: 0, dark: 0, illo: 0, t: 'translateY(-96px) scale(.72)' },
-];
+// Text position is measured up from the stage's bottom edge rather than down
+// from its top, same reasoning as the rest of onboarding: the stage is 874
+// tall design-wise but renders shorter once real browser chrome takes its
+// cut, and anchoring from the edge that's actually stable keeps the clearance
+// to the button intact instead of the text drifting into it.
+const TEXT_UP_FROM_BOTTOM = 412;
 
-const TYPE_MS = 26;
-const SWIRL_S = 30;
-const EARTH_S = 210;
-const EASE = 'cubic-bezier(.28,1,.34,1)';
+function Grain() {
+  return (
+    <div style={{
+      position: 'absolute', inset: 0, pointerEvents: 'none', opacity: .55,
+      backgroundImage:
+        'repeating-linear-gradient(27deg,rgba(120,104,84,.055) 0 1px,rgba(0,0,0,0) 1px 3px),' +
+        'repeating-linear-gradient(114deg,rgba(120,104,84,.045) 0 1px,rgba(0,0,0,0) 1px 4px)',
+    }} />
+  );
+}
 
-// Design positions are measured down from the top of an 874-tall canvas. The
-// stage is shorter than that whenever browser chrome takes a bite, and all of
-// this copy sits in the lower half, so it is anchored up from the bottom
-// instead — which is what keeps its distance from the button and the dots.
-const UP_FROM_BOTTOM = { loud: 202, room: 278, wordmark: 326, tagline: 238 };
-// The drawing is fitted rather than moved. On the design's 874 it sits at top 20
-// and ends 25 above the first line of type; a shorter stage has to take that
-// difference out of something. Sliding the whole drawing up closes the gap over
-// the copy at one end and pushes the Earth into the Skip button at the other, so
-// it is scaled to land in the space that is actually there — top pinned, and
-// pinned horizontally on the visor so the astronaut stays centred.
-const ILLO_TOP = 20;
-const ILLO_H = 627;
-const illoFit = (stageH: number) =>
-  Math.min(1, Math.max(.6, (stageH - ILLO_TOP - 25 - UP_FROM_BOTTOM.loud) / ILLO_H));
-/** Moon top on screen three, holding the design's gap down to the wordmark. */
-const MOON_ABOVE_WORDMARK = 376;
+function Dots({ active }: { active: 0 | 1 | 2 }) {
+  return (
+    <div style={{ display: 'flex', gap: 7, margin: '0 0 22px', paddingLeft: 2 }}>
+      {[0, 1, 2].map(i => (
+        <span key={i} style={{
+          display: 'block', width: 5, height: 5, borderRadius: '50%',
+          background: i === active ? '#2A2724' : 'rgba(42,39,36,.26)',
+        }} />
+      ))}
+    </div>
+  );
+}
 
-export default function Onboarding({ onDone }: { onDone: () => void }) {
-  const leave = (outcome: 'completed' | 'skipped') => { trackOnboarding(outcome); onDone(); };
+export default function Onboarding({ onStart, onDone }: { onStart: () => void; onDone: () => void }) {
   const { height: stageH } = useStageLayout();
-  const [screen, setScreen] = useState(0);
-  const [typed, setTyped] = useState(0);
+  const [screen, setScreen] = useState<OnboardScreen>(1);
+  const [phase, setPhase] = useState<Phase>('rest');
+  const [n, setN] = useState(0);
   const [done, setDone] = useState(false);
-  const timer = useRef<number | undefined>(undefined);
 
-  // Only schedules; the caller resets what is on screen. Keeping the reset out
-  // of here means mounting can start the timer without setting state as it goes.
-  const startTyping = useCallback((n: number) => {
-    window.clearTimeout(timer.current);
-    const full = COPY[n];
-    // Screen two's copy is about nine times screen one's, so it types
-    // proportionally faster — a fixed rate would hold the reader for ten seconds.
-    const base = TYPE_MS * (full.length > 90 ? 0.6 : 1);
+  const reducedRef = useRef(false);
+  const typeTimer = useRef<number | undefined>(undefined);
+  const advanceTimer = useRef<number | undefined>(undefined);
+
+  function typeHead(s: OnboardScreen) {
+    clearTimeout(typeTimer.current);
+    const full = HEADS[s];
+    if (reducedRef.current) { setN(full.length); setDone(true); return; }
+    setN(0);
+    setDone(false);
     let i = 0;
     const step = () => {
       i++;
-      setTyped(i);
+      setN(i);
       if (i >= full.length) { setDone(true); return; }
+      // Dwell on the sentence break so the two halves read as two thoughts.
       const ch = full[i - 1];
-      // Punctuation is where a voice would pause, so the typing pauses there too.
-      const extra = '.?!'.includes(ch) ? base * 11 : ',—;:'.includes(ch) ? base * 5 : 0;
-      timer.current = window.setTimeout(step, base + extra);
+      const extra = '.?!'.includes(ch) ? 430 : ',—;:'.includes(ch) ? 180 : 0;
+      typeTimer.current = window.setTimeout(step, 34 + extra);
     };
-    timer.current = window.setTimeout(step, 520);
+    typeTimer.current = window.setTimeout(step, 420);
+  }
+
+  useEffect(() => {
+    reducedRef.current = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    typeHead(1);
+    return () => { clearTimeout(typeTimer.current); clearTimeout(advanceTimer.current); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => { startTyping(0); return () => window.clearTimeout(timer.current); }, [startTyping]);
+  // Tapping the text completes the line rather than making anyone wait it out.
+  function finishTyping() {
+    clearTimeout(typeTimer.current);
+    setN(HEADS[screen].length);
+    setDone(true);
+  }
 
-  const tap = () => {
-    // First tap lands the rest of the line, second moves on. Screen three waits
-    // for the button rather than tipping the reader into the app by accident.
-    if (!done) { window.clearTimeout(timer.current); setTyped(COPY[screen].length); setDone(true); return; }
-    if (screen < 2) {
-      const n = screen + 1;
-      setScreen(n); setTyped(0); setDone(false); startTyping(n);
-    }
-  };
+  function goto(next: OnboardScreen) {
+    setScreen(next);
+    setPhase('rest');
+    typeHead(next);
+  }
 
-  const cfg = SCREENS[screen];
-  const text = COPY[screen].slice(0, typed);
-  // The rest of the line is rendered from the first frame, invisible. The block
-  // is laid out for the finished sentence throughout, so the line breaks are
-  // settled before a character appears and nothing re-wraps as it fills in —
-  // text-wrap: pretty was rebalancing every break on every keystroke, which is
-  // what made the paragraph move around under the reader.
-  const rest = COPY[screen].slice(typed);
-  const caret = done ? 0 : 1;
-  const dot = (i: number) =>
-    i === screen ? 'rgba(145,132,217,.95)' : screen === 0 ? 'rgba(46,42,48,.22)' : 'rgba(233,237,245,.2)';
-  const ground = (bg: string, opacity: number): React.CSSProperties => ({
-    position: 'absolute', inset: 0, background: bg, opacity,
-    transition: `opacity 900ms ${EASE}`,
-  });
-  const visor: React.CSSProperties = {
-    position: 'absolute', left: '50.36%', top: '40.89%', width: '17.47%', height: '29.17%',
-    transform: 'translate(-50%,-50%)', borderRadius: '50%',
-  };
-  const ink = (opacity: number, invert: boolean): React.CSSProperties => ({
-    position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block', opacity,
-    filter: invert ? 'invert(1) grayscale(1) brightness(.9) contrast(1.06)' : undefined,
-    WebkitMaskImage: 'radial-gradient(78% 72% at 50% 44%, #000 62%, rgba(0,0,0,0) 100%)',
-    maskImage: 'radial-gradient(78% 72% at 50% 44%, #000 62%, rgba(0,0,0,0) 100%)',
-    transition: `opacity 900ms ${EASE}`,
-  });
-  const earth = (opacity: number, invert: boolean): React.CSSProperties => ({
-    position: 'absolute', inset: '-25%', opacity,
-    backgroundImage: `url(${astronaut})`, backgroundSize: '1254% auto', backgroundPosition: '86.55% 10.36%',
-    filter: invert ? 'invert(1) brightness(.92)' : undefined,
-    animation: `lua-swirl ${EARTH_S}s linear infinite`,
-    transition: 'opacity 900ms',
-  });
-  const caretStyle = (h: string, ml: number, va: string, bg: string): React.CSSProperties => ({
-    display: 'inline-block', width: 2, height: h, marginLeft: ml, verticalAlign: va, background: bg,
-    animation: 'lua-blink 1.05s step-end infinite', opacity: caret,
-  });
-  const skip = (opacity: number, color: string): React.CSSProperties => ({
+  function complete() {
+    clearTimeout(advanceTimer.current);
+    trackOnboarding('completed');
+    onDone();
+  }
+
+  function skip() {
+    clearTimeout(typeTimer.current);
+    clearTimeout(advanceTimer.current);
+    onStart();
+    trackOnboarding('skipped');
+    onDone();
+  }
+
+  // Chrome leaves in the first 240ms, the camera runs 1200ms (900ms under
+  // reduced motion, which skips the transform entirely), and the question
+  // only begins once the move has settled — never during it. The permission
+  // request fires here, synchronously in the tap, rather than after the
+  // animation: iOS only honours it inside the actual user gesture.
+  function handleStart() {
+    onStart();
+    clearTimeout(advanceTimer.current);
+    setPhase('push');
+    const pushMs = reducedRef.current ? 400 : 1200;
+    advanceTimer.current = window.setTimeout(() => {
+      setPhase('question');
+      advanceTimer.current = window.setTimeout(complete, 2600);
+    }, pushMs);
+  }
+
+  function skipDwell() {
+    if (phase !== 'question') return;
+    complete();
+  }
+
+  const reduced = reducedRef.current;
+  const moved = phase === 'push' || phase === 'question';
+  const gone = screen === 3 && moved;
+  const textTop = stageH - TEXT_UP_FROM_BOTTOM;
+
+  const skipStyle = (opacity: number, color: string): React.CSSProperties => ({
     position: 'absolute', top: 34, right: 16, minWidth: 64, height: 44,
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     border: 0, background: 'none', cursor: 'pointer',
-    font: '400 12.5px/1 Inter,sans-serif', letterSpacing: '.07em',
+    font: '400 12.5px/1 "Source Sans 3",sans-serif', letterSpacing: '.07em',
     transition: 'opacity 900ms', opacity, color,
-    // Two Skips share this corner and cross-fade, so one of them is always
-    // invisible and, without this, always on top of the other — taking the tap.
-    // They do the same thing today, so nothing was broken by it; the day they
-    // stop doing the same thing, something would be, silently.
+    // Two Skips share this corner and cross-fade, so one is always invisible
+    // and, without this, always on top of the other — taking the tap.
     pointerEvents: opacity ? 'auto' : 'none',
   });
 
+  const headline = (s: OnboardScreen) => (
+    <h1 style={{
+      margin: '0 0 18px', font: '400 30px/1.2 Newsreader,Georgia,serif', letterSpacing: '-.011em',
+      color: '#2A2724', textWrap: 'pretty',
+    }}>
+      {HEADS[s].slice(0, n)}
+      <span style={{
+        display: 'inline-block', width: 2, height: '.78em', marginLeft: 4, verticalAlign: '-.04em',
+        background: '#6B6459', opacity: done ? 0 : 1,
+      }} />
+    </h1>
+  );
+
   return (
-    <div onClick={tap} style={{ position: 'absolute', inset: 0, cursor: 'pointer' }}>
-      <div style={ground('radial-gradient(120% 80% at 50% 34%, #1c1e2e 0%, #161826 46%, #0f101a 100%)', cfg.app)} />
-      <div style={ground('linear-gradient(180deg, #221e2f 0%, #15141f 55%, #0f101a 100%)', cfg.dusk)} />
-      <div style={ground('#f4efe4', cfg.paper)} />
-
-      <div style={{
-        position: 'absolute', left: -378, top: ILLO_TOP, width: 1150, height: ILLO_H,
-        transformOrigin: '50.36% 0', transform: `scale(${illoFit(stageH)})`,
-      }}>
-      <div style={{
-        position: 'absolute', inset: 0,
-        transformOrigin: '50.36% 40.89%', opacity: cfg.illo, transform: cfg.t,
-        transition: `transform 1100ms ${EASE}, opacity 800ms ${EASE}`,
-      }}>
-        <img src={astronaut} alt="" draggable={false} style={ink(cfg.light, false)} />
-        <img src={astronaut} alt="" draggable={false} style={ink(cfg.dark, true)} />
-
-        <div style={{
-          ...visor, overflow: 'hidden',
-          background: 'radial-gradient(120% 120% at 34% 24%, #2a1c3f 0%, #150e22 70%, #0d0916 100%)',
-        }}>
-          <img src={glassSwirl} alt="" draggable={false} style={{
-            position: 'absolute', left: '-9%', top: '-9%', width: '118%', height: '118%',
-            animation: `lua-swirl ${SWIRL_S}s linear infinite`, filter: 'blur(.6px) saturate(1.1)',
-          }} />
-        </div>
-        <div style={{
-          ...visor, pointerEvents: 'none',
-          boxShadow: 'inset 0 5px 14px rgba(233,237,245,.26), inset 0 -20px 34px rgba(0,0,0,.62), 0 0 46px 10px rgba(142,63,168,.3)',
-        }} />
-
-        <div style={{ position: 'absolute', left: '60.8%', top: '16.2%', width: '3.9%', height: '7.15%', borderRadius: '50%', overflow: 'hidden' }}>
-          <div style={earth(cfg.light, false)} />
-          <div style={earth(cfg.dark, true)} />
-        </div>
-      </div>
-      </div>
-
-      {screen === 2 && (
-        <div style={{
-          position: 'absolute', left: 68, top: Math.max(24, stageH - UP_FROM_BOTTOM.wordmark - MOON_ABOVE_WORDMARK),
-          width: 220, height: 220,
-        }}>
-          <img src={moonBody} alt="" draggable={false} style={{ width: '100%', height: '100%', display: 'block', animation: 'lua-drift 15s ease-in-out infinite' }} />
-          <div style={{ position: 'absolute', left: '42.94%', top: '17.82%', width: '34.8%', height: '34.8%', borderRadius: '50%', overflow: 'hidden' }}>
-            <img src={glassSwirl} alt="" draggable={false} style={{
-              position: 'absolute', left: '-8%', top: '-8%', width: '116%', height: '116%',
-              animation: `lua-swirl ${SWIRL_S}s linear infinite`, filter: 'blur(.7px)',
-            }} />
-          </div>
-          <div style={{
-            position: 'absolute', left: '42.94%', top: '17.82%', width: '34.8%', height: '34.8%', borderRadius: '50%',
-            boxShadow: 'inset 0 2px 5px rgba(233,237,245,.2), inset 0 -8px 15px rgba(0,0,0,.6), 0 0 30px 6px rgba(142,63,168,.34)',
-            animation: 'lua-breathe 6s ease-in-out infinite',
-          }} />
-        </div>
-      )}
-
-      {screen === 0 && (
-        <div style={{
-          position: 'absolute', left: 32, right: 32, top: stageH - UP_FROM_BOTTOM.loud,
-          font: '300 31px/1.26 Inter,sans-serif', letterSpacing: '-.03em', color: '#2e2a30', textWrap: 'pretty',
-        }}>{text}<span style={caretStyle('.86em', 5, '-.06em', '#6d5f8a')} /><span aria-hidden="true" style={{ opacity: 0 }}>{rest}</span></div>
-      )}
+    <div style={{ position: 'absolute', inset: 0, background: '#F4EFE6', overflow: 'hidden' }}>
 
       {screen === 1 && (
-        <div style={{
-          position: 'absolute', left: 32, right: 32, top: stageH - UP_FROM_BOTTOM.room,
-          font: '400 15px/1.68 Inter,sans-serif', letterSpacing: '.002em', color: '#b2b6ca', textWrap: 'pretty',
-        }}>{text}<span style={caretStyle('.9em', 4, '-.1em', '#9184d9')} /><span aria-hidden="true" style={{ opacity: 0 }}>{rest}</span></div>
+        <div style={{ position: 'absolute', inset: 0, animation: 'lua-dim 400ms linear both' }}>
+          <img
+            src={ob1} alt="" draggable={false}
+            style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 443, objectFit: 'cover', objectPosition: 'center 89%', display: 'block' }}
+          />
+          <div style={{ position: 'absolute', left: 0, right: 0, top: 363, height: 96, background: 'linear-gradient(rgba(244,239,230,0),#F4EFE6 74%)' }} />
+
+          <div onClick={finishTyping} style={{ position: 'absolute', left: 26, right: 26, top: textTop, cursor: 'pointer' }}>
+            {headline(1)}
+            <p style={{ margin: 0, maxWidth: '55ch', font: '400 17px/1.68 "Source Sans 3",sans-serif', color: '#46423C', textWrap: 'pretty', transition: 'opacity 420ms linear', opacity: done ? 1 : 0 }}>{BODY[1][0]}</p>
+            <p style={{ margin: '15px 0 0', maxWidth: '55ch', font: '400 17px/1.68 "Source Sans 3",sans-serif', color: '#46423C', textWrap: 'pretty', transition: 'opacity 420ms linear', opacity: done ? 1 : 0 }}>{BODY[1][1]}</p>
+          </div>
+
+          <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '0 26px 42px' }}>
+            <Dots active={0} />
+            <button type="button" onClick={() => goto(2)} style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: 52,
+              border: '1px solid rgba(42,39,36,.34)', borderRadius: 999, cursor: 'pointer', background: 'transparent',
+              color: '#2A2724', font: '500 17px/1 "Source Sans 3",sans-serif', letterSpacing: '.012em',
+            }}>Continue</button>
+          </div>
+
+          <div style={{ position: 'absolute', left: 28, top: 70, pointerEvents: 'none', font: '400 19px/1 Newsreader,Georgia,serif', letterSpacing: '.02em', color: 'rgba(42,39,36,.62)' }}>Lua</div>
+          <Grain />
+        </div>
       )}
 
       {screen === 2 && (
-        <>
-          <div style={{
-            position: 'absolute', left: 32, top: stageH - UP_FROM_BOTTOM.wordmark,
-            font: '300 64px/1 Inter,sans-serif', letterSpacing: '-.045em', color: '#f0eef2',
-          }}>Lua</div>
-          <div style={{
-            position: 'absolute', left: 32, right: 32, top: stageH - UP_FROM_BOTTOM.tagline,
-            font: '300 27px/1.24 Inter,sans-serif', letterSpacing: '-.025em', color: '#cfd3e5', textWrap: 'pretty',
-          }}>{text}<span style={caretStyle('.86em', 5, '-.06em', '#9184d9')} /><span aria-hidden="true" style={{ opacity: 0 }}>{rest}</span></div>
-          {done && (
-            <button type="button" onClick={(e) => { e.stopPropagation(); leave('completed'); }} style={{
-              position: 'absolute', left: 32, right: 32, bottom: 56, padding: 15, borderRadius: 100, cursor: 'pointer',
-              border: '1px solid rgba(145,132,217,.5)', background: 'rgba(145,132,217,.06)',
-              color: '#d2cefd', font: '400 14.5px/1 Inter,sans-serif', letterSpacing: '.02em',
-              animation: `lua-rise 620ms ${EASE} both`,
-            }}>Start now</button>
-          )}
-        </>
+        <div style={{ position: 'absolute', inset: 0, animation: 'lua-dim 400ms linear both' }}>
+          <img
+            src={ob2} alt="" draggable={false}
+            style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 443, objectFit: 'cover', objectPosition: 'center 72%', display: 'block' }}
+          />
+          <div style={{ position: 'absolute', left: 0, right: 0, top: 363, height: 96, background: 'linear-gradient(rgba(244,239,230,0),#F4EFE6 74%)' }} />
+
+          <div onClick={finishTyping} style={{ position: 'absolute', left: 26, right: 26, top: textTop, cursor: 'pointer' }}>
+            {headline(2)}
+            <p style={{ margin: 0, maxWidth: '55ch', font: '400 17px/1.68 "Source Sans 3",sans-serif', color: '#46423C', textWrap: 'pretty', transition: 'opacity 420ms linear', opacity: done ? 1 : 0 }}>{BODY[2][0]}</p>
+            <p style={{ margin: '15px 0 0', maxWidth: '55ch', font: '400 17px/1.68 "Source Sans 3",sans-serif', color: '#46423C', textWrap: 'pretty', transition: 'opacity 420ms linear', opacity: done ? 1 : 0 }}>{BODY[2][1]}</p>
+          </div>
+
+          <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '0 26px 42px' }}>
+            <Dots active={1} />
+            <button type="button" onClick={() => goto(3)} style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: 52,
+              border: '1px solid rgba(42,39,36,.34)', borderRadius: 999, cursor: 'pointer', background: 'transparent',
+              color: '#2A2724', font: '500 17px/1 "Source Sans 3",sans-serif', letterSpacing: '.012em',
+            }}>Continue</button>
+          </div>
+          <Grain />
+        </div>
       )}
 
-      {/* Two Skips, crossing over with the ground beneath them: ink on paper, then light on dark. */}
-      <button type="button" onClick={(e) => { e.stopPropagation(); leave('skipped'); }} style={skip(cfg.paper, '#6a6472')}>Skip</button>
-      <button type="button" onClick={(e) => { e.stopPropagation(); leave('skipped'); }} style={skip(screen === 0 ? 0 : 1, '#8d90a3')}>Skip</button>
+      {screen === 3 && (
+        <div style={{ position: 'absolute', inset: 0, animation: 'lua-dim 400ms linear both' }} onClick={skipDwell}>
+          <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
+            <img
+              src={ob3} alt="" draggable={false}
+              style={{
+                position: 'absolute', left: -209.5, top: 0, width: 812, height: 443, display: 'block',
+                transformOrigin: VISOR_ORIGIN, willChange: 'transform',
+                transition: 'transform 1200ms cubic-bezier(.16,.84,.28,1), filter 1200ms linear',
+                transform: reduced ? CAM_REST : moved ? CAM_FULL : CAM_REST,
+                filter: reduced ? 'none' : moved ? 'blur(4px)' : 'none',
+              }}
+            />
+            <div style={{
+              position: 'absolute', left: 0, right: 0, top: 363, height: 96,
+              background: 'linear-gradient(rgba(244,239,230,0),#F4EFE6 74%)',
+              transition: 'opacity 300ms linear', opacity: gone ? 0 : 1,
+            }} />
+            <div style={{
+              position: 'absolute', inset: 0, pointerEvents: 'none',
+              background: 'radial-gradient(circle at 50% 50%,rgba(58,35,86,.78) 0%,rgba(44,26,66,.92) 46%,rgba(26,15,39,.99) 100%)',
+              transition: `opacity ${reduced ? 400 : 1100}ms linear`, opacity: moved ? 0.96 : 0,
+            }} />
 
-      <div style={{ position: 'absolute', left: 0, right: 0, bottom: 26, display: 'flex', justifyContent: 'center', gap: 7, pointerEvents: 'none' }}>
-        {[0, 1, 2].map(i => (
-          <div key={i} style={{ width: 5, height: 5, borderRadius: '50%', background: dot(i), transition: 'background 700ms' }} />
-        ))}
-      </div>
+            <div
+              onClick={(e) => { e.stopPropagation(); finishTyping(); }}
+              style={{
+                position: 'absolute', left: 26, right: 26, top: textTop,
+                transition: 'opacity 240ms linear', opacity: gone ? 0 : 1,
+                pointerEvents: gone ? 'none' : 'auto', cursor: gone ? undefined : 'pointer',
+              }}
+            >
+              {headline(3)}
+            </div>
+
+            <div style={{ position: 'absolute', left: 34, right: 34, top: '50%', translate: '0 -50%', transition: 'opacity 420ms linear', opacity: phase === 'question' ? 1 : 0 }}>
+              <p style={{ margin: 0, font: '300 29px/1.42 Newsreader,Georgia,serif', letterSpacing: '-.006em', color: '#F6F1E7', textWrap: 'pretty' }}>{SAMPLE_QUESTION}</p>
+            </div>
+
+            <div style={{
+              position: 'absolute', left: 0, right: 0, bottom: 0, padding: '0 26px 42px',
+              transition: 'opacity 240ms linear', opacity: gone ? 0 : 1, pointerEvents: gone ? 'none' : 'auto',
+            }}>
+              <Dots active={2} />
+              <button type="button" onClick={(e) => { e.stopPropagation(); handleStart(); }} style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: 52,
+                border: 0, borderRadius: 999, cursor: 'pointer', color: '#F6F1E7',
+                font: '500 17px/1 "Source Sans 3",sans-serif', letterSpacing: '.012em',
+                backgroundColor: '#3E2559',
+                backgroundImage: 'radial-gradient(128% 172% at 22% 16%,rgba(198,145,58,.44) 0%,rgba(124,74,124,.26) 34%,rgba(62,37,89,0) 62%)',
+              }}>Start now</button>
+            </div>
+            <Grain />
+          </div>
+        </div>
+      )}
+
+      {/* Two Skips, crossing over with the ground beneath them: ink on paper, then light on violet. */}
+      <button type="button" onClick={(e) => { e.stopPropagation(); skip(); }} style={skipStyle(gone ? 0 : 1, '#6a6472')}>Skip</button>
+      <button type="button" onClick={(e) => { e.stopPropagation(); skip(); }} style={skipStyle(gone ? 1 : 0, '#cabfe0')}>Skip</button>
     </div>
   );
 }
