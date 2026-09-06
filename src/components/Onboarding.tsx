@@ -134,7 +134,7 @@ export default function Onboarding({ onStart, onDone }: { onStart: () => void; o
         <div style={{ position: 'absolute', inset: 0, animation: 'lua-dim 400ms linear both' }}>
           <img
             src={ob1} alt="" draggable={false}
-            style={{ position: 'absolute', left: 0, right: 0, top: 0, height: imageH(1), objectFit: 'cover', objectPosition: 'center 89%', display: 'block' }}
+            style={{ position: 'absolute', left: 0, right: 0, top: 0, width: '100%', height: imageH(1), objectFit: 'cover', objectPosition: 'center 89%', display: 'block' }}
           />
           <div style={{ position: 'absolute', left: 0, right: 0, top: seamTop(1), height: 96, background: 'linear-gradient(rgba(244,239,230,0),#F4EFE6 74%)' }} />
 
@@ -164,7 +164,7 @@ export default function Onboarding({ onStart, onDone }: { onStart: () => void; o
         <div style={{ position: 'absolute', inset: 0, animation: 'lua-dim 400ms linear both' }}>
           <img
             src={ob2} alt="" draggable={false}
-            style={{ position: 'absolute', left: 0, right: 0, top: 0, height: imageH(2), objectFit: 'cover', objectPosition: 'center 72%', display: 'block' }}
+            style={{ position: 'absolute', left: 0, right: 0, top: 0, width: '100%', height: imageH(2), objectFit: 'cover', objectPosition: 'center 72%', display: 'block' }}
           />
           <div style={{ position: 'absolute', left: 0, right: 0, top: seamTop(2), height: 96, background: 'linear-gradient(rgba(244,239,230,0),#F4EFE6 74%)' }} />
 
@@ -192,7 +192,7 @@ export default function Onboarding({ onStart, onDone }: { onStart: () => void; o
         <div style={{ position: 'absolute', inset: 0, animation: 'lua-dim 400ms linear both' }}>
           <img
             src={ob2} alt="" draggable={false}
-            style={{ position: 'absolute', left: 0, right: 0, top: 0, height: imageH(3), objectFit: 'cover', objectPosition: 'center 72%', display: 'block' }}
+            style={{ position: 'absolute', left: 0, right: 0, top: 0, width: '100%', height: imageH(3), objectFit: 'cover', objectPosition: 'center 72%', display: 'block' }}
           />
           <div style={{ position: 'absolute', left: 0, right: 0, top: seamTop(3), height: 96, background: 'linear-gradient(rgba(244,239,230,0),#F4EFE6 74%)' }} />
 
