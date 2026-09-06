@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { trackOnboarding } from '../lib/analytics';
 import { useStageLayout } from '../lib/layout';
 import ob1 from '../assets/ob-1-ruins.jpeg';
@@ -18,16 +18,22 @@ const EASE = 'cubic-bezier(.28,1,.34,1)';
 // of the 874px design reference (see lib/layout.ts). Text wraps identically
 // regardless of stageH since the width never changes, so the room the text
 // block and button row below the photo need is constant per screen — only
-// the photo should give up height on a short stage. That room isn't the same
-// across screens, though: screen one's two paragraphs need far more of it
-// than screen three's single line, so reserving screen one's worst case for
-// every screen (as an earlier pass did) left two and three with a
-// needlessly cramped photo. RESERVE below is gap(19) + measured text-block
-// height + button row(121), per screen, each rounded up a few px for
-// safety.
+// the photo should give up height on a short stage.
+//
+// That room used to be a hand-measured constant per screen, tuned against
+// this one browser's font metrics. Real devices render the same text taller
+// or shorter (different font-hinting, different fallback fonts while
+// Newsreader/Source Sans load), so a fixed number was always one bad render
+// away from either wasting space or — worse — running the text into the
+// button row beneath it, which is exactly what happened here. The text
+// block is now measured for real via ResizeObserver, per screen, and the
+// constants below are only the guess used for the very first paint before
+// that measurement lands.
 const IMAGE_H_MAX = 443;
 const IMAGE_H_MIN = 240;
-const RESERVE: Record<OnboardScreen, number> = { 1: 400, 2: 340, 3: 185 };
+const GAP_BELOW_IMAGE = 19;
+const BUTTON_ROW_H = 121;
+const FALLBACK_TEXT_H: Record<OnboardScreen, number> = { 1: 260, 2: 200, 3: 45 };
 
 function Grain() {
   return (
@@ -61,6 +67,24 @@ export default function Onboarding({ onStart, onDone }: { onStart: () => void; o
 
   const reducedRef = useRef(false);
   const typeTimer = useRef<number | undefined>(undefined);
+  const textRef = useRef<HTMLDivElement>(null);
+  const [textH, setTextH] = useState<Partial<Record<OnboardScreen, number>>>({});
+
+  // The paragraphs are always in the DOM (opacity toggles them, layout keeps
+  // them), so the block's real height is stable and measurable from first
+  // mount — no need to wait for typing to finish.
+  useLayoutEffect(() => {
+    const el = textRef.current;
+    if (!el) return;
+    const measure = () => {
+      const h = el.offsetHeight;
+      setTextH(prev => (prev[screen] === h ? prev : { ...prev, [screen]: h }));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [screen]);
 
   function typeHead(s: OnboardScreen) {
     clearTimeout(typeTimer.current);
@@ -113,9 +137,12 @@ export default function Onboarding({ onStart, onDone }: { onStart: () => void; o
     onDone();
   }
 
-  const imageH = (s: OnboardScreen) => Math.max(IMAGE_H_MIN, Math.min(IMAGE_H_MAX, stageH - RESERVE[s]));
+  const imageH = (s: OnboardScreen) => {
+    const t = textH[s] ?? FALLBACK_TEXT_H[s];
+    return Math.max(IMAGE_H_MIN, Math.min(IMAGE_H_MAX, stageH - GAP_BELOW_IMAGE - t - BUTTON_ROW_H));
+  };
   const seamTop = (s: OnboardScreen) => imageH(s) - 80;
-  const textTop = (s: OnboardScreen) => imageH(s) + 19;
+  const textTop = (s: OnboardScreen) => imageH(s) + GAP_BELOW_IMAGE;
 
   const headline = (s: OnboardScreen) => (
     <span style={{ color: '#2A2724' }}>
@@ -138,7 +165,7 @@ export default function Onboarding({ onStart, onDone }: { onStart: () => void; o
           />
           <div style={{ position: 'absolute', left: 0, right: 0, top: seamTop(1), height: 96, background: 'linear-gradient(rgba(244,239,230,0),#F4EFE6 74%)' }} />
 
-          <div onClick={finishTyping} style={{ position: 'absolute', left: 26, right: 26, top: textTop(1), cursor: 'pointer' }}>
+          <div ref={textRef} onClick={finishTyping} style={{ position: 'absolute', left: 26, right: 26, top: textTop(1), cursor: 'pointer' }}>
             <h1 style={{ margin: '0 0 18px', font: '400 30px/1.2 Newsreader,Georgia,serif', letterSpacing: '-.011em', textWrap: 'pretty' }}>
               {headline(1)}
             </h1>
@@ -168,7 +195,7 @@ export default function Onboarding({ onStart, onDone }: { onStart: () => void; o
           />
           <div style={{ position: 'absolute', left: 0, right: 0, top: seamTop(2), height: 96, background: 'linear-gradient(rgba(244,239,230,0),#F4EFE6 74%)' }} />
 
-          <div onClick={finishTyping} style={{ position: 'absolute', left: 26, right: 26, top: textTop(2), cursor: 'pointer' }}>
+          <div ref={textRef} onClick={finishTyping} style={{ position: 'absolute', left: 26, right: 26, top: textTop(2), cursor: 'pointer' }}>
             <h1 style={{ margin: '0 0 18px', font: '400 30px/1.2 Newsreader,Georgia,serif', letterSpacing: '-.011em', textWrap: 'pretty' }}>
               {headline(2)}
             </h1>
@@ -196,7 +223,7 @@ export default function Onboarding({ onStart, onDone }: { onStart: () => void; o
           />
           <div style={{ position: 'absolute', left: 0, right: 0, top: seamTop(3), height: 96, background: 'linear-gradient(rgba(244,239,230,0),#F4EFE6 74%)' }} />
 
-          <div onClick={finishTyping} style={{ position: 'absolute', left: 26, right: 26, top: textTop(3), cursor: 'pointer' }}>
+          <div ref={textRef} onClick={finishTyping} style={{ position: 'absolute', left: 26, right: 26, top: textTop(3), cursor: 'pointer' }}>
             <h1 style={{ margin: 0, font: '400 30px/1.2 Newsreader,Georgia,serif', letterSpacing: '-.011em', textWrap: 'pretty' }}>
               {headline(3)}
             </h1>
