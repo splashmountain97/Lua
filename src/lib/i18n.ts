@@ -15,12 +15,28 @@
 
 export type Lang = 'en' | 'pt';
 
+/**
+ * What is stored, which is not the same as what is rendered.
+ *
+ * 'system' is a real, selectable state rather than the absence of one: without
+ * it there is no way back to following the device once someone has overridden
+ * it, and "unset" is not something a settings row can offer. It is represented
+ * by the absence of the key, so a reader who has never chosen is already on it.
+ */
+export type LangPref = 'system' | Lang;
+
 /** One string in both languages. Both are required; there is no partial entry. */
 export interface Localized { en: string; pt: string }
 
-export const LANGS: { id: Lang; label: string }[] = [
+/**
+ * The languages, named in themselves. 'English' is always "English" and
+ * 'Português' always "Português", never "Portuguese" — a language name is not
+ * UI copy and does not translate. `note` is the region it is written for, as
+ * text: a flag would be a country, and Português is spoken in several.
+ */
+export const LANGS: { id: Lang; label: string; note?: string }[] = [
   { id: 'en', label: 'English' },
-  { id: 'pt', label: 'Português' },
+  { id: 'pt', label: 'Português', note: 'Brasil' },
 ];
 
 /** Resolve one entry. The whole runtime cost of this module. */
@@ -78,18 +94,47 @@ export function langFromPath(): Lang | null {
  * to storage, so it steers this visit only.
  */
 export function getLang(): Lang {
+  return resolveLang(getLangPref());
+}
+
+/** The stored choice, or 'system' when there has never been one. */
+export function getLangPref(): LangPref {
   try {
     const raw = localStorage.getItem(LANG_KEY);
     if (isLang(raw)) return raw;
   } catch { /* private mode */ }
-  return langFromPath() ?? detectLang();
+  return 'system';
+}
+
+/**
+ * A preference as an actual language to render in. Only 'system' consults the
+ * link and the device; a stored choice is returned untouched, which is what
+ * makes it outrank both.
+ */
+export function resolveLang(pref: LangPref): Lang {
+  return pref === 'system' ? langFromPath() ?? detectLang() : pref;
 }
 
 export function saveLang(lang: Lang) {
   try { localStorage.setItem(LANG_KEY, lang); } catch { /* private mode */ }
 }
 
+/**
+ * Back to following the device. The key is removed rather than set to a
+ * sentinel, so 'system' stays the one state that is written down nowhere and
+ * a reader who has never chosen is indistinguishable from one who chose it.
+ */
+export function clearLang() {
+  try { localStorage.removeItem(LANG_KEY); } catch { /* private mode */ }
+}
+
+/** Store a preference, whichever of the three it is. */
+export function saveLangPref(pref: LangPref) {
+  if (pref === 'system') clearLang();
+  else saveLang(pref);
+}
+
 /** Whether the reader has ever chosen for themselves — see openShared in useLua. */
 export function hasChosenLang(): boolean {
-  try { return isLang(localStorage.getItem(LANG_KEY)); } catch { return false; }
+  return getLangPref() !== 'system';
 }

@@ -41,6 +41,14 @@ button { font-family: inherit; }
   outline-offset: 2px;
 }
 
+/* The app is drawn for a thumb and carries no hover state anywhere else. The
+   settings sheet is a list of rows, though, and a list read with a pointer
+   wants to say which row the pointer is on — so this one lift exists, and only
+   where there is a real pointer to lift under. */
+@media (hover: hover) {
+  [data-lua-row]:hover { background: rgba(233, 237, 245, .02); }
+}
+
 @keyframes lua-jitter {
   0%   { transform: translate3d(0,0,0) rotate(0deg); }
   18%  { transform: translate3d(-3.5px,1.5px,0) rotate(-1.1deg); }
@@ -67,5 +75,7 @@ button { font-family: inherit; }
 @keyframes lua-rise { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: none; } }
 @keyframes lua-dim { from { opacity: 0; } to { opacity: 1; } }
 @keyframes lua-slide { from { transform: translateX(-100%); } to { transform: none; } }
+/* The settings sheet, up from the bottom edge it is anchored to. */
+@keyframes lua-sheet { from { transform: translateY(100%); } to { transform: none; } }
 @keyframes lua-blink { 0%,49% { opacity: 1; } 50%,100% { opacity: 0; } }
 @keyframes lua-hint { 0%,100% { opacity: .32; } 50% { opacity: .72; } }

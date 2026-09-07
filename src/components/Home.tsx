@@ -8,6 +8,7 @@ import { moonPhase } from '../lib/streak';
 import Spotlight from './Spotlight';
 import WriteModal from './WriteModal';
 import SavedPanel from './SavedPanel';
+import SettingsSheet from './SettingsSheet';
 import Wall from './Wall';
 import { DAY_CAP, SAVE_CAP, DAY_COUNTER_FROM, dayLabel } from '../lib/limits';
 import { setSafeToUpdate } from '../lib/updates';
@@ -44,6 +45,7 @@ export default function Home({ lua }: { lua: Lua }) {
   const wallFromRef = useRef<HTMLButtonElement>(null);
   const shareRef = useRef<HTMLButtonElement>(null);
   const streakRef = useRef<HTMLButtonElement>(null);
+  const gearRef = useRef<HTMLButtonElement>(null);
   const weightsRef = useRef<HTMLDivElement>(null);
   const ph = state.phase;
   // The number is what is still put aside, matching the panel's own 'Saved'
@@ -110,7 +112,7 @@ export default function Home({ lua }: { lua: Lua }) {
   // someone read their streak, and without the cleanup that claim would
   // outlive the component that made it.
   const atRest = state.screen === 'home' && ph === 'idle' && !state.wall
-    && !state.panelOpen && state.writeModal === null && !state.infoOpen;
+    && !state.panelOpen && !state.settingsOpen && state.writeModal === null && !state.infoOpen;
   useEffect(() => {
     setSafeToUpdate(atRest);
     return () => setSafeToUpdate(false);
@@ -125,15 +127,16 @@ export default function Home({ lua }: { lua: Lua }) {
         pointerEvents: v.chrome > .8 ? 'auto' : 'none',
         transition: `opacity ${Math.round(dur * 0.5)}ms linear`,
       }}>
-        {/* The mirror of the streak button in the opposite corner: two quiet
-            counters, one composition, no new pattern. It used to hide at zero,
-            which cannot survive being pointed at during the first run: a
-            control explained and then gone is worse than one showing nothing
-            yet. */}
+        {/* Leftmost of the three, and no longer a mirror of anything: the
+            header used to be two counters in opposite corners with the day
+            count between them, and the day count has gone. What is left groups
+            in one corner rather than staying spread across a row it no longer
+            fills. It still survives a zero — a control explained during the
+            first run and then gone is worse than one showing nothing yet. */}
         {(saved.length > 0 || introStep >= INTRO.saved) && (
           <button ref={savedRef} type="button" onClick={actions.openPanel}
             aria-label={t(UI.home.savedAria(savedCount))} style={{
-              position: 'absolute', top: 70, left: 14,
+              position: 'absolute', top: 70, right: 106,
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
               width: 46, height: 46, background: 'none', border: 0, padding: 0, cursor: 'pointer',
               color: savedFull ? 'rgba(242,193,78,.85)' : '#9397ab',
@@ -145,13 +148,6 @@ export default function Home({ lua }: { lua: Lua }) {
           </button>
         )}
 
-        {/* A third quiet counter, centred between the other two, so the row
-            reads as three of a kind rather than a new sort of thing. */}
-        <div style={{
-          position: 'absolute', top: 78, left: 0, right: 0, textAlign: 'center',
-          pointerEvents: 'none', ...dayCounter,
-        }}>{t(dayLabel(dayUsed))}</div>
-
         {/* Placed by its own corner rather than by a full-width flex row. The
             row was invisible but 402 wide, sat at the same height as the
             bookmark in the opposite corner, and came after it — so it took
@@ -160,7 +156,7 @@ export default function Home({ lua }: { lua: Lua }) {
             the bookmark shook the moon instead. */}
         <button ref={streakRef} type="button" onClick={actions.goStreak}
           aria-label={t(UI.home.streakAria(streakDays))} style={{
-            position: 'absolute', top: 70, right: 14,
+            position: 'absolute', top: 70, right: 60,
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
             width: 46, height: 46, background: 'none', border: 0, padding: 0, cursor: 'pointer',
           }}>
@@ -173,6 +169,33 @@ export default function Home({ lua }: { lua: Lua }) {
               font: '15px/1 "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif',
             }}>{moonPhase(streakDays)}</span>
           <span style={{ font: '400 10px/1 ui-monospace,Menlo,monospace', color: '#9397ab', letterSpacing: '.02em' }}>{streakDays}d</span>
+        </button>
+
+        {/* The three 46px boxes tile edge to edge, so the corner reads as one
+            control group rather than three separate ones. The gear holds the
+            corner but is a step dimmer than the counters beside it — same
+            family, lower rank, so it never competes for a glance.
+
+            Aligned by its glyph rather than by its box: centring the box lines
+            the cog up with the 10px counter labels and reads as crooked, so it
+            sits to the top and pads down onto the streak's moon instead. */}
+        <button ref={gearRef} type="button" onClick={actions.openSettings}
+          aria-label={t(UI.settings.title)} title={t(UI.settings.title)} style={{
+            position: 'absolute', top: 70, right: 14,
+            display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
+            width: 46, height: 46, padding: '7px 0 0',
+            background: 'none', border: 0, cursor: 'pointer',
+            color: state.settingsOpen ? '#b2b6ca' : '#75798c',
+            transition: 'color .2s',
+          }}>
+          {/* Not Phosphor's gear, which Nocturne otherwise specifies: its thin
+              spokes collapse at 18px and read as a sun. Six wide, shallow teeth
+              on a thick body survive the size — outer radius 10.4 against a
+              root of 7.9, so the teeth are only 2.5 deep. */}
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" aria-hidden="true">
+            <path d="M8.54 4.90L9.13 2.00L14.87 2.00L15.46 4.90A7.9 7.9 0 0 1 16.42 5.45L19.22 4.52L22.09 9.48L19.88 11.45A7.9 7.9 0 0 1 19.88 12.55L22.09 14.52L19.22 19.48L16.42 18.55A7.9 7.9 0 0 1 15.46 19.10L14.87 22.00L9.13 22.00L8.54 19.10A7.9 7.9 0 0 1 7.58 18.55L4.78 19.48L1.91 14.52L4.12 12.55A7.9 7.9 0 0 1 4.12 11.45L1.91 9.48L4.78 4.52L7.58 5.45A7.9 7.9 0 0 1 8.54 4.90Z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
         </button>
 
         <div style={{ position: 'absolute', top: titleY, left: 0, right: 0, textAlign: 'center', padding: '0 32px' }}>
@@ -541,6 +564,12 @@ export default function Home({ lua }: { lua: Lua }) {
         onRestore={actions.restoreSaved}
         onCommit={actions.commitSaved}
         returnFocusRef={savedRef}
+      />
+
+      <SettingsSheet
+        open={state.settingsOpen}
+        onClose={actions.closeSettings}
+        returnFocusRef={gearRef}
       />
 
       <WriteModal

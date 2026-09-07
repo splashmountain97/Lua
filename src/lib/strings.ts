@@ -246,4 +246,31 @@ export const UI = {
     copyFailed: L('Couldn’t copy', 'Não deu para copiar'),
     savedForLater: L('Saved for later', 'Salva para depois'),
   },
+
+  settings: {
+    title: L('Settings', 'Ajustes'),
+    close: L('Close', 'Fechar'),
+    language: L('Language', 'Idioma'),
+    // Language names themselves are not here: English is always 'English' and
+    // Português always 'Português', in either interface — see LANGS. Only
+    // 'Automatic' and its note are UI copy, and so only they translate.
+    auto: L('Automatic', 'Automático'),
+    autoNote: (name: string) => L(
+      `Follows your device — ${name}`,
+      `Segue o seu aparelho — ${name}`,
+    ),
+    // The row's value says the outcome, not the mechanism: someone on
+    // Automatic wants to know which language they are actually getting.
+    autoValue: (name: string) => L(
+      `Automatic · ${name}`,
+      `Automático · ${name}`,
+    ),
+    // Settings is where people go looking for account and data controls. Lua's
+    // answer is that there are none, and saying so is more useful than an
+    // empty section.
+    footer: L(
+      'Nothing here leaves your device. There is no account to manage.',
+      'Nada daqui sai do seu aparelho. Não existe conta para gerenciar.',
+    ),
+  },
 } as const;

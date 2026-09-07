@@ -44,6 +44,8 @@ interface LuaState {
   writeTip: string;
   /** Whether the saved drawer is open. */
   panelOpen: boolean;
+  /** Whether the settings sheet is up. */
+  settingsOpen: boolean;
   /** Which door of the wall is up, if any. Nothing here unlocks anything. */
   wall: Door | null;
   /** The nudge above the moon, in the slot 'Ready to begin?' used to hold. */
@@ -144,6 +146,7 @@ export function useLua() {
     writeModal: null,
     writeTip: WRITE_TIPS[startLang][0],
     panelOpen: false,
+    settingsOpen: false,
     wall: null,
     idleLine: IDLE_FIRST[startLang][0],
     tipLine: IDLE_TIPS[startLang][0],
@@ -231,6 +234,29 @@ export function useLua() {
       tipLine: drawLine(IDLE_TIPS[lang], s.tipLine),
     });
   }
+
+  // The two lines on the resting screen are drawn once and then held as text,
+  // so a language chosen in the settings sheet would leave them behind in the
+  // old one — the sheet sits over the very screen they are on, which is the
+  // worst place to leave a stale sentence.
+  //
+  // They are re-drawn rather than looked up by position: the pools are not
+  // parallel between languages (SETTLING has five lines in English and three
+  // in Portuguese), so an index means different things in each. These pools
+  // rotate at random on every open anyway, so a different line is exactly what
+  // they already do. The first run is skipped, or this would immediately undo
+  // the draw the mount effect below just made.
+  const langRef = useRef(lang);
+  useEffect(() => {
+    if (langRef.current === lang) return;
+    langRef.current = lang;
+    const s = stateRef.current;
+    patch({
+      idleLine: drawLine((hasOpenedBefore() ? IDLE_RETURN : IDLE_FIRST)[lang], s.idleLine),
+      tipLine: drawLine(IDLE_TIPS[lang], s.tipLine),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lang]);
 
   // A returning user skips the welcome screen (and so never calls
   // rollIdleLine via askMotion) — roll the real line once on mount instead of
@@ -638,6 +664,17 @@ export function useLua() {
     patch(s => { savePrefs({ selected: s.selected, weight: w }); return { weight: w, infoOpen: null }; });
   }
 
+  // The language itself is not held here: it lives in LangProvider, so every
+  // screen reads one source and the sheet writes straight through to it.
+  function openSettings(e?: React.SyntheticEvent) {
+    e?.stopPropagation();
+    patch({ settingsOpen: true, infoOpen: null });
+  }
+
+  function closeSettings() {
+    patch({ settingsOpen: false });
+  }
+
   function goStreak(e?: React.SyntheticEvent) { e?.stopPropagation(); go('streak'); }
   function goHome() { rollIdleLine(); go('home', 'idle'); }
   function doUnlock() { persistUnlocked(true); patch({ unlocked: true }); go('home', 'idle'); }
@@ -649,7 +686,7 @@ export function useLua() {
       toggleCategory, toggleInfo, setWeight, goStreak, goHome, doUnlock, writeItDown, openShared,
       closeWrite, copyFromModal,
       saveCurrent, toggleDone, removeSaved, restoreSaved, commitSaved, openPanel, closePanel,
-      openWall, closeWall, joinWaitlist,
+      openWall, closeWall, joinWaitlist, openSettings, closeSettings,
       dismissCoach, advanceIntro, dismissShareCoach, dismissStreakCoach,
     },
   };

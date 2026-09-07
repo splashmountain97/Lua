@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { getLang, saveLang, type Lang } from '../lib/i18n';
+import { getLangPref, resolveLang, saveLangPref, type Lang, type LangPref } from '../lib/i18n';
 import { LangContext, langValue } from './useLang';
 
 /**
@@ -14,19 +14,23 @@ import { LangContext, langValue } from './useLang';
 const htmlLang = (lang: Lang) => (lang === 'pt' ? 'pt-BR' : 'en');
 
 export function LangProvider({ children }: { children: React.ReactNode }) {
-  const [lang, setLangState] = useState<Lang>(() => {
-    const initial = getLang();
-    if (typeof document !== 'undefined') document.documentElement.lang = htmlLang(initial);
+  // The preference is the state; the language is derived from it. Holding the
+  // language instead would lose the difference between following the device
+  // and having chosen whatever the device happens to say.
+  const [pref, setPrefState] = useState<LangPref>(() => {
+    const initial = getLangPref();
+    if (typeof document !== 'undefined') document.documentElement.lang = htmlLang(resolveLang(initial));
     return initial;
   });
 
-  const setLang = useCallback((next: Lang) => {
-    setLangState(next);
-    saveLang(next);
-    if (typeof document !== 'undefined') document.documentElement.lang = htmlLang(next);
+  const setPref = useCallback((next: LangPref) => {
+    setPrefState(next);
+    saveLangPref(next);
+    if (typeof document !== 'undefined') document.documentElement.lang = htmlLang(resolveLang(next));
   }, []);
 
-  const value = useMemo(() => langValue(lang, setLang), [lang, setLang]);
+  const lang = resolveLang(pref);
+  const value = useMemo(() => langValue(lang, pref, setPref), [lang, pref, setPref]);
 
   return <LangContext value={value}>{children}</LangContext>;
 }
