@@ -1,4 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
+import { useLang } from '../hooks/useLang';
+import { UI } from '../lib/strings';
+import type { Localized } from '../lib/i18n';
 import moonBody from '../assets/moon-body.png';
 import glassSwirl from '../assets/glass-swirl.png';
 
@@ -10,12 +13,8 @@ export type Door = 'life' | 'world' | 'day' | 'save';
 // sentence does not hold: nothing is being unlocked and the count comes back on
 // its own tomorrow, so an email offering to announce *that* is worthless and
 // the reader knows it. The limit doors promise the limit's removal instead.
-const LOCKED = 'This one’s still behind the moon. Leave your email and we’ll let you know the moment it unlocks.';
-const lifts = (what: string) =>
-  `${what} — for now. Leave your email and we’ll let you know the moment that limit goes away.`;
-
 interface DoorCopy {
-  kicker: string; head: string; body: string; cta: string; dismiss: string;
+  kicker: Localized; head: Localized; body: Localized; cta: Localized; dismiss: Localized;
 }
 
 // The promise is identical whichever gate you hit, so it cannot read as four
@@ -25,22 +24,22 @@ interface DoorCopy {
 // is the one gate where the thing refused arrives by itself.
 const DOORS: Record<Door, DoorCopy> = {
   life: {
-    kicker: 'Life · not open yet', head: 'Not open yet', body: LOCKED,
-    cta: 'Tell me when it opens', dismiss: 'Stay with Self for now',
+    kicker: UI.wall.kickerLife, head: UI.wall.headNotOpen, body: UI.wall.locked,
+    cta: UI.wall.ctaOpens, dismiss: UI.wall.dismissCategory,
   },
   world: {
-    kicker: 'Beyond You · not open yet', head: 'Not open yet', body: LOCKED,
-    cta: 'Tell me when it opens', dismiss: 'Stay with Self for now',
+    kicker: UI.wall.kickerWorld, head: UI.wall.headNotOpen, body: UI.wall.locked,
+    cta: UI.wall.ctaOpens, dismiss: UI.wall.dismissCategory,
   },
   day: {
-    kicker: 'Five a day · free limit', head: 'Come back tomorrow',
-    body: lifts('Five questions a day is the free limit'),
-    cta: 'Tell me when it lifts', dismiss: 'That’s enough for today',
+    kicker: UI.wall.kickerDay, head: UI.wall.headDay,
+    body: UI.wall.lifts(UI.wall.limitDay),
+    cta: UI.wall.ctaLifts, dismiss: UI.wall.dismissDay,
   },
   save: {
-    kicker: 'Twenty saved · free limit', head: 'Full — for now',
-    body: lifts('Twenty saved is the free limit'),
-    cta: 'Tell me when it lifts', dismiss: 'I’ll clear a few first',
+    kicker: UI.wall.kickerSave, head: UI.wall.headSave,
+    body: UI.wall.lifts(UI.wall.limitSave),
+    cta: UI.wall.ctaLifts, dismiss: UI.wall.dismissSave,
   },
 };
 
@@ -69,6 +68,7 @@ interface WallProps {
 //
 // It renders inside the canvas rather than a portal: the stage is scaled.
 export default function Wall({ door, onClose, onJoin, returnFocusRef }: WallProps) {
+  const { t } = useLang();
   const cardRef = useRef<HTMLDivElement>(null);
   const fieldRef = useRef<HTMLInputElement>(null);
   const openRef = useRef<Door | null>(null);
@@ -119,7 +119,7 @@ export default function Wall({ door, onClose, onJoin, returnFocusRef }: WallProp
     if (!door) return;
     const value = email.trim();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value)) {
-      setNote(value ? 'That address looks incomplete — mind checking it?' : 'An address first, then we can tell you.');
+      setNote(t(value ? UI.wall.noteBadAddress : UI.wall.noteNoAddress));
       return;
     }
     setNote('');
@@ -144,7 +144,7 @@ export default function Wall({ door, onClose, onJoin, returnFocusRef }: WallProp
         ref={cardRef}
         role="dialog"
         aria-modal="true"
-        aria-label={copy.kicker}
+        aria-label={t(copy.kicker)}
         onPointerDown={(e) => e.stopPropagation()}
         style={{
           position: 'absolute', zIndex: 41, left: 22, right: 22, top: '50%',
@@ -187,32 +187,32 @@ export default function Wall({ door, onClose, onJoin, returnFocusRef }: WallProp
         <div style={{
           font: '500 9.5px/1 ui-monospace,Menlo,monospace', letterSpacing: '.16em',
           textTransform: 'uppercase', color: '#75798c', textAlign: 'center', margin: '0 0 12px',
-        }}>{copy.kicker}</div>
+        }}>{t(copy.kicker)}</div>
 
         {sent ? (
           <>
             <h2 style={{ margin: '0 0 11px', font: '300 26px/1.2 Inter,sans-serif', letterSpacing: '-.03em', color: '#f0eef2', textAlign: 'center' }}>
-              You’re on the list
+              {t(UI.wall.onList)}
             </h2>
             {/* The second sentence is the point: the app's whole promise is that
                 it keeps nothing, so the one time it asks for something it says
                 what it will and will not do with it. */}
             <p style={{ margin: '0 0 22px', font: '400 13.5px/1.62 Inter,sans-serif', color: '#b2b6ca', textAlign: 'center', textWrap: 'pretty' }}>
-              One message, when that happens. Nothing else — that hasn’t changed.
+              {t(UI.wall.onListBody)}
             </p>
             <button type="button" onClick={close} style={{
               width: '100%', height: 48, borderRadius: 100, cursor: 'pointer',
               border: '1px solid rgba(145,132,217,.55)', background: 'rgba(145,132,217,.08)',
               color: '#d2cefd', font: '400 14.5px/1 Inter,sans-serif', letterSpacing: '.02em',
-            }}>Back to your question</button>
+            }}>{t(UI.wall.backToQuestion)}</button>
           </>
         ) : (
           <>
             <h2 style={{ margin: '0 0 11px', font: '300 26px/1.2 Inter,sans-serif', letterSpacing: '-.03em', color: '#f0eef2', textAlign: 'center' }}>
-              {copy.head}
+              {t(copy.head)}
             </h2>
             <p style={{ margin: '0 0 20px', font: '400 13.5px/1.62 Inter,sans-serif', color: '#b2b6ca', textAlign: 'center', textWrap: 'pretty' }}>
-              {copy.body}
+              {t(copy.body)}
             </p>
 
             <input
@@ -220,8 +220,8 @@ export default function Wall({ door, onClose, onJoin, returnFocusRef }: WallProp
               type="email"
               inputMode="email"
               autoComplete="email"
-              placeholder="you@example.com"
-              aria-label="Email address"
+              placeholder={t(UI.wall.emailPlaceholder)}
+              aria-label={t(UI.wall.emailAria)}
               aria-describedby="lua-wall-note"
               value={email}
               onChange={(e) => { setEmail(e.target.value); setNote(''); }}
@@ -243,15 +243,15 @@ export default function Wall({ door, onClose, onJoin, returnFocusRef }: WallProp
               width: '100%', height: 48, borderRadius: 100, cursor: 'pointer',
               border: '1px solid rgba(145,132,217,.55)', background: 'rgba(145,132,217,.08)',
               color: '#d2cefd', font: '400 14.5px/1 Inter,sans-serif', letterSpacing: '.02em',
-            }}>{copy.cta}</button>
+            }}>{t(copy.cta)}</button>
             <button type="button" onClick={close} style={{
               width: '100%', padding: '11px 0 2px', background: 'none', border: 0,
               cursor: 'pointer', color: '#75798c', font: '400 12px/1 Inter,sans-serif',
-            }}>{copy.dismiss}</button>
+            }}>{t(copy.dismiss)}</button>
           </>
         )}
 
-        <button type="button" onClick={close} aria-label="Close" style={{
+        <button type="button" onClick={close} aria-label={t(UI.home.close)} style={{
           position: 'absolute', top: 4, right: 4, width: 44, height: 44,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           background: 'none', border: 0, cursor: 'pointer', color: 'rgba(147,151,171,.75)',

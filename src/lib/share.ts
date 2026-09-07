@@ -1,11 +1,22 @@
 /**
+ * The two words this module can say, handed in by the caller so that nothing
+ * here has to know which language is on screen.
+ */
+export interface CopyWords { copied: string; failed: string }
+const COPY_WORDS: Record<'en', CopyWords> = {
+  en: { copied: 'Copied', failed: 'Couldn\u2019t copy' },
+};
+
+/**
  * The question id in a /q/<id> share link, if the app was opened through one.
  * The pages under /q are built at deploy time so the link previews correctly in
  * a chat app; this is how the running app recognises one and opens on that
  * question rather than a random one.
  */
 export function sharedPromptId(): number | null {
-  const path = /^\/q\/(\d+)\/?$/.exec(window.location.pathname);
+  // /q/<id> is English and /q/pt/<id> Portuguese; both name the same question.
+  // Which language it was sent in is lib/i18n's business, not this one's.
+  const path = /^\/q\/(?:pt\/)?(\d+)\/?$/.exec(window.location.pathname);
   // ?p= is accepted as well as /q/<id>, so a hand-written or hand-edited link
   // still finds its question. Links are not made this way: /q/<id> is a real
   // page built at deploy time carrying that question's own preview, and a
@@ -21,10 +32,10 @@ export function sharedPromptId(): number | null {
  * Puts text on the clipboard without opening the share sheet — for taking a
  * question away to write about, which is a private act, not a send.
  */
-export async function copyOnly(text: string, note: (t: string) => void) {
+export async function copyOnly(text: string, note: (t: string) => void, words = COPY_WORDS.en) {
   try {
     await navigator.clipboard.writeText(text);
-    note('Copied');
+    note(words.copied);
     return;
   } catch { /* fall through to the legacy path */ }
   try {
@@ -36,15 +47,16 @@ export async function copyOnly(text: string, note: (t: string) => void) {
     ta.select();
     const ok = document.execCommand('copy');
     document.body.removeChild(ta);
-    note(ok ? 'Copied' : 'Couldn\u2019t copy');
+    note(ok ? words.copied : words.failed);
   } catch {
-    note('Couldn\u2019t copy');
+    note(words.failed);
   }
 }
 
 export async function shareOrCopy(
   message: string,
   note: (text: string) => void,
+  words = COPY_WORDS.en,
 ) {
   const nav = navigator as Navigator & { share?: (data: { text: string }) => Promise<void> };
   if (nav.share) {
@@ -57,7 +69,7 @@ export async function shareOrCopy(
   }
   try {
     await navigator.clipboard.writeText(message);
-    note('Copied');
+    note(words.copied);
     return;
   } catch { /* fall through to the legacy path */ }
   try {
@@ -69,8 +81,8 @@ export async function shareOrCopy(
     ta.select();
     const ok = document.execCommand('copy');
     document.body.removeChild(ta);
-    note(ok ? 'Copied' : 'Couldn’t copy');
+    note(ok ? words.copied : words.failed);
   } catch {
-    note('Couldn’t copy');
+    note(words.failed);
   }
 }

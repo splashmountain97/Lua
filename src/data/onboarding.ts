@@ -7,22 +7,9 @@
 
 export type OnboardScreen = 1 | 2 | 3;
 
-export const HEADS: Record<OnboardScreen, string> = {
-  1: 'The question is ours. The answer is yours.',
-  2: 'Earth is loud. The moon isn’t.',
-  3: 'Ready to know yourself better?',
-};
-
-export const BODY: Record<1 | 2, [string, string]> = {
-  1: [
-    'Journaling is just answering an honest question about your own life, on purpose. People have done it for two thousand years — emperors did it, and so did people with nothing.',
-    'A few hundred questions, handpicked slowly.',
-  ],
-  2: [
-    'One question a day. Answer it on paper, in your head, or out loud — alone or with friends. You decide.',
-    'Lua keeps none of it. No account, nothing saved, nothing sent.',
-  ],
-};
+// The screens' words are not here — they are chrome, and chrome lives in
+// lib/strings beside every other line the app says, in both languages. What
+// stays is the geometry, which is the same in either.
 
 // The push-in on screen three is one transform on the helmet artwork, pivoted
 // on the visor's measured centre — a saturation scan of the source (the

@@ -6,9 +6,11 @@ import ob2 from '../assets/ob-2-walking.jpeg';
 import ob3 from '../assets/ob-3-helmet.jpeg';
 import glassSwirl from '../assets/glass-swirl.png';
 import {
-  HEADS, BODY, VISOR_ORIGIN, VISOR_BOX, CAM_REST, CAM_FULL_AT_443,
+  VISOR_ORIGIN, VISOR_BOX, CAM_REST, CAM_FULL_AT_443,
   type OnboardScreen,
 } from '../data/onboarding';
+import { useLang } from '../hooks/useLang';
+import { UI } from '../lib/strings';
 
 // Screens one and two are hand-drawn "paper" photos (ruins, moonwalk).
 // Screen three is the astronaut's own helmet: tapping Start now pushes the
@@ -68,6 +70,7 @@ function Dots({ active }: { active: 0 | 1 | 2 }) {
 }
 
 export default function Onboarding({ onStart, onDone, onReveal }: { onStart: () => void; onDone: () => void; onReveal: () => void }) {
+  const { t } = useLang();
   const { height: stageH } = useStageLayout();
   const [screen, setScreen] = useState<OnboardScreen>(1);
   const [n, setN] = useState(0);
@@ -98,7 +101,7 @@ export default function Onboarding({ onStart, onDone, onReveal }: { onStart: () 
 
   function typeHead(s: OnboardScreen) {
     clearTimeout(typeTimer.current);
-    const full = HEADS[s];
+    const full = t(UI.onboarding.heads[s]);
     if (reducedRef.current) { setN(full.length); setDone(true); return; }
     setN(0);
     setDone(false);
@@ -125,7 +128,7 @@ export default function Onboarding({ onStart, onDone, onReveal }: { onStart: () 
   // Tapping the text completes the line rather than making anyone wait it out.
   function finishTyping() {
     clearTimeout(typeTimer.current);
-    setN(HEADS[screen].length);
+    setN(t(UI.onboarding.heads[screen]).length);
     setDone(true);
   }
 
@@ -179,7 +182,7 @@ export default function Onboarding({ onStart, onDone, onReveal }: { onStart: () 
 
   const headline = (s: OnboardScreen) => (
     <span style={{ color: '#2A2724' }}>
-      {HEADS[s].slice(0, n)}
+      {t(UI.onboarding.heads[s]).slice(0, n)}
       <span style={{
         display: 'inline-block', width: 2, height: '.86em', marginLeft: 5, verticalAlign: '-.06em',
         background: '#2A2724', opacity: done ? 0 : 1,
@@ -202,8 +205,8 @@ export default function Onboarding({ onStart, onDone, onReveal }: { onStart: () 
             <h1 style={{ margin: '0 0 18px', font: '400 30px/1.2 Newsreader,Georgia,serif', letterSpacing: '-.011em', textWrap: 'pretty' }}>
               {headline(1)}
             </h1>
-            <p style={{ margin: 0, maxWidth: '55ch', font: '400 17px/1.5 "Source Sans 3",sans-serif', color: '#46423C', textWrap: 'pretty', transition: 'opacity 420ms linear', opacity: done ? 1 : 0 }}>{BODY[1][0]}</p>
-            <p style={{ margin: '10px 0 0', maxWidth: '55ch', font: '400 17px/1.5 "Source Sans 3",sans-serif', color: '#46423C', textWrap: 'pretty', transition: 'opacity 420ms linear', opacity: done ? 1 : 0 }}>{BODY[1][1]}</p>
+            <p style={{ margin: 0, maxWidth: '55ch', font: '400 17px/1.5 "Source Sans 3",sans-serif', color: '#46423C', textWrap: 'pretty', transition: 'opacity 420ms linear', opacity: done ? 1 : 0 }}>{t(UI.onboarding.body[1][0])}</p>
+            <p style={{ margin: '10px 0 0', maxWidth: '55ch', font: '400 17px/1.5 "Source Sans 3",sans-serif', color: '#46423C', textWrap: 'pretty', transition: 'opacity 420ms linear', opacity: done ? 1 : 0 }}>{t(UI.onboarding.body[1][1])}</p>
           </div>
 
           <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '0 26px 42px' }}>
@@ -212,7 +215,7 @@ export default function Onboarding({ onStart, onDone, onReveal }: { onStart: () 
               display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: 52,
               border: '1px solid rgba(42,39,36,.34)', borderRadius: 999, cursor: 'pointer', background: 'transparent',
               color: '#2A2724', font: '500 17px/1 "Source Sans 3",sans-serif', letterSpacing: '.012em',
-            }}>Continue</button>
+            }}>{t(UI.onboarding.next)}</button>
           </div>
 
           <div style={{ position: 'absolute', left: 28, top: 70, pointerEvents: 'none', font: '400 19px/1 Newsreader,Georgia,serif', letterSpacing: '.02em', color: 'rgba(42,39,36,.62)' }}>Lua</div>
@@ -232,8 +235,8 @@ export default function Onboarding({ onStart, onDone, onReveal }: { onStart: () 
             <h1 style={{ margin: '0 0 18px', font: '400 30px/1.2 Newsreader,Georgia,serif', letterSpacing: '-.011em', textWrap: 'pretty' }}>
               {headline(2)}
             </h1>
-            <p style={{ margin: 0, maxWidth: '55ch', font: '400 17px/1.5 "Source Sans 3",sans-serif', color: '#46423C', textWrap: 'pretty', transition: 'opacity 420ms linear', opacity: done ? 1 : 0 }}>{BODY[2][0]}</p>
-            <p style={{ margin: '10px 0 0', maxWidth: '55ch', font: '400 17px/1.5 "Source Sans 3",sans-serif', color: '#46423C', textWrap: 'pretty', transition: 'opacity 420ms linear', opacity: done ? 1 : 0 }}>{BODY[2][1]}</p>
+            <p style={{ margin: 0, maxWidth: '55ch', font: '400 17px/1.5 "Source Sans 3",sans-serif', color: '#46423C', textWrap: 'pretty', transition: 'opacity 420ms linear', opacity: done ? 1 : 0 }}>{t(UI.onboarding.body[2][0])}</p>
+            <p style={{ margin: '10px 0 0', maxWidth: '55ch', font: '400 17px/1.5 "Source Sans 3",sans-serif', color: '#46423C', textWrap: 'pretty', transition: 'opacity 420ms linear', opacity: done ? 1 : 0 }}>{t(UI.onboarding.body[2][1])}</p>
           </div>
 
           <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '0 26px 42px' }}>
@@ -242,7 +245,7 @@ export default function Onboarding({ onStart, onDone, onReveal }: { onStart: () 
               display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: 52,
               border: '1px solid rgba(42,39,36,.34)', borderRadius: 999, cursor: 'pointer', background: 'transparent',
               color: '#2A2724', font: '500 17px/1 "Source Sans 3",sans-serif', letterSpacing: '.012em',
-            }}>Continue</button>
+            }}>{t(UI.onboarding.next)}</button>
           </div>
           <Grain />
         </div>
@@ -309,7 +312,7 @@ export default function Onboarding({ onStart, onDone, onReveal }: { onStart: () 
               border: '1px solid rgba(42,39,36,.34)', borderRadius: 999, cursor: 'pointer', background: '#2A2724',
               color: '#F4EFE6', font: '500 17px/1 "Source Sans 3",sans-serif', letterSpacing: '.012em',
               animation: done ? `lua-rise 620ms ${EASE} both` : undefined,
-            }}>Start now</button>
+            }}>{t(UI.onboarding.start)}</button>
           </div>
           <Grain />
         </div>
@@ -321,7 +324,7 @@ export default function Onboarding({ onStart, onDone, onReveal }: { onStart: () 
         border: 0, background: 'none', cursor: pushed ? undefined : 'pointer',
         font: '400 12.5px/1 "Source Sans 3",sans-serif', letterSpacing: '.07em', color: '#6a6472',
         transition: 'opacity 240ms linear', opacity: pushed ? 0 : 1, pointerEvents: pushed ? 'none' : 'auto',
-      }}>Skip</button>
+      }}>{t(UI.onboarding.skip)}</button>
     </div>
   );
 }
