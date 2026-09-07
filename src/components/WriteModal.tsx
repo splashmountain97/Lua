@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import { useLang } from '../hooks/useLang';
+import { UI } from '../lib/strings';
 import AstronautBust from './AstronautBust';
 
 /** 1 the first time the write icon is ever tapped, 2 every time after. */
@@ -55,6 +57,7 @@ const reduced = () =>
 // stage is scaled to the viewport, and a portal would escape that and land at
 // the wrong size.
 export default function WriteModal({ tier, tip, onClose, onCopy, returnFocusRef }: WriteModalProps) {
+  const { t } = useLang();
   const cardRef = useRef<HTMLDivElement>(null);
   const openRef = useRef<WriteTier>(null);
   const [copied, setCopied] = useState(false);
@@ -123,7 +126,7 @@ export default function WriteModal({ tier, tip, onClose, onCopy, returnFocusRef 
   if (tier === null) return null;
 
   const closeButton = (style: React.CSSProperties) => (
-    <button type="button" onClick={close} aria-label="Close" style={{ ...CLOSE_BTN, ...style }}>
+    <button type="button" onClick={close} aria-label={t(UI.home.close)} style={{ ...CLOSE_BTN, ...style }}>
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
         <path d="M6.4 6.4l11.2 11.2M17.6 6.4L6.4 17.6" />
       </svg>
@@ -145,7 +148,7 @@ export default function WriteModal({ tier, tip, onClose, onCopy, returnFocusRef 
         ref={cardRef}
         role="dialog"
         aria-modal="true"
-        aria-label={tier === 1 ? 'Copied to your clipboard' : 'Still no text box'}
+        aria-label={t(tier === 1 ? UI.write.copiedAria : UI.write.stillNoBoxAria)}
         tabIndex={-1}
         onPointerDown={(e) => e.stopPropagation()}
         style={{
@@ -165,10 +168,10 @@ export default function WriteModal({ tier, tip, onClose, onCopy, returnFocusRef 
             <div style={{
               font: '400 11px/1 ui-monospace,Menlo,monospace', letterSpacing: '.08em',
               color: 'rgba(242,193,78,.8)', margin: '0 0 12px',
-            }}>Copied to your clipboard.</div>
+            }}>{t(UI.write.copiedKicker)}</div>
             <p style={{
               margin: 0, font: '400 14.5px/1.62 Inter,sans-serif', color: '#cfd3e5', textWrap: 'pretty',
-            }}>Lua’s not built for typing — paper works better for this. Paste it into your favourite notes app if you’d rather write there instead.</p>
+            }}>{t(UI.write.copiedBody)}</p>
 
             {closeButton({ top: 6, right: 6 })}
           </>
@@ -177,7 +180,7 @@ export default function WriteModal({ tier, tip, onClose, onCopy, returnFocusRef 
             <div style={{
               font: '400 11.5px/1.4 Inter,sans-serif', letterSpacing: '.01em',
               color: '#9397ab', margin: '0 0 7px', paddingRight: 34,
-            }}>Still no text box — on purpose.</div>
+            }}>{t(UI.write.stillNoBox)}</div>
             <p style={{
               margin: '0 0 18px', font: '400 15px/1.5 Inter,sans-serif',
               letterSpacing: '-.004em', color: '#cfd3e5', textWrap: 'pretty',
@@ -189,7 +192,7 @@ export default function WriteModal({ tier, tip, onClose, onCopy, returnFocusRef 
               color: copied ? 'rgba(242,193,78,.9)' : '#d2cefd',
               font: '400 13.5px/1 Inter,sans-serif', letterSpacing: '.02em',
               transition: 'all .2s',
-            }}>{copied ? 'Copied' : 'Copy to clipboard'}</button>
+            }}>{t(copied ? UI.write.copied : UI.write.copy)}</button>
 
             {closeButton({ top: 2, right: 2 })}
           </>

@@ -12,6 +12,8 @@ import Wall from './Wall';
 import { DAY_CAP, SAVE_CAP, DAY_COUNTER_FROM, dayLabel } from '../lib/limits';
 import { setSafeToUpdate } from '../lib/updates';
 import { INTRO, type useLua } from '../hooks/useLua';
+import { useLang } from '../hooks/useLang';
+import { UI } from '../lib/strings';
 
 type Lua = ReturnType<typeof useLua>;
 
@@ -31,6 +33,7 @@ const wdotStyle = (i: number, pw: number): React.CSSProperties => ({
 
 export default function Home({ lua }: { lua: Lua }) {
   const { state, streakDays, introStep, saved, dayUsed, quiet, actions } = lua;
+  const { lang, t } = useLang();
   const { titleY, moonCY, lineY, height: stageH } = useStageLayout();
   const promptRef = useRef<HTMLDivElement>(null);
   const catsRef = useRef<HTMLDivElement>(null);
@@ -65,8 +68,8 @@ export default function Home({ lua }: { lua: Lua }) {
   // this over breakfast as readily as at midnight, so 'today' and 'tomorrow'
   // are the only safe ones.
   const dayNote = daySpent
-    ? 'That’s five today. Come back tomorrow.'
-    : dayUsed === DAY_CAP - 1 ? 'One question left today.' : null;
+    ? t(UI.home.dayAllSpent)
+    : dayUsed === DAY_CAP - 1 ? t(UI.home.dayOneLeft) : null;
   const lockGlyph = (size: number, w: number) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={w} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <rect x="4.5" y="10.5" width="15" height="10" rx="1.6" />
@@ -88,7 +91,8 @@ export default function Home({ lua }: { lua: Lua }) {
   const swirlBlur = 1 + state.energy * 3.2;
   const prompt = PROMPTS[state.promptIx];
   const pw = prompt.w;
-  const promptLen = prompt.t.length;
+  const promptText = prompt.t[lang];
+  const promptLen = promptText.length;
   const promptFs = promptLen > 92 ? 21.5 : promptLen > 74 ? 23.5 : promptLen > 56 ? 26 : promptLen > 38 ? 28 : 31;
   const dur = v.dur;
   // The slot that held 'Ready to begin?' now rotates through the nudges, at the
@@ -128,7 +132,7 @@ export default function Home({ lua }: { lua: Lua }) {
             yet. */}
         {(saved.length > 0 || introStep >= INTRO.saved) && (
           <button ref={savedRef} type="button" onClick={actions.openPanel}
-            aria-label={`Saved questions: ${savedCount}`} style={{
+            aria-label={t(UI.home.savedAria(savedCount))} style={{
               position: 'absolute', top: 70, left: 14,
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
               width: 46, height: 46, background: 'none', border: 0, padding: 0, cursor: 'pointer',
@@ -146,7 +150,7 @@ export default function Home({ lua }: { lua: Lua }) {
         <div style={{
           position: 'absolute', top: 78, left: 0, right: 0, textAlign: 'center',
           pointerEvents: 'none', ...dayCounter,
-        }}>{dayLabel(dayUsed)}</div>
+        }}>{t(dayLabel(dayUsed))}</div>
 
         {/* Placed by its own corner rather than by a full-width flex row. The
             row was invisible but 402 wide, sat at the same height as the
@@ -155,7 +159,7 @@ export default function Home({ lua }: { lua: Lua }) {
             button, it also passed the stage's tap test, and a tap meant for
             the bookmark shook the moon instead. */}
         <button ref={streakRef} type="button" onClick={actions.goStreak}
-          aria-label={`Streak: ${streakDays} ${streakDays === 1 ? 'day' : 'days'}`} style={{
+          aria-label={t(UI.home.streakAria(streakDays))} style={{
             position: 'absolute', top: 70, right: 14,
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
             width: 46, height: 46, background: 'none', border: 0, padding: 0, cursor: 'pointer',
@@ -190,17 +194,17 @@ export default function Home({ lua }: { lua: Lua }) {
               animation: 'lua-rise .18s cubic-bezier(.33,1,.68,1) both',
             }}>
               <div style={{ font: '500 10px/1 ui-monospace,Menlo,monospace', letterSpacing: '.1em', textTransform: 'uppercase', color: '#9184d9', marginBottom: 5 }}>
-                {infoCat.label}
+                {t(infoCat.label)}
               </div>
               <div style={{ font: '400 11.5px/1.55 Inter,sans-serif', color: '#cfd3e5' }}>
-                {infoCat.desc}
+                {t(infoCat.desc)}
               </div>
             </div>
           )}
 
           <div ref={catsRef}>
             <div style={{ margin: '0 0 3px', padding: '0 2px' }}>
-              <span style={{ font: '400 11.5px/1.4 Inter,sans-serif', letterSpacing: '.01em', color: '#9397ab' }}>Tap to choose what you'd like to reflect on</span>
+              <span style={{ font: '400 11.5px/1.4 Inter,sans-serif', letterSpacing: '.01em', color: '#9397ab' }}>{t(UI.home.tapToChoose)}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               {CATS.map(c => {
@@ -214,7 +218,7 @@ export default function Home({ lua }: { lua: Lua }) {
                   <div key={c.id} style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                     <button type="button" onClick={(e) => actions.toggleCategory(c.id, e)}
                       aria-disabled={shut || undefined}
-                      aria-label={shut ? `${c.label} — not open yet` : undefined}
+                      aria-label={shut ? t(UI.home.notOpenYet(t(c.label))) : undefined}
                       ref={shut ? wallFromRef : undefined}
                       style={{ display: 'flex', alignItems: 'center', height: 46, padding: 0, background: 'none', border: 0, cursor: 'pointer' }}>
                       <span style={{
@@ -234,10 +238,10 @@ export default function Home({ lua }: { lua: Lua }) {
                             background: on ? '#b5abfc' : 'transparent',
                           }} />
                         )}
-                        {c.label}
+                        {t(c.label)}
                       </span>
                     </button>
-                    <button type="button" onClick={(e) => actions.toggleInfo(c.id, e)} aria-label="About this category" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', width: 38, height: 46, padding: 0, background: 'none', border: 0, cursor: 'pointer' }}>
+                    <button type="button" onClick={(e) => actions.toggleInfo(c.id, e)} aria-label={t(UI.home.aboutCategory)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', width: 38, height: 46, padding: 0, background: 'none', border: 0, cursor: 'pointer' }}>
                       <span style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 32, borderRadius: '0 100px 100px 0',
                         font: '500 9.5px/1 ui-monospace,Menlo,monospace', transition: 'all .18s',
@@ -254,7 +258,7 @@ export default function Home({ lua }: { lua: Lua }) {
 
           <div ref={weightsRef}>
           <div style={{ margin: '6px 0 3px', padding: '0 2px' }}>
-            <span style={{ font: '400 11.5px/1.4 Inter,sans-serif', letterSpacing: '.01em', color: '#9397ab' }}>How hard do you want to think?</span>
+            <span style={{ font: '400 11.5px/1.4 Inter,sans-serif', letterSpacing: '.01em', color: '#9397ab' }}>{t(UI.home.howHard)}</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             {WEIGHTS.map(w => {
@@ -267,7 +271,7 @@ export default function Home({ lua }: { lua: Lua }) {
                     border: `1px solid ${on ? 'rgba(145,132,217,.5)' : 'rgba(147,151,171,.14)'}`,
                     background: on ? 'rgba(145,132,217,.09)' : 'transparent',
                     color: on ? '#d2cefd' : '#9397ab',
-                  }}>{w.label}</span>
+                  }}>{t(w.label)}</span>
                 </button>
               );
             })}
@@ -277,7 +281,7 @@ export default function Home({ lua }: { lua: Lua }) {
             padding: '0 2px', margin: '7px 0 0', font: '400 11px/1.4 Inter,sans-serif',
             color: state.weight === null ? 'rgba(147,151,171,.75)' : 'rgba(181,171,252,.8)',
           }}>
-            {state.weight === null ? WEIGHT_ANY_NOTE : WEIGHT_NOTE[state.weight]}
+            {t(state.weight === null ? WEIGHT_ANY_NOTE : WEIGHT_NOTE[state.weight])}
           </div>
         </div>
       </div>
@@ -393,7 +397,7 @@ export default function Home({ lua }: { lua: Lua }) {
         <div ref={promptRef} style={{ width: 302, textAlign: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9, margin: '0 0 22px' }}>
             <span style={{ font: '500 9.5px/1 ui-monospace,Menlo,monospace', letterSpacing: '.18em', textTransform: 'uppercase', color: 'rgba(242,193,78,.78)' }}>
-              {promptCat.label}
+              {t(promptCat.label)}
             </span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 3.5 }}>
               <span style={wdotStyle(1, pw)} /><span style={wdotStyle(2, pw)} /><span style={wdotStyle(3, pw)} />
@@ -402,10 +406,10 @@ export default function Home({ lua }: { lua: Lua }) {
           <p style={{
             margin: 0, font: `400 ${promptFs}px/1.34 Inter,sans-serif`, letterSpacing: '-.014em', color: '#f0eef2',
             textShadow: '0 0 22px rgba(242,193,78,.2), 0 0 60px rgba(145,132,217,.14)',
-          }}>{prompt.t}</p>
+          }}>{promptText}</p>
         </div>
 
-        <button ref={closeRef} type="button" onClick={actions.dismiss} aria-label="Close this question" title="Close" style={{
+        <button ref={closeRef} type="button" onClick={actions.dismiss} aria-label={t(UI.home.closeQuestion)} title={t(UI.home.close)} style={{
           position: 'absolute', top: 34, right: 16, width: 44, height: 44,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           background: 'none', border: 0, cursor: 'pointer', color: 'rgba(147,151,171,.8)',
@@ -429,7 +433,7 @@ export default function Home({ lua }: { lua: Lua }) {
           pointerEvents: ph === 'settled' ? 'auto' : 'none',
           transition: `opacity 700ms linear ${ph === 'settled' ? '300ms' : '0ms'}`,
         }}>
-          <button ref={writeRef} type="button" onClick={actions.writeItDown} aria-label="Write about this question" title="Write about it" style={iconAction}>
+          <button ref={writeRef} type="button" onClick={actions.writeItDown} aria-label={t(UI.home.writeAria)} title={t(UI.home.writeTitle)} style={iconAction}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <rect x="3" y="4" width="9.5" height="16" rx="1.4" />
               <path d="M5.8 4v16" />
@@ -443,10 +447,10 @@ export default function Home({ lua }: { lua: Lua }) {
               shut, rather than a different control. */}
           <button type="button" onClick={actions.saveCurrent}
             aria-pressed={savedNow}
-            aria-label={savedFull && !savedNow
-              ? 'Saved list full — remove one to save another'
-              : savedNow ? 'Remove this question from saved' : 'Save this question for later'}
-            title={savedNow ? 'Saved' : savedFull ? 'Saved list full' : 'Save for later'}
+            aria-label={t(savedFull && !savedNow
+              ? UI.home.saveFullAria
+              : savedNow ? UI.home.unsaveAria : UI.home.saveAria)}
+            title={t(savedNow ? UI.home.savedTitle : savedFull ? UI.home.saveFullTitle : UI.home.saveTitle)}
             style={{
               ...iconAction, position: 'relative', transition: 'color .2s',
               color: savedNow ? 'rgba(242,193,78,.9)' : savedFull ? 'rgba(242,193,78,.85)' : '#9397ab',
@@ -461,7 +465,7 @@ export default function Home({ lua }: { lua: Lua }) {
               }}>{lockGlyph(9, 2.4)}</span>
             )}
           </button>
-          <button ref={shareRef} type="button" onClick={actions.share} aria-label="Send this question to someone" title="Send to a friend" style={iconAction}>
+          <button ref={shareRef} type="button" onClick={actions.share} aria-label={t(UI.home.shareAria)} title={t(UI.home.shareTitle)} style={iconAction}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M20.5 3.5L10.8 13.2" />
               <path d="M20.5 3.5l-6.2 17-3.5-7.3-7.3-3.5 17-6.2z" />
@@ -481,7 +485,7 @@ export default function Home({ lua }: { lua: Lua }) {
               beside the label, so the button keeps one identity through the
               change instead of becoming a different control. */}
           <button ref={againRef} type="button" onClick={actions.again}
-            aria-label={daySpent ? 'Shake again — five a day is the free limit' : undefined}
+            aria-label={daySpent ? t(UI.home.shakeAgainLockedAria) : undefined}
             style={{
               display: 'flex', alignItems: 'center', gap: 9,
               background: daySpent ? 'none' : 'rgba(145,132,217,.10)',
@@ -496,13 +500,13 @@ export default function Home({ lua }: { lua: Lua }) {
               width: daySpent ? 13 : 0, opacity: daySpent ? 1 : 0,
               transition: 'width .25s, opacity .25s',
             }}>{lockGlyph(13, 1.9)}</span>
-            Shake again
+            {t(UI.home.shakeAgain)}
           </button>
           {/* Reading the count directly under the control that spends one is
               where it does the most good. Note the off-by-one: the question in
               front of you is already counted, so 4/5 means this yields your
               fifth. */}
-          <div style={{ minHeight: 12, ...dayCounter }}>{dayLabel(dayUsed)}</div>
+          <div style={{ minHeight: 12, ...dayCounter }}>{t(dayLabel(dayUsed))}</div>
         </div>
 
       </div>
@@ -554,35 +558,35 @@ export default function Home({ lua }: { lua: Lua }) {
       <Spotlight
         targetRef={promptRef}
         show={ph === 'settled' && introStep === INTRO.reflection && !state.shareNote}
-        text="That's a reflection. Sit with it as long as you like."
+        text={t(UI.intro.reflection)}
         place="below"
         onDismiss={actions.advanceIntro}
       />
       <Spotlight
         targetRef={closeRef}
         show={ph === 'settled' && introStep === INTRO.close && !state.shareNote}
-        text="Done with it? Close it here and the moon comes back."
+        text={t(UI.intro.close)}
         place="below"
         onDismiss={actions.advanceIntro}
       />
       <Spotlight
         targetRef={writeRef}
         show={ph === 'settled' && introStep === INTRO.write && !state.shareNote}
-        text="Copy it to your clipboard, to answer wherever you keep your words."
+        text={t(UI.intro.write)}
         place="above"
         onDismiss={actions.advanceIntro}
       />
       <Spotlight
         targetRef={shareRef}
         show={ph === 'settled' && introStep === INTRO.share && !state.shareNote}
-        text="Send a question to someone — they'll get the prompt, no app required to open it."
+        text={t(UI.intro.share)}
         place="above"
         onDismiss={actions.advanceIntro}
       />
       <Spotlight
         targetRef={againRef}
         show={ph === 'settled' && introStep === INTRO.again && !state.shareNote}
-        text="Not the one? Shake again for another."
+        text={t(UI.intro.again)}
         place="above"
         onDismiss={actions.advanceIntro}
       />
@@ -590,28 +594,28 @@ export default function Home({ lua }: { lua: Lua }) {
       <Spotlight
         targetRef={catsRef}
         show={ph === 'idle' && introStep === INTRO.cats && !state.infoOpen}
-        text="Pick the ground your question comes from — yourself, your life, or the world beyond it. Change it whenever you like."
+        text={t(UI.intro.cats)}
         place="above"
         onDismiss={actions.advanceIntro}
       />
       <Spotlight
         targetRef={weightsRef}
         show={ph === 'idle' && introStep === INTRO.weights && !state.infoOpen}
-        text="And how far you want to be pushed. Some questions are a passing thought, some stay with you for days."
+        text={t(UI.intro.weights)}
         place="above"
         onDismiss={actions.advanceIntro}
       />
       <Spotlight
         targetRef={savedRef}
         show={ph === 'idle' && introStep === INTRO.saved && !state.infoOpen}
-        text="Anything you put aside is kept here — the questions you liked when the moment was wrong."
+        text={t(UI.intro.saved)}
         place="below"
         onDismiss={actions.advanceIntro}
       />
       <Spotlight
         targetRef={streakRef}
         show={ph === 'idle' && introStep === INTRO.streak && !state.infoOpen}
-        text="The moon fills as you come back — a little more every few days, full at twenty-five."
+        text={t(UI.intro.streak)}
         place="below"
         onDismiss={actions.advanceIntro}
       />

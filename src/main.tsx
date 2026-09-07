@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { Analytics } from '@vercel/analytics/react'
 import './index.css'
 import App from './App.tsx'
+import { LangProvider } from './hooks/LangProvider'
 import { initAnalytics } from './lib/analytics'
 import { watchForUpdates } from './lib/updates'
 
@@ -12,7 +13,9 @@ watchForUpdates()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <LangProvider>
+      <App />
+    </LangProvider>
     <Analytics />
   </StrictMode>,
 )

@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { CATS, PROMPTS, promptIndexById } from '../data/content';
+import { useLang } from '../hooks/useLang';
+import { UI } from '../lib/strings';
 import type { SavedEntry } from '../lib/storage';
 import { SAVE_CAP } from '../lib/limits';
 
@@ -59,6 +61,7 @@ const dot = (lit: boolean, colour: string): React.CSSProperties => ({
 export default function SavedPanel({
   open, rows, onClose, onToggleDone, onRemove, onRestore, onCommit, returnFocusRef,
 }: SavedPanelProps) {
+  const { lang, t } = useLang();
   const panelRef = useRef<HTMLDivElement>(null);
   const openRef = useRef(false);
   const [openId, setOpenId] = useState<number | null>(null);
@@ -183,7 +186,7 @@ export default function SavedPanel({
             <path d="M4.5 6.5h15M9.5 6.5V4.8a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1.7" />
             <path d="M6.5 6.5l.9 12.2a1 1 0 0 0 1 .9h7.2a1 1 0 0 0 1-.9l.9-12.2" />
           </svg>
-          <span style={{ font: '400 10px/1 ui-monospace,Menlo,monospace', letterSpacing: '.08em', textTransform: 'uppercase' }}>Remove</span>
+          <span style={{ font: '400 10px/1 ui-monospace,Menlo,monospace', letterSpacing: '.08em', textTransform: 'uppercase' }}>{t(UI.panel.remove)}</span>
         </button>
 
         <div
@@ -206,7 +209,7 @@ export default function SavedPanel({
               <span style={{
                 font: '500 9.5px/1 ui-monospace,Menlo,monospace', letterSpacing: '.16em', textTransform: 'uppercase',
                 color: entry.done ? 'rgba(147,151,171,.6)' : 'rgba(242,193,78,.78)',
-              }}>{cat?.label}</span>
+              }}>{cat ? t(cat.label) : ''}</span>
               <span style={{ display: 'flex', alignItems: 'center', gap: 3.5 }}>
                 <span style={dot(prompt.w >= 1, lit)} />
                 <span style={dot(prompt.w >= 2, lit)} />
@@ -216,14 +219,14 @@ export default function SavedPanel({
             <div style={{
               font: '400 13.5px/1.45 Inter,sans-serif', letterSpacing: '-.004em',
               color: entry.done ? '#8a8fa3' : '#cfd3e5', textWrap: 'pretty',
-            }}>{prompt.t}</div>
+            }}>{prompt.t[lang]}</div>
           </div>
 
           <button
             type="button"
             onClick={() => toggle(entry.id)}
             aria-pressed={entry.done}
-            aria-label={entry.done ? 'Move back to saved' : 'Mark as reflected on'}
+            aria-label={t(entry.done ? UI.panel.markUndone : UI.panel.markDone)}
             style={{
               flex: 'none', width: 44, height: 44, margin: '-11px -10px 0 0',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -265,7 +268,7 @@ export default function SavedPanel({
         ref={panelRef}
         role="dialog"
         aria-modal="true"
-        aria-label="Saved questions"
+        aria-label={t(UI.panel.aria)}
         tabIndex={-1}
         onPointerDown={(e) => e.stopPropagation()}
         style={{
@@ -282,10 +285,10 @@ export default function SavedPanel({
               <div style={{
                 font: '500 10px/1 ui-monospace,Menlo,monospace', letterSpacing: '.16em',
                 textTransform: 'uppercase', color: '#9397ab', margin: '0 0 10px',
-              }}>Put aside for later</div>
-              <div style={{ font: '300 27px/1.2 Inter,sans-serif', letterSpacing: '-.028em', color: '#f0eef2' }}>Saved</div>
+              }}>{t(UI.panel.kicker)}</div>
+              <div style={{ font: '300 27px/1.2 Inter,sans-serif', letterSpacing: '-.028em', color: '#f0eef2' }}>{t(UI.panel.title)}</div>
             </div>
-            <button type="button" onClick={close} aria-label="Close" style={{
+            <button type="button" onClick={close} aria-label={t(UI.home.close)} style={{
               flex: 'none', width: 44, height: 44, margin: '-8px -10px 0 0',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               background: 'none', border: 0, cursor: 'pointer', color: 'rgba(147,151,171,.8)',
@@ -303,8 +306,8 @@ export default function SavedPanel({
             color: rows.length >= SAVE_CAP ? '#b2b6ca' : '#9397ab', maxWidth: 250,
           }}>
             {rows.length >= SAVE_CAP
-              ? 'Twenty is the free limit. Remove one to make room for another.'
-              : 'Only the question is kept — never what you did with it.'}
+              ? t(UI.panel.atCap)
+              : t(UI.panel.privacy)}
           </p>
         </div>
 
@@ -319,7 +322,7 @@ export default function SavedPanel({
             position: 'sticky', top: 0, zIndex: 2, display: 'flex', alignItems: 'baseline', gap: 8,
             margin: '0 0 10px', padding: '10px 2px 8px', background: '#171927',
           }}>
-            <span style={sectionHeader}>Saved</span>
+            <span style={sectionHeader}>{t(UI.panel.sectionSaved)}</span>
             <span style={countStyle}>{saved.length}</span>
           </div>
 
@@ -328,7 +331,7 @@ export default function SavedPanel({
               padding: '16px 14px', borderRadius: 8, background: 'rgba(233,237,245,.02)',
               boxShadow: 'inset 0 0 0 1px rgba(233,237,245,.06)',
               font: '400 12px/1.55 Inter,sans-serif', color: '#75798c',
-            }}>Nothing put aside. Bookmark a question when you like it but the moment is wrong.</div>
+            }}>{t(UI.panel.empty)}</div>
           )}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -355,7 +358,7 @@ export default function SavedPanel({
                     <path d="M5 8.5L12 16l7-7.5" />
                   </svg>
                 )}
-                <span style={sectionHeader}>Reflected on</span>
+                <span style={sectionHeader}>{t(UI.panel.sectionDone)}</span>
                 <span style={countStyle}>{done.length}</span>
               </button>
               <div id="lua-reflected-list" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -375,12 +378,12 @@ export default function SavedPanel({
           transform: pending ? 'none' : 'translateY(10px)',
           pointerEvents: pending ? 'auto' : 'none',
         }}>
-          <span style={{ font: '400 12.5px/1 Inter,sans-serif', color: '#cfd3e5' }}>Removed</span>
+          <span style={{ font: '400 12.5px/1 Inter,sans-serif', color: '#cfd3e5' }}>{t(UI.panel.removed)}</span>
           <button type="button" onClick={undo} style={{
             padding: '7px 14px', borderRadius: 100, border: '1px solid rgba(145,132,217,.55)',
             background: 'rgba(145,132,217,.10)', color: '#d2cefd',
             font: '400 12px/1 Inter,sans-serif', letterSpacing: '.02em', cursor: 'pointer',
-          }}>Undo</button>
+          }}>{t(UI.panel.undo)}</button>
         </div>
       </div>
     </>

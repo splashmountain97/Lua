@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { CATS, PROMPTS, promptIndexById, type CategoryId, type Weight, shareText } from '../data/content';
 import { IDLE_FIRST, IDLE_RETURN, IDLE_TIPS, SETTLING, WRITE_TIPS } from '../data/content';
+import { useLang } from './useLang';
+import { UI } from '../lib/strings';
 import { PHASES, REVEAL_MS, type Phase } from '../lib/phases';
 import { copyOnly, shareOrCopy, sharedPromptId } from '../lib/share';
 import type { WriteTier } from '../components/WriteModal';
@@ -92,6 +94,12 @@ function pick(s: Pick<LuaState, 'selected' | 'weight' | 'lastShownIx'>): number 
 }
 
 export function useLua() {
+  const { lang, t } = useLang();
+  // The pools are seeded once, before the first paint, from the same stored
+  // language the provider resolved — reading it again here rather than
+  // threading it in keeps the initial state a pure function of storage.
+  const [startLang] = useState(lang);
+  const copyWords = { copied: t(UI.toast.copied), failed: t(UI.toast.copyFailed) };
   const startedOpen = hasOpenedBefore();
   const [sharedIx] = useState(sharedIndex);
   // Self alone, and Medium.
@@ -134,12 +142,12 @@ export function useLua() {
     holding: false,
     shareNote: null,
     writeModal: null,
-    writeTip: WRITE_TIPS[0],
+    writeTip: WRITE_TIPS[startLang][0],
     panelOpen: false,
     wall: null,
-    idleLine: IDLE_FIRST[0],
-    tipLine: IDLE_TIPS[0],
-    settlingLine: SETTLING[0],
+    idleLine: IDLE_FIRST[startLang][0],
+    tipLine: IDLE_TIPS[startLang][0],
+    settlingLine: SETTLING[startLang][0],
     motionGranted: false,
   }));
 
@@ -198,7 +206,7 @@ export function useLua() {
   useEffect(() => clearTimers, []);
 
   /** Draw from a pool, never handing back the line already on screen. */
-  function drawLine(pool: string[], current: string): string {
+  function drawLine(pool: readonly string[], current: string): string {
     const fresh = pool.filter(l => l !== current);
     const from = fresh.length ? fresh : pool;
     return from[Math.floor(Math.random() * from.length)];
@@ -219,8 +227,8 @@ export function useLua() {
     // draw inside one can settle on a line other than the one committed.
     const s = stateRef.current;
     patch({
-      idleLine: drawLine(returning ? IDLE_RETURN : IDLE_FIRST, s.idleLine),
-      tipLine: drawLine(IDLE_TIPS, s.tipLine),
+      idleLine: drawLine((returning ? IDLE_RETURN : IDLE_FIRST)[lang], s.idleLine),
+      tipLine: drawLine(IDLE_TIPS[lang], s.tipLine),
     });
   }
 
@@ -363,7 +371,7 @@ export function useLua() {
     if (stateRef.current.screen !== 'home' || !stateRef.current.holding) return;
     patch({
       holding: false, phase: 'anticipate', tiltX: 0, tiltY: 0,
-      settlingLine: drawLine(SETTLING, stateRef.current.settlingLine),
+      settlingLine: drawLine(SETTLING[lang], stateRef.current.settlingLine),
     });
     after(PHASES.anticipate.dur + 720, reveal);
   }
@@ -415,7 +423,7 @@ export function useLua() {
     after(760, () => {
       patch({
         holding: false, phase: 'anticipate', tiltX: 0, tiltY: 0,
-        settlingLine: drawLine(SETTLING, stateRef.current.settlingLine),
+        settlingLine: drawLine(SETTLING[lang], stateRef.current.settlingLine),
       });
       after(PHASES.anticipate.dur + 720, reveal);
     });
@@ -446,7 +454,7 @@ export function useLua() {
     after(520, () => {
       patch({ phase: 'agitate', energy: 1 });
       after(700, () => {
-        patch({ phase: 'anticipate', settlingLine: drawLine(SETTLING, stateRef.current.settlingLine) });
+        patch({ phase: 'anticipate', settlingLine: drawLine(SETTLING[lang], stateRef.current.settlingLine) });
         after(PHASES.anticipate.dur + 620, reveal);
       });
     });
@@ -485,22 +493,22 @@ export function useLua() {
       // Drawn here rather than in the modal: the draw is a side effect, and
       // this is the event that causes it. Doing it in a mount effect would run
       // twice under StrictMode and swap the sentence out from under the reader.
-      patch({ writeModal: 2, writeTip: drawLine([...WRITE_TIPS], stateRef.current.writeTip) });
+      patch({ writeModal: 2, writeTip: drawLine(WRITE_TIPS[lang], stateRef.current.writeTip) });
       return;
     }
     markWriteIntroSeen();
     patch({ writeModal: 1 });
     // The note is swallowed: closeWrite raises it on the way out instead.
-    await copyOnly(PROMPTS[stateRef.current.promptIx].t, () => {});
+    await copyOnly(PROMPTS[stateRef.current.promptIx].t[lang], () => {}, copyWords);
   }
 
   function closeWrite() {
-    if (stateRef.current.writeModal === 1) noteCopy('Copied');
+    if (stateRef.current.writeModal === 1) noteCopy(t(UI.toast.copied));
     patch({ writeModal: null });
   }
 
   async function copyFromModal() {
-    await copyOnly(PROMPTS[stateRef.current.promptIx].t, noteCopy);
+    await copyOnly(PROMPTS[stateRef.current.promptIx].t[lang], noteCopy, copyWords);
   }
 
   /**
@@ -522,7 +530,7 @@ export function useLua() {
     const next = already ? saved.filter(r => r.id !== id) : [{ id, done: false }, ...saved];
     setSavedRows(next);
     if (already) patch({ shareNote: null });
-    else noteCopy('Saved for later');
+    else noteCopy(t(UI.toast.savedForLater));
   }
 
   function toggleDone(id: number) {
@@ -591,14 +599,14 @@ export function useLua() {
   async function share(e?: React.SyntheticEvent) {
     e?.stopPropagation();
     trackAction('share');
-    const msg = shareText(PROMPTS[stateRef.current.promptIx], shareMoon(streakDays));
+    const msg = shareText(PROMPTS[stateRef.current.promptIx], lang, shareMoon(streakDays));
     // A deadline rather than a flag. The share promise is at the mercy of the
     // platform sheet and may never settle; a flag cleared in a finally would
     // then stay set and leave the question impossible to tap away. A deadline
     // expires on its own, so the worst case is a moment of ignored taps.
     shareGuardUntilRef.current = Date.now() + 1500;
     try {
-      await shareOrCopy(msg, noteCopy);
+      await shareOrCopy(msg, noteCopy, copyWords);
     } finally {
       shareGuardUntilRef.current = Date.now() + 800;
     }

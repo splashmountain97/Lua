@@ -19,4 +19,7 @@ export const SAVE_CAP = 20;
 /** The counter appears on the fourth, where it is a warning rather than a scoreboard. */
 export const DAY_COUNTER_FROM = 4;
 
-export const dayLabel = (used: number) => `${Math.min(used, DAY_CAP)} / ${DAY_CAP} today`;
+import { UI } from './strings';
+
+/** The numbers stay here; only their wording comes from the string table. */
+export const dayLabel = (used: number) => UI.home.dayLabel(Math.min(used, DAY_CAP), DAY_CAP);

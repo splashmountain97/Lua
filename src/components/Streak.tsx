@@ -1,8 +1,11 @@
 import MoonMini from './MoonMini';
+import { useLang } from '../hooks/useLang';
+import { UI } from '../lib/strings';
 
 const DOT_COUNT = 28;
 
 export default function Streak({ streakDays, onBack }: { streakDays: number; onBack: () => void }) {
+  const { t } = useLang();
   const litPct = Math.min(0.16, 0.02 + streakDays * 0.008);
   const terminatorStyle: React.CSSProperties = {
     mixBlendMode: 'screen',
@@ -12,14 +15,14 @@ export default function Streak({ streakDays, onBack }: { streakDays: number; onB
   return (
     <div style={{ position: 'absolute', inset: 0, padding: '104px 32px 56px', display: 'flex', flexDirection: 'column' }}>
       <div style={{ font: '500 10px/1 ui-monospace,Menlo,monospace', letterSpacing: '.16em', textTransform: 'uppercase', color: '#9397ab', margin: '0 0 30px' }}>
-        The light has moved
+        {t(UI.streak.kicker)}
       </div>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 11, margin: '0 0 8px' }}>
         <span style={{ font: '300 62px/1 Inter,sans-serif', letterSpacing: '-.04em', color: '#f0eef2' }}>{streakDays}</span>
-        <span style={{ font: '400 14px/1 Inter,sans-serif', color: '#9397ab' }}>{streakDays === 1 ? 'day' : 'days'} in a row</span>
+        <span style={{ font: '400 14px/1 Inter,sans-serif', color: '#9397ab' }}>{t(UI.streak.inARow(streakDays))}</span>
       </div>
       <p style={{ font: '400 13px/1.62 Inter,sans-serif', color: '#9397ab', margin: '0 0 40px', maxWidth: 290 }}>
-        There is no chart here, and nothing to lose. The object keeps the count for you: each day you come back, a little more of it is lit.
+        {t(UI.streak.body)}
       </p>
       <div style={{ position: 'relative', width: 210, height: 210, margin: '0 auto 34px' }}>
         <MoonMini size={210} driftDur={16} swirlDur={24} glowAlpha={0.26} terminatorStyle={terminatorStyle} />
@@ -40,7 +43,7 @@ export default function Streak({ streakDays, onBack }: { streakDays: number; onB
           color: '#b5abfc', font: '400 14px/1 Inter,sans-serif',
         }}
       >
-        Back
+        {t(UI.streak.back)}
       </button>
     </div>
   );

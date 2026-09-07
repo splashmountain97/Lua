@@ -1,4 +1,6 @@
 import AstronautBust from './AstronautBust';
+import { useLang } from '../hooks/useLang';
+import { UI } from '../lib/strings';
 
 /**
  * The beat before a question someone was sent.
@@ -14,6 +16,7 @@ import AstronautBust from './AstronautBust';
  * the app gives anyone.
  */
 export default function Arrival({ onContinue }: { onContinue: () => void }) {
+  const { t } = useLang();
   return (
     <div
       onPointerDown={onContinue}
@@ -39,13 +42,13 @@ export default function Arrival({ onContinue }: { onContinue: () => void }) {
           margin: '26px 0 0', textAlign: 'center',
           font: '400 17px/1.5 Inter,sans-serif', letterSpacing: '-.008em', color: '#f0eef2',
           animation: 'lua-rise .5s cubic-bezier(.33,1,.68,1) both',
-        }}>Someone thought of you 🌙</div>
+        }}>{t(UI.arrival.line)}</div>
         <div style={{
           margin: '14px 0 0', textAlign: 'center',
           font: '400 11px/1.5 ui-monospace,Menlo,monospace', letterSpacing: '.06em',
           color: 'rgba(147,151,171,.9)',
           animation: 'lua-hint 5.2s ease-in-out infinite',
-        }}>Tap to read it.</div>
+        }}>{t(UI.arrival.tap)}</div>
       </div>
     </div>
   );

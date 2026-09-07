@@ -1,9 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { trackOnboarding } from '../lib/analytics';
 import astronaut from '../assets/onboard-astronaut-2048.jpg';
 import moonBody from '../assets/moon-body.png';
 import glassSwirl from '../assets/glass-swirl.png';
 import { useStageLayout } from '../lib/layout';
+import { useLang } from '../hooks/useLang';
+import { UI } from '../lib/strings';
 
 // Three screens, typed out one character at a time, replacing the old welcome.
 //
@@ -13,11 +15,7 @@ import { useStageLayout } from '../lib/layout';
 // is the same image the moon carries, which is what lets screen three hand over
 // to the object itself — the reader has been looking at it the whole time.
 
-const COPY = [
-  'Earth is loud. The moon isn’t.',
-  'Up here, there’s room to hear yourself think. Some people make journaling sound like a lot of work — the right notebook, the right hour, someone doing it ‘properly.’ Lua skips all that. Just a quiet second and one honest question, however that works for you.',
-  'A question, once a day.',
-];
+const COPY = [UI.onboarding.one, UI.onboarding.two, UI.onboarding.three];
 
 const SCREENS = [
   { paper: 1, dusk: 0, app: 0, light: 1, dark: 0, illo: 1, t: 'none' },
@@ -49,6 +47,11 @@ const illoFit = (stageH: number) =>
 const MOON_ABOVE_WORDMARK = 376;
 
 export default function Onboarding({ onDone }: { onDone: () => void }) {
+  const { t, lang } = useLang();
+  // Resolved once per language: the typewriter measures and slices these on
+  // every keystroke, and re-resolving the pair each frame would allocate a
+  // string per character for no gain.
+  const copy = useMemo(() => COPY.map(t), [lang]); // eslint-disable-line react-hooks/exhaustive-deps
   const leave = (outcome: 'completed' | 'skipped') => { trackOnboarding(outcome); onDone(); };
   const { height: stageH } = useStageLayout();
   const [screen, setScreen] = useState(0);
@@ -60,7 +63,7 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
   // of here means mounting can start the timer without setting state as it goes.
   const startTyping = useCallback((n: number) => {
     window.clearTimeout(timer.current);
-    const full = COPY[n];
+    const full = copy[n];
     // Screen two's copy is about nine times screen one's, so it types
     // proportionally faster — a fixed rate would hold the reader for ten seconds.
     const base = TYPE_MS * (full.length > 90 ? 0.6 : 1);
@@ -75,14 +78,14 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
       timer.current = window.setTimeout(step, base + extra);
     };
     timer.current = window.setTimeout(step, 520);
-  }, []);
+  }, [copy]);
 
   useEffect(() => { startTyping(0); return () => window.clearTimeout(timer.current); }, [startTyping]);
 
   const tap = () => {
     // First tap lands the rest of the line, second moves on. Screen three waits
     // for the button rather than tipping the reader into the app by accident.
-    if (!done) { window.clearTimeout(timer.current); setTyped(COPY[screen].length); setDone(true); return; }
+    if (!done) { window.clearTimeout(timer.current); setTyped(copy[screen].length); setDone(true); return; }
     if (screen < 2) {
       const n = screen + 1;
       setScreen(n); setTyped(0); setDone(false); startTyping(n);
@@ -90,13 +93,13 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
   };
 
   const cfg = SCREENS[screen];
-  const text = COPY[screen].slice(0, typed);
+  const text = copy[screen].slice(0, typed);
   // The rest of the line is rendered from the first frame, invisible. The block
   // is laid out for the finished sentence throughout, so the line breaks are
   // settled before a character appears and nothing re-wraps as it fills in —
   // text-wrap: pretty was rebalancing every break on every keystroke, which is
   // what made the paragraph move around under the reader.
-  const rest = COPY[screen].slice(typed);
+  const rest = copy[screen].slice(typed);
   const caret = done ? 0 : 1;
   const dot = (i: number) =>
     i === screen ? 'rgba(145,132,217,.95)' : screen === 0 ? 'rgba(46,42,48,.22)' : 'rgba(233,237,245,.2)';
@@ -228,14 +231,14 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
               border: '1px solid rgba(145,132,217,.5)', background: 'rgba(145,132,217,.06)',
               color: '#d2cefd', font: '400 14.5px/1 Inter,sans-serif', letterSpacing: '.02em',
               animation: `lua-rise 620ms ${EASE} both`,
-            }}>Start now</button>
+            }}>{t(UI.onboarding.start)}</button>
           )}
         </>
       )}
 
       {/* Two Skips, crossing over with the ground beneath them: ink on paper, then light on dark. */}
-      <button type="button" onClick={(e) => { e.stopPropagation(); leave('skipped'); }} style={skip(cfg.paper, '#6a6472')}>Skip</button>
-      <button type="button" onClick={(e) => { e.stopPropagation(); leave('skipped'); }} style={skip(screen === 0 ? 0 : 1, '#8d90a3')}>Skip</button>
+      <button type="button" onClick={(e) => { e.stopPropagation(); leave('skipped'); }} style={skip(cfg.paper, '#6a6472')}>{t(UI.onboarding.skip)}</button>
+      <button type="button" onClick={(e) => { e.stopPropagation(); leave('skipped'); }} style={skip(screen === 0 ? 0 : 1, '#8d90a3')}>{t(UI.onboarding.skip)}</button>
 
       <div style={{ position: 'absolute', left: 0, right: 0, bottom: 26, display: 'flex', justifyContent: 'center', gap: 7, pointerEvents: 'none' }}>
         {[0, 1, 2].map(i => (
