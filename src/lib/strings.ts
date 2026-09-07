@@ -165,15 +165,48 @@ export const UI = {
   },
 
   onboarding: {
-    one: L(
-      'Earth is loud. The moon isn’t.',
-      'A Terra é barulhenta. A Lua não.',
-    ),
-    two: L(
-      'Up here, there’s room to hear yourself think. Some people make journaling sound like a lot of work — the right notebook, the right hour, someone doing it ‘properly.’ Lua skips all that. Just a quiet second and one honest question, however that works for you.',
-      'Aqui em cima sobra espaço para ouvir seus próprios pensamentos. Tem gente que faz da escrita algo trabalhoso — o caderno certo, a hora certa, alguém fazendo do jeito ‘correto’. A Lua pula tudo isso. Só um segundo de silêncio e uma pergunta honesta, do jeito que funcionar para você.',
-    ),
-    three: L('A question, once a day.', 'Uma pergunta por dia.'),
+    // The typewriter on these headings counts characters, so a translation
+    // simply types at its own length — nothing here is measured in English.
+    heads: {
+      1: L(
+        'The question is ours. The answer is yours.',
+        'A pergunta é nossa. A resposta é sua.',
+      ),
+      2: L(
+        'Earth is loud. The moon isn’t.',
+        'A Terra é barulhenta. A Lua não.',
+      ),
+      // Not 'Pronto para...': that makes the reader pick a gender before
+      // they have answered anything. The question form asks the same thing
+      // and asks it of everyone.
+      3: L(
+        'Ready to know yourself better?',
+        'Quer se conhecer melhor?',
+      ),
+    },
+    body: {
+      1: [
+        L(
+          'Journaling is just answering an honest question about your own life, on purpose. People have done it for two thousand years — emperors did it, and so did people with nothing.',
+          'Escrever sobre si mesmo é só responder, de propósito, uma pergunta honesta sobre a própria vida. As pessoas fazem isso há dois mil anos — imperadores fizeram, e quem não tinha nada também.',
+        ),
+        L(
+          'A few hundred questions, handpicked slowly.',
+          'Algumas centenas de perguntas, escolhidas a dedo, sem pressa.',
+        ),
+      ],
+      2: [
+        L(
+          'One question a day. Answer it on paper, in your head, or out loud — alone or with friends. You decide.',
+          'Uma pergunta por dia. Responda no papel, na cabeça ou em voz alta — só você ou com amigos. Você decide.',
+        ),
+        L(
+          'Lua keeps none of it. No account, nothing saved, nothing sent.',
+          'A Lua não guarda nada disso. Sem conta, nada salvo, nada enviado.',
+        ),
+      ],
+    },
+    next: L('Continue', 'Continuar'),
     start: L('Start now', 'Começar agora'),
     skip: L('Skip', 'Pular'),
   },
