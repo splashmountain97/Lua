@@ -21,7 +21,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = join(root, 'dist');
-const ORIGIN = 'https://lua-coral.vercel.app';
+const ORIGIN = 'https://luadaily.com';
 
 const escapeAttr = (s) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');

@@ -514,7 +514,7 @@ export const IDLE_RETURN: Record<Lang, string[]> = {
   ],
 };
 
-export const LANDING_URL = 'https://lua-coral.vercel.app';
+export const LANDING_URL = 'https://luadaily.com';
 
 /** The page built for one question — see scripts/generate-share-pages.mjs. */
 export const shareUrl = (id: number, lang: Lang) =>
