@@ -655,6 +655,12 @@ export function useLua() {
     e?.stopPropagation();
     // Not open yet: tapping is how the wall is reached, so the pill stays live.
     if (id === 'life' || id === 'world') { openWall(id, e); return; }
+    // Turning off the last one is refused below, and a refusal is not a change
+    // — reporting it would have counted a filter nobody managed to move. With
+    // life and world shut, 'you' is the only id that reaches here and the only
+    // member of the set, so this is every category tap for now.
+    const cur = stateRef.current.selected;
+    if (cur.includes(id) && cur.length === 1) { patch({ infoOpen: null }); return; }
     // Outside the updater: StrictMode invokes those twice, which would double
     // every event sent from inside one.
     trackFilter('category', id);
@@ -673,7 +679,9 @@ export function useLua() {
 
   function setWeight(w: Weight | null, e?: React.SyntheticEvent) {
     e?.stopPropagation();
-    trackFilter('weight', w ?? 'any');
+    // Re-tapping the pill that is already on lands here too, and that is not a
+    // change either — the default weight made those the commonest phantom.
+    if (stateRef.current.weight !== w) trackFilter('weight', w ?? 'any');
     patch(s => { savePrefs({ selected: s.selected, weight: w }); return { weight: w, infoOpen: null }; });
   }
 
