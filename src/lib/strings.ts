@@ -74,21 +74,25 @@ export const UI = {
       "That's a reflection. Sit with it as long as you like.",
       'Isso é uma reflexão. Fique com ela o tempo que quiser.',
     ),
-    close: L(
-      'Done with it? Close it here and the moon comes back.',
-      'Terminou? Feche aqui e a lua volta.',
-    ),
-    write: L(
-      'Copy it to your clipboard, to answer wherever you keep your words.',
-      'Copie para a área de transferência e responda onde você guarda suas palavras.',
+    again: L(
+      'Not the one? Shake again for another.',
+      'Não era essa? Chacoalhe de novo para outra.',
     ),
     share: L(
       "Send a question to someone — they'll get the prompt, no app required to open it.",
       'Mande uma pergunta para alguém — a pessoa recebe a pergunta e não precisa de app nenhum para abrir.',
     ),
-    again: L(
-      'Not the one? Shake again for another.',
-      'Não era essa? Chacoalhe de novo para outra.',
+    write: L(
+      'Copy it to your clipboard, to answer wherever you keep your words.',
+      'Copie para a área de transferência e responda onde você guarda suas palavras.',
+    ),
+    save: L(
+      'Right question, wrong moment? Put it aside and it waits for you.',
+      'Pergunta certa, hora errada? Deixe de lado e ela espera por você.',
+    ),
+    close: L(
+      'Done with it? Close it here and the moon comes back.',
+      'Terminou? Feche aqui e a lua volta.',
     ),
     cats: L(
       'Pick the ground your question comes from — yourself, your life, or the world beyond it. Change it whenever you like.',

@@ -67,14 +67,21 @@ function sharedIndex(): number | null {
 /**
  * The first run, as a sequence.
  *
- * Five while the first question is on the screen, and four more once it has
+ * Six while the first question is on the screen, and four more once it has
  * been put down — the filters are not worth explaining until someone has seen
  * what they filter. Each step is gated on the phase it belongs to, so the
  * question steps wait for the question and the rest wait for the idle screen.
+ *
+ * The question's six run in order of what someone is most likely to want, not
+ * in the order the controls happen to sit on the screen: the question itself,
+ * then another one if this is not it, then the three things to do with the one
+ * in front of them, and only then the way out. Closing is the last thing a
+ * newcomer needs pointed at — it was first here once, which taught the exit
+ * before anything worth staying for.
  */
 export const INTRO = {
-  reflection: 0, close: 1, share: 2, write: 3, again: 4,
-  cats: 5, weights: 6, saved: 7, streak: 8, done: 9,
+  reflection: 0, again: 1, share: 2, write: 3, save: 4, close: 5,
+  cats: 6, weights: 7, saved: 8, streak: 9, done: 10,
 } as const;
 const INTRO_DONE = INTRO.done;
 

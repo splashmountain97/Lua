@@ -40,6 +40,7 @@ export default function Home({ lua }: { lua: Lua }) {
   const catsRef = useRef<HTMLDivElement>(null);
   const writeRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const saveRef = useRef<HTMLButtonElement>(null);
   const againRef = useRef<HTMLButtonElement>(null);
   const savedRef = useRef<HTMLButtonElement>(null);
   const wallFromRef = useRef<HTMLButtonElement>(null);
@@ -468,7 +469,7 @@ export default function Home({ lua }: { lua: Lua }) {
           {/* At the cap it keeps its glyph and gains a padlock badge on a
               ground dark enough to read over it — the control is the same one,
               shut, rather than a different control. */}
-          <button type="button" onClick={actions.saveCurrent}
+          <button ref={saveRef} type="button" onClick={actions.saveCurrent}
             aria-pressed={savedNow}
             aria-label={t(savedFull && !savedNow
               ? UI.home.saveFullAria
@@ -580,10 +581,13 @@ export default function Home({ lua }: { lua: Lua }) {
         returnFocusRef={writeRef}
       />
 
-      {/* The first run, in order. Five while the question is up — it is the
+      {/* The first run, in order. Six while the question is up — it is the
           thing they came for, so it gets a beat to itself before anything is
           explained — then four more once it has been put down, because the
-          filters mean nothing until you have seen what they filter. */}
+          filters mean nothing until you have seen what they filter.
+          The six are ordered by what someone is most likely to reach for, not
+          by where the controls sit: another question, then the three things to
+          do with this one, and the way out last. See INTRO in useLua. */}
       <Spotlight
         targetRef={promptRef}
         show={ph === 'settled' && introStep === INTRO.reflection && !state.shareNote}
@@ -592,16 +596,9 @@ export default function Home({ lua }: { lua: Lua }) {
         onDismiss={actions.advanceIntro}
       />
       <Spotlight
-        targetRef={closeRef}
-        show={ph === 'settled' && introStep === INTRO.close && !state.shareNote}
-        text={t(UI.intro.close)}
-        place="below"
-        onDismiss={actions.advanceIntro}
-      />
-      <Spotlight
-        targetRef={writeRef}
-        show={ph === 'settled' && introStep === INTRO.write && !state.shareNote}
-        text={t(UI.intro.write)}
+        targetRef={againRef}
+        show={ph === 'settled' && introStep === INTRO.again && !state.shareNote}
+        text={t(UI.intro.again)}
         place="above"
         onDismiss={actions.advanceIntro}
       />
@@ -613,10 +610,24 @@ export default function Home({ lua }: { lua: Lua }) {
         onDismiss={actions.advanceIntro}
       />
       <Spotlight
-        targetRef={againRef}
-        show={ph === 'settled' && introStep === INTRO.again && !state.shareNote}
-        text={t(UI.intro.again)}
+        targetRef={writeRef}
+        show={ph === 'settled' && introStep === INTRO.write && !state.shareNote}
+        text={t(UI.intro.write)}
         place="above"
+        onDismiss={actions.advanceIntro}
+      />
+      <Spotlight
+        targetRef={saveRef}
+        show={ph === 'settled' && introStep === INTRO.save && !state.shareNote}
+        text={t(UI.intro.save)}
+        place="above"
+        onDismiss={actions.advanceIntro}
+      />
+      <Spotlight
+        targetRef={closeRef}
+        show={ph === 'settled' && introStep === INTRO.close && !state.shareNote}
+        text={t(UI.intro.close)}
+        place="below"
         onDismiss={actions.advanceIntro}
       />
 
