@@ -10,6 +10,7 @@ import type { Door } from '../components/Wall';
 import { DAY_CAP, SAVE_CAP } from '../lib/limits';
 import { shareMoon } from '../lib/streak';
 import { trackPromptShown, trackShake, trackFilter, trackAction, trackSavedOpened, trackWallShown, trackWaitlist } from '../lib/analytics';
+import type { RevealTrigger } from '../lib/analytics';
 import {
   getCoachSeen, getPrefs, getUnlocked, hasOpenedBefore,
   bumpRevealsTotal, getRevealsTotal, getShareCoachSeen, getStreakCoachSeen,
@@ -93,6 +94,22 @@ export const INTRO = {
 } as const;
 const INTRO_DONE = INTRO.done;
 
+/**
+ * The three introduction screens are switched off, not removed.
+ *
+ * They sat in front of the one thing the product is for, and the measurement
+ * said they were losing most of the people who arrived: of roughly 175 visits,
+ * only 77 ever reached a question. Nobody was rejecting them — of those who
+ * got as far as a decision, 54 finished and only 4 skipped. People were
+ * leaving during the screens themselves, before anything was recorded.
+ *
+ * So a first visit now lands where screen three's 'Start now' used to put it:
+ * on the moon, with a question already open. Nothing in Onboarding.tsx has
+ * been changed or deleted — set this back to true and the introduction returns
+ * exactly as it was.
+ */
+const SHOW_ONBOARDING = false;
+
 const TILT_AMT = 1;
 const QUIET_PILLS = true;
 
@@ -141,7 +158,7 @@ export function useLua() {
     // One beat first, to say a person chose it: the question is the same
     // question either way, but arriving with no sign anyone sent it is colder
     // than it needs to be.
-    screen: sharedIx !== null ? 'arrival' : startedOpen ? 'home' : 'onboard1',
+    screen: sharedIx !== null ? 'arrival' : startedOpen || !SHOW_ONBOARDING ? 'home' : 'onboard1',
     phase: 'idle',
     selected: initialPrefs.selected as CategoryId[],
     weight: initialPrefs.weight as Weight | null,
@@ -276,9 +293,31 @@ export function useLua() {
   // A returning user skips the welcome screen (and so never calls
   // rollIdleLine via finishOnboarding) — roll the real line once on mount
   // instead of leaving the idle placeholder showing.
+  //
+  // With SHOW_ONBOARDING off, a first-time visitor never calls it either, and
+  // needs the reveal that screen three's 'Start now' used to perform. This is
+  // finishOnboardingRevealed's body without the go(): the screen is already
+  // home, because the initial state above put it there.
+  // StrictMode mounts, unmounts and remounts in development, which would spend
+  // two of the daily five and send two prompt_shown events for one arrival if
+  // the arrival did any work synchronously. It does none: arrivalShake only
+  // schedules timers, and the unmount cleanup above (clearTimers) cancels the
+  // first mount's before the second mount schedules its own, so exactly one
+  // sequence survives in development and in production alike.
+  //
+  // A ref guard here would be worse than nothing. It would stop the second
+  // mount from rescheduling what the unmount had just cancelled, and the moon
+  // would sit idle forever.
   useEffect(() => {
-    if (startedOpen) rollIdleLine();
-    else if (sharedIx !== null) markOpened();
+    // The original two branches, unchanged and in their original order: a
+    // returning user rolls the line whether or not they arrived on a share.
+    if (startedOpen) { rollIdleLine(); return; }
+    if (sharedIx !== null) { markOpened(); return; }
+    // What is left is a first visit with no share link — the case the
+    // introduction used to own, and the only one this changes. The moon shakes
+    // itself once, so the question is earned by something the reader watched
+    // happen rather than appearing on a screen they have not understood yet.
+    if (!SHOW_ONBOARDING) { rollIdleLine(); arrivalShake(); }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -356,7 +395,7 @@ export function useLua() {
   function finishOnboardingRevealed() {
     rollIdleLine();
     go('home', 'idle');
-    reveal();
+    reveal('start');
   }
 
   function go(screen: Screen, phase: Phase = 'idle') {
@@ -378,9 +417,25 @@ export function useLua() {
     // it, so backing out of sharing threw the question away. Checked after the
     // button test so the close control and the actions are never held off.
     if (Date.now() < shareGuardUntilRef.current) return;
-    requestMotionPermission();
     const ph = state.phase;
-    if (ph === 'settled') { dismiss(); return; }
+    if (ph === 'settled') {
+      // iOS raises motion access in a native dialog, and it can only be asked
+      // for from inside a real tap — there is no way to ask quietly later, or
+      // without one. This is the one tap in the app that can afford to be
+      // interrupted by it: the question is being put away, so the dialog has
+      // no gesture to break and nothing on screen to cost. A press on the moon
+      // is the opposite — the dialog takes the pointerup with it, the hold
+      // never releases, and the shake dies half finished.
+      //
+      // Held back until a second question has been opened, so it lands after
+      // someone has watched the moon shake, read a question and asked for
+      // another. On arrival there is nothing to shake for yet: the question
+      // came to them unasked, and a permission dialog on top of it is a
+      // stranger asking for something before they know what it buys.
+      if (getRevealsTotal() >= 2) requestMotionPermission();
+      dismiss();
+      return;
+    }
     if (ph !== 'idle') return;
     if (daySpent()) { openWall('day'); return; }
     clearTimers();
@@ -401,7 +456,7 @@ export function useLua() {
   // The index is resolved here rather than inside the state updater: React
   // re-runs updaters under StrictMode, and an analytics call in one would
   // report two reveals for every one the reader saw.
-  function reveal() {
+  function reveal(trigger: RevealTrigger) {
     const s = stateRef.current;
     const ix = s.pinnedIx ?? pick(s);
     patch({ phase: 'reveal', promptIx: ix, pinnedIx: null, lastShownIx: ix });
@@ -413,7 +468,7 @@ export function useLua() {
     setRevealsTotal(lifetime);
     // Both are read after their increment: this reveal is the one being
     // counted, so day one should report as day one and not as day zero.
-    trackPromptShown(PROMPTS[ix], streak, lifetime);
+    trackPromptShown(PROMPTS[ix], streak, lifetime, trigger);
     // Counted here rather than at each entry point: this is the one place a
     // question actually reaches the reader, so it catches the shake, the tap
     // and 'Shake again' alike and cannot be double-counted by a re-run.
@@ -427,7 +482,7 @@ export function useLua() {
       holding: false, phase: 'anticipate', tiltX: 0, tiltY: 0,
       settlingLine: drawLine(SETTLING[lang], stateRef.current.settlingLine),
     });
-    after(PHASES.anticipate.dur + 720, reveal);
+    after(PHASES.anticipate.dur + 720, () => reveal('shake'));
   }
 
   // Both coach moments are dismissed by their own overlay rather than by the
@@ -479,7 +534,48 @@ export function useLua() {
         holding: false, phase: 'anticipate', tiltX: 0, tiltY: 0,
         settlingLine: drawLine(SETTLING[lang], stateRef.current.settlingLine),
       });
-      after(PHASES.anticipate.dur + 720, reveal);
+      after(PHASES.anticipate.dur + 720, () => reveal('auto'));
+    });
+  }
+
+  /**
+   * What a first arrival sees, now that there is no introduction in front of
+   * it. Slower than autoShake on purpose: autoShake plays to someone who has
+   * just skipped an explanation and already knows what the moon is for.
+   *
+   * Going straight to reveal() read as a page that had already broken — a
+   * question simply present, with nothing to say where it came from. These
+   * three beats are the mechanism itself, in order: a moon, still long enough
+   * to be noticed; the moon stirring and then shaking harder; the question
+   * coming out of it. Nobody has to touch anything, and by the time the
+   * question lands they have watched the thing that produces one.
+   *
+   * A tap during the opening beat cancels all of this through onDown's
+   * clearTimers and hands over to a real shake, which is the better outcome
+   * and reports itself as 'shake' rather than 'auto'.
+   */
+  function arrivalShake() {
+    clearTimers();
+    // Still first. A moon already shaking when the page paints is scenery;
+    // one that starts is a thing that just did something.
+    after(930, () => {
+      patch({ holding: true, phase: 'agitate', energy: .3, infoOpen: null });
+      // Built rather than constant, so it reads as winding up to something
+      // instead of vibrating in place.
+      after(780, () => patch({ energy: .62 }));
+      after(1560, () => patch({ energy: 1 }));
+      after(2250, () => {
+        patch({
+          holding: false, phase: 'anticipate', tiltX: 0, tiltY: 0,
+          settlingLine: drawLine(SETTLING[lang], stateRef.current.settlingLine),
+        });
+        // The same settle every other path uses, so the question arrives the
+        // way it will every time they shake it themselves. Only the tail is
+        // stretched: anticipate's own duration is shared with the shake, the
+        // 'Shake again' button and the share arrival, and lengthening it here
+        // would slow all of them down too.
+        after(PHASES.anticipate.dur + 1080, () => reveal('auto'));
+      });
     });
   }
 
@@ -509,7 +605,7 @@ export function useLua() {
       patch({ phase: 'agitate', energy: 1 });
       after(700, () => {
         patch({ phase: 'anticipate', settlingLine: drawLine(SETTLING[lang], stateRef.current.settlingLine) });
-        after(PHASES.anticipate.dur + 620, reveal);
+        after(PHASES.anticipate.dur + 620, () => reveal('again'));
       });
     });
   }

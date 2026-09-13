@@ -124,13 +124,36 @@ function band(n: number): string {
  * It buys the distribution, not the path: how many questions are opened by
  * people on day one against day seven, never whether these two events are the
  * same person. That distribution is the whole of what was being asked.
+ *
+ * `trigger` says who asked for the question. A first visit is now handed one
+ * on arrival rather than being made to earn it through an introduction, so
+ * without this the event cannot tell a question someone wanted from one that
+ * was simply put in front of them, and every conversion rate built on it reads
+ * as though the product converts everyone who lands. Anything other than
+ * 'auto' is a reader who asked. It describes the gesture, never the reader.
  */
-export function trackPromptShown(prompt: Prompt, streakDays: number, lifetimeReveals: number) {
+export type RevealTrigger =
+  /** Handed over on arrival, unasked. The introduction used to occupy this moment. */
+  | 'auto'
+  /** The reader shook the moon, by hand or by pressing it. */
+  | 'shake'
+  /** The reader pressed 'Shake again' on a question they already had. */
+  | 'again'
+  /** The reader pressed 'Start now' on the last introduction screen. */
+  | 'start';
+
+export function trackPromptShown(
+  prompt: Prompt,
+  streakDays: number,
+  lifetimeReveals: number,
+  trigger: RevealTrigger,
+) {
   send('prompt_shown', {
     category: prompt.c,
     weight: prompt.w,
     streak_day: band(streakDays),
     lifetime_reveals: band(lifetimeReveals),
+    trigger,
   });
 }
 
