@@ -298,25 +298,26 @@ export function useLua() {
   // needs the reveal that screen three's 'Start now' used to perform. This is
   // finishOnboardingRevealed's body without the go(): the screen is already
   // home, because the initial state above put it there.
-  // StrictMode runs mount effects twice in development. The two branches below
-  // are safe to repeat, but the reveal is not: it spends a question from the
-  // daily five, bumps the lifetime counter and sends prompt_shown, so without
-  // this a dev build opens on '2 / 5 today' and reports two questions for one
-  // arrival. Production mounts once and never reads this.
-  const openedOnMountRef = useRef(false);
+  // StrictMode mounts, unmounts and remounts in development, which would spend
+  // two of the daily five and send two prompt_shown events for one arrival if
+  // the arrival did any work synchronously. It does none: arrivalShake only
+  // schedules timers, and the unmount cleanup above (clearTimers) cancels the
+  // first mount's before the second mount schedules its own, so exactly one
+  // sequence survives in development and in production alike.
+  //
+  // A ref guard here would be worse than nothing. It would stop the second
+  // mount from rescheduling what the unmount had just cancelled, and the moon
+  // would sit idle forever.
   useEffect(() => {
     // The original two branches, unchanged and in their original order: a
     // returning user rolls the line whether or not they arrived on a share.
     if (startedOpen) { rollIdleLine(); return; }
     if (sharedIx !== null) { markOpened(); return; }
-    if (openedOnMountRef.current) return;
-    openedOnMountRef.current = true;
     // What is left is a first visit with no share link — the case the
-    // introduction used to own, and the only one this changes. An idle moon is
-    // the wrong thing to hand someone who has been given no reason yet to
-    // shake it, so open the question first; the moon is still underneath when
-    // they dismiss it.
-    if (!SHOW_ONBOARDING) { rollIdleLine(); reveal('auto'); }
+    // introduction used to own, and the only one this changes. The moon shakes
+    // itself once, so the question is earned by something the reader watched
+    // happen rather than appearing on a screen they have not understood yet.
+    if (!SHOW_ONBOARDING) { rollIdleLine(); arrivalShake(); }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -518,6 +519,44 @@ export function useLua() {
         settlingLine: drawLine(SETTLING[lang], stateRef.current.settlingLine),
       });
       after(PHASES.anticipate.dur + 720, () => reveal('auto'));
+    });
+  }
+
+  /**
+   * What a first arrival sees, now that there is no introduction in front of
+   * it. Slower than autoShake on purpose: autoShake plays to someone who has
+   * just skipped an explanation and already knows what the moon is for.
+   *
+   * Going straight to reveal() read as a page that had already broken — a
+   * question simply present, with nothing to say where it came from. These
+   * three beats are the mechanism itself, in order: a moon, still long enough
+   * to be noticed; the moon stirring and then shaking harder; the question
+   * coming out of it. Nobody has to touch anything, and by the time the
+   * question lands they have watched the thing that produces one.
+   *
+   * A tap during the opening beat cancels all of this through onDown's
+   * clearTimers and hands over to a real shake, which is the better outcome
+   * and reports itself as 'shake' rather than 'auto'.
+   */
+  function arrivalShake() {
+    clearTimers();
+    // Still first. A moon already shaking when the page paints is scenery;
+    // one that starts is a thing that just did something.
+    after(620, () => {
+      patch({ holding: true, phase: 'agitate', energy: .3, infoOpen: null });
+      // Built rather than constant, so it reads as winding up to something
+      // instead of vibrating in place.
+      after(520, () => patch({ energy: .62 }));
+      after(1040, () => patch({ energy: 1 }));
+      after(1500, () => {
+        patch({
+          holding: false, phase: 'anticipate', tiltX: 0, tiltY: 0,
+          settlingLine: drawLine(SETTLING[lang], stateRef.current.settlingLine),
+        });
+        // The same settle every other path uses, so the question arrives the
+        // way it will every time they shake it themselves.
+        after(PHASES.anticipate.dur + 720, () => reveal('auto'));
+      });
     });
   }
 
