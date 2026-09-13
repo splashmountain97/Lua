@@ -42,8 +42,59 @@ const EASE = 'cubic-bezier(.28,1,.34,1)';
 const IMAGE_H_MAX = 443;
 const IMAGE_H_MIN = 240;
 const GAP_BELOW_IMAGE = 19;
-const BUTTON_ROW_H = 121;
+// Dots, the gap under them, the button and the clearance below it. The text
+// block is measured against the bottom of the stage, so without a gap reserved
+// above the dots the two met exactly — the last line of the body sat on the
+// dots with nothing between them.
+const BUTTON_ROW_H = 109;
+const GAP_ABOVE_DOTS = 28;
 const FALLBACK_TEXT_H: Record<OnboardScreen, number> = { 1: 260, 2: 200, 3: 45 };
+
+const STAGE_W = 402;
+
+// Screens one and two are the same tall portrait (1536x2752). Drawn edge to
+// edge they are scaled to the stage's 402 width, which leaves only the middle
+// ~47% of the artwork's height inside the frame on a phone-height stage —
+// enough to lose the ruins on screen one entirely, which is the one thing that
+// drawing is about.
+//
+// So the photo is fitted to the frame rather than cropped by it: drawn as wide
+// as it can be while still showing PHOTO_BAND of the artwork's height, down to
+// a floor that stops it shrinking into a stamp. At the design height that works
+// out to the full 402 and nothing changes; on a shorter stage the paper steps
+// back from the edges instead of the frame eating into the drawing. The margins
+// that leaves are masked off, so the paper melts into the page the way the seam
+// below it already does rather than showing a cut edge.
+const PHOTO_NAT_W = 1536;
+const PHOTO_NAT_H = 2752;
+const PHOTO_BAND = 0.6;
+const PHOTO_W_MIN = 344;
+const PHOTO_FADE = 26;
+// Where the top of the frame sits in the artwork: just above the ruins on
+// screen one, just above Earth on screen two. What the frame cannot fit runs
+// off the bottom, where the seam is already fading the drawing into the page.
+const PHOTO_TOP: Record<1 | 2, number> = { 1: .315, 2: .35 };
+
+function Photo({ src, screen, height }: { src: string; screen: 1 | 2; height: number }) {
+  const w = Math.min(STAGE_W, Math.max(PHOTO_W_MIN, height * PHOTO_NAT_W / (PHOTO_BAND * PHOTO_NAT_H)));
+  const h = w * PHOTO_NAT_H / PHOTO_NAT_W;
+  // Only worth masking while there are margins to hide the cut edge against.
+  const fade = w < STAGE_W
+    ? `linear-gradient(90deg,rgba(0,0,0,0),#000 ${PHOTO_FADE}px,#000 ${w - PHOTO_FADE}px,rgba(0,0,0,0))`
+    : undefined;
+  return (
+    <div style={{ position: 'absolute', left: 0, right: 0, top: 0, height, overflow: 'hidden' }}>
+      <img
+        src={src} alt="" draggable={false}
+        style={{
+          position: 'absolute', left: (STAGE_W - w) / 2, top: -PHOTO_TOP[screen] * h,
+          width: w, height: h, display: 'block',
+          maskImage: fade, WebkitMaskImage: fade,
+        }}
+      />
+    </div>
+  );
+}
 
 function Grain() {
   return (
@@ -58,7 +109,7 @@ function Grain() {
 
 function Dots({ active }: { active: 0 | 1 | 2 }) {
   return (
-    <div style={{ display: 'flex', gap: 7, margin: '0 0 22px', paddingLeft: 2 }}>
+    <div style={{ display: 'flex', gap: 7, margin: '0 0 18px', paddingLeft: 2 }}>
       {[0, 1, 2].map(i => (
         <span key={i} style={{
           display: 'block', width: 5, height: 5, borderRadius: '50%',
@@ -165,7 +216,7 @@ export default function Onboarding({ onStart, onDone, onReveal }: { onStart: () 
 
   const imageH = (s: OnboardScreen) => {
     const t = textH[s] ?? FALLBACK_TEXT_H[s];
-    return Math.max(IMAGE_H_MIN, Math.min(IMAGE_H_MAX, stageH - GAP_BELOW_IMAGE - t - BUTTON_ROW_H));
+    return Math.max(IMAGE_H_MIN, Math.min(IMAGE_H_MAX, stageH - GAP_BELOW_IMAGE - t - GAP_ABOVE_DOTS - BUTTON_ROW_H));
   };
   const seamTop = (s: OnboardScreen) => imageH(s) - 80;
   const textTop = (s: OnboardScreen) => imageH(s) + GAP_BELOW_IMAGE;
@@ -195,10 +246,7 @@ export default function Onboarding({ onStart, onDone, onReveal }: { onStart: () 
 
       {screen === 1 && (
         <div style={{ position: 'absolute', inset: 0, animation: 'lua-dim 400ms linear both' }}>
-          <img
-            src={ob1} alt="" draggable={false}
-            style={{ position: 'absolute', left: 0, right: 0, top: 0, width: '100%', height: imageH(1), objectFit: 'cover', objectPosition: 'center 89%', display: 'block' }}
-          />
+          <Photo src={ob1} screen={1} height={imageH(1)} />
           <div style={{ position: 'absolute', left: 0, right: 0, top: seamTop(1), height: 96, background: 'linear-gradient(rgba(244,239,230,0),#F4EFE6 74%)' }} />
 
           <div ref={textRef} onClick={finishTyping} style={{ position: 'absolute', left: 26, right: 26, top: textTop(1), cursor: 'pointer' }}>
@@ -209,7 +257,7 @@ export default function Onboarding({ onStart, onDone, onReveal }: { onStart: () 
             <p style={{ margin: '10px 0 0', maxWidth: '55ch', font: '400 17px/1.5 "Source Sans 3",sans-serif', color: '#46423C', textWrap: 'pretty', transition: 'opacity 420ms linear', opacity: done ? 1 : 0 }}>{t(UI.onboarding.body[1][1])}</p>
           </div>
 
-          <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '0 26px 42px' }}>
+          <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '0 26px 34px' }}>
             <Dots active={0} />
             <button type="button" onClick={() => goto(2)} style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: 52,
@@ -225,10 +273,7 @@ export default function Onboarding({ onStart, onDone, onReveal }: { onStart: () 
 
       {screen === 2 && (
         <div style={{ position: 'absolute', inset: 0, animation: 'lua-dim 400ms linear both' }}>
-          <img
-            src={ob2} alt="" draggable={false}
-            style={{ position: 'absolute', left: 0, right: 0, top: 0, width: '100%', height: imageH(2), objectFit: 'cover', objectPosition: 'center 72%', display: 'block' }}
-          />
+          <Photo src={ob2} screen={2} height={imageH(2)} />
           <div style={{ position: 'absolute', left: 0, right: 0, top: seamTop(2), height: 96, background: 'linear-gradient(rgba(244,239,230,0),#F4EFE6 74%)' }} />
 
           <div ref={textRef} onClick={finishTyping} style={{ position: 'absolute', left: 26, right: 26, top: textTop(2), cursor: 'pointer' }}>
@@ -239,7 +284,7 @@ export default function Onboarding({ onStart, onDone, onReveal }: { onStart: () 
             <p style={{ margin: '10px 0 0', maxWidth: '55ch', font: '400 17px/1.5 "Source Sans 3",sans-serif', color: '#46423C', textWrap: 'pretty', transition: 'opacity 420ms linear', opacity: done ? 1 : 0 }}>{t(UI.onboarding.body[2][1])}</p>
           </div>
 
-          <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '0 26px 42px' }}>
+          <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '0 26px 34px' }}>
             <Dots active={1} />
             <button type="button" onClick={() => goto(3)} style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: 52,
@@ -303,7 +348,7 @@ export default function Onboarding({ onStart, onDone, onReveal }: { onStart: () 
           </div>
 
           <div style={{
-            position: 'absolute', left: 0, right: 0, bottom: 0, padding: '0 26px 42px',
+            position: 'absolute', left: 0, right: 0, bottom: 0, padding: '0 26px 34px',
             transition: 'opacity 240ms linear', opacity: pushed ? 0 : 1, pointerEvents: pushed ? 'none' : 'auto',
           }}>
             <Dots active={2} />

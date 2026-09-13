@@ -91,17 +91,24 @@ export function setSaved(rows: SavedEntry[]) {
  * How far through the first run someone has got.
  *
  * A number rather than a flag now, because the introduction is a sequence:
- * five moments on the first question, then four more once they have put it
+ * six moments on the first question, then four more once they have put it
  * down. Anyone who finished the old two-step introduction is counted as done,
  * so nobody who has already been shown around gets shown around again.
+ *
+ * The seen flag is read before the number, because the number is only ever
+ * meaningful against the sequence it was written under. Adding a step moves
+ * every step after it, and the old last step's number is the new
+ * second-to-last's — so someone who had finished would be handed one more
+ * moment by arithmetic alone. The flag says finished regardless of length.
  */
 export function getIntroStep(done: number): number {
+  if (safeGet(PILL_INTRO_KEY)) return done;
   const raw = safeGet(INTRO_STEP_KEY);
   if (raw !== null) {
     const n = Number(raw);
     return Number.isFinite(n) ? Math.max(0, Math.min(done, Math.floor(n))) : 0;
   }
-  return safeGet(PILL_INTRO_KEY) ? done : 0;
+  return 0;
 }
 
 export function setIntroStep(n: number) {
