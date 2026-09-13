@@ -123,6 +123,15 @@ export const UI = {
     stillNoBox: L('Still no text box — on purpose.', 'Continua sem caixa de texto — de propósito.'),
     copy: L('Copy to clipboard', 'Copiar para a área de transferência'),
     copied: L('Copied', 'Copiado'),
+    // Moved here from onboarding screen two. It is the strongest thing the
+    // product has to say, and it was being said in an introduction read
+    // before anyone had a question in front of them. This is the moment it
+    // actually answers: the write icon is open and someone is deciding
+    // whether to be honest.
+    privacy: L(
+      'Lua keeps none of it. No account, nothing saved, nothing sent.',
+      'A Lua não guarda nada disso. Sem conta, nada salvo, nada enviado.',
+    ),
   },
 
   panel: {

@@ -172,6 +172,10 @@ export default function WriteModal({ tier, tip, onClose, onCopy, returnFocusRef 
             <p style={{
               margin: 0, font: '400 14.5px/1.62 Inter,sans-serif', color: '#cfd3e5', textWrap: 'pretty',
             }}>{t(UI.write.copiedBody)}</p>
+            <p style={{
+              margin: '14px 0 0', font: '400 12.5px/1.5 Inter,sans-serif',
+              color: 'rgba(147,151,171,.85)', textWrap: 'pretty',
+            }}>{t(UI.write.privacy)}</p>
 
             {closeButton({ top: 6, right: 6 })}
           </>
@@ -182,9 +186,13 @@ export default function WriteModal({ tier, tip, onClose, onCopy, returnFocusRef 
               color: '#9397ab', margin: '0 0 7px', paddingRight: 34,
             }}>{t(UI.write.stillNoBox)}</div>
             <p style={{
-              margin: '0 0 18px', font: '400 15px/1.5 Inter,sans-serif',
+              margin: '0 0 12px', font: '400 15px/1.5 Inter,sans-serif',
               letterSpacing: '-.004em', color: '#cfd3e5', textWrap: 'pretty',
             }}>{tip}</p>
+            <p style={{
+              margin: '0 0 16px', font: '400 12.5px/1.5 Inter,sans-serif',
+              color: 'rgba(147,151,171,.85)', textWrap: 'pretty',
+            }}>{t(UI.write.privacy)}</p>
             <button type="button" onClick={copy} style={{
               width: '100%', height: 44, borderRadius: 100, cursor: 'pointer',
               border: `1px solid ${copied ? 'rgba(242,193,78,.5)' : 'rgba(145,132,217,.55)'}`,
