@@ -417,9 +417,25 @@ export function useLua() {
     // it, so backing out of sharing threw the question away. Checked after the
     // button test so the close control and the actions are never held off.
     if (Date.now() < shareGuardUntilRef.current) return;
-    requestMotionPermission();
     const ph = state.phase;
-    if (ph === 'settled') { dismiss(); return; }
+    if (ph === 'settled') {
+      // iOS raises motion access in a native dialog, and it can only be asked
+      // for from inside a real tap — there is no way to ask quietly later, or
+      // without one. This is the one tap in the app that can afford to be
+      // interrupted by it: the question is being put away, so the dialog has
+      // no gesture to break and nothing on screen to cost. A press on the moon
+      // is the opposite — the dialog takes the pointerup with it, the hold
+      // never releases, and the shake dies half finished.
+      //
+      // Held back until a second question has been opened, so it lands after
+      // someone has watched the moon shake, read a question and asked for
+      // another. On arrival there is nothing to shake for yet: the question
+      // came to them unasked, and a permission dialog on top of it is a
+      // stranger asking for something before they know what it buys.
+      if (getRevealsTotal() >= 2) requestMotionPermission();
+      dismiss();
+      return;
+    }
     if (ph !== 'idle') return;
     if (daySpent()) { openWall('day'); return; }
     clearTimers();
@@ -542,20 +558,23 @@ export function useLua() {
     clearTimers();
     // Still first. A moon already shaking when the page paints is scenery;
     // one that starts is a thing that just did something.
-    after(620, () => {
+    after(930, () => {
       patch({ holding: true, phase: 'agitate', energy: .3, infoOpen: null });
       // Built rather than constant, so it reads as winding up to something
       // instead of vibrating in place.
-      after(520, () => patch({ energy: .62 }));
-      after(1040, () => patch({ energy: 1 }));
-      after(1500, () => {
+      after(780, () => patch({ energy: .62 }));
+      after(1560, () => patch({ energy: 1 }));
+      after(2250, () => {
         patch({
           holding: false, phase: 'anticipate', tiltX: 0, tiltY: 0,
           settlingLine: drawLine(SETTLING[lang], stateRef.current.settlingLine),
         });
         // The same settle every other path uses, so the question arrives the
-        // way it will every time they shake it themselves.
-        after(PHASES.anticipate.dur + 720, () => reveal('auto'));
+        // way it will every time they shake it themselves. Only the tail is
+        // stretched: anticipate's own duration is shared with the shake, the
+        // 'Shake again' button and the share arrival, and lengthening it here
+        // would slow all of them down too.
+        after(PHASES.anticipate.dur + 1080, () => reveal('auto'));
       });
     });
   }
