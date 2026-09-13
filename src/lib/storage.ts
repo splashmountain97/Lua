@@ -15,12 +15,29 @@ const STREAK_LAST_KEY = 'lua.streakLastOpen';
 const PREFS_KEY = 'lua.prefs';
 const DAY_COUNT_KEY = 'lua.dayCount';
 const WAITLIST_KEY = 'lua.waitlist';
+const DEV_KEY = 'lua.devDevice';
 
 function safeGet(key: string): string | null {
   try { return localStorage.getItem(key); } catch { return null; }
 }
 function safeSet(key: string, value: string) {
   try { localStorage.setItem(key, value); } catch { /* private mode */ }
+}
+
+/**
+ * Whether this browser belongs to whoever builds the thing rather than to a
+ * reader. Set from ?lua-dev=1 and cleared by ?lua-dev=0 — see the note above
+ * readDevFlag in lib/analytics for why it is read from the URL every time
+ * rather than only stored.
+ *
+ * Written as '0' rather than removed, so a browser that has been explicitly
+ * un-flagged reads the same as one that never was.
+ */
+export function isDevDevice(): boolean {
+  return safeGet(DEV_KEY) === '1';
+}
+export function setDevDevice(on: boolean) {
+  safeSet(DEV_KEY, on ? '1' : '0');
 }
 
 export function hasOpenedBefore(): boolean {
