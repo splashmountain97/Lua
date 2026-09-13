@@ -67,10 +67,10 @@ function sharedIndex(): number | null {
 /**
  * The first run, as a sequence.
  *
- * Six while the first question is on the screen, and four more once it has
- * been put down — the filters are not worth explaining until someone has seen
- * what they filter. Each step is gated on the phase it belongs to, so the
- * question steps wait for the question and the rest wait for the idle screen.
+ * Six while the first question is on the screen, and two more once it has been
+ * put down — the filters are not worth explaining until someone has seen what
+ * they filter. Each step is gated on the phase it belongs to, so the question
+ * steps wait for the question and the rest wait for the idle screen.
  *
  * The question's six run in order of what someone is most likely to want, not
  * in the order the controls happen to sit on the screen: the question itself,
@@ -78,10 +78,18 @@ function sharedIndex(): number | null {
  * in front of them, and only then the way out. Closing is the last thing a
  * newcomer needs pointed at — it was first here once, which taught the exit
  * before anything worth staying for.
+ *
+ * The home screen's two were four: a step each for the categories, the
+ * weights, the saved list and the streak. But those four controls are only two
+ * places to look — the filters stacked at the foot of the screen, and the
+ * counters tiled into the top corner — and dimming the screen twice to explain
+ * one cluster taught the taps, not the layout. Lit as clusters they cost half
+ * as many dismissals and leave room to name the gear, which no step reached
+ * when each one had to be spent on a single control.
  */
 export const INTRO = {
   reflection: 0, again: 1, share: 2, write: 3, save: 4, close: 5,
-  cats: 6, weights: 7, saved: 8, streak: 9, done: 10,
+  filters: 6, corner: 7, done: 8,
 } as const;
 const INTRO_DONE = INTRO.done;
 

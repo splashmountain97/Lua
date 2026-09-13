@@ -94,21 +94,21 @@ export const UI = {
       'Done with it? Close it here and the moon comes back.',
       'Terminou? Feche aqui e a lua volta.',
     ),
-    cats: L(
-      'Pick the ground your question comes from — yourself, your life, or the world beyond it. Change it whenever you like.',
-      'Escolha de onde a pergunta vem — de você, da sua vida ou do mundo ao seu redor. Mude quando quiser.',
+    // One line for the pair of filters, and one for the corner's three
+    // counters, because each cluster is one place to look rather than two or
+    // three controls to be walked through. Both name their parts in the order
+    // they sit on the screen, left to right, so the words can be mapped to the
+    // things without a second glance.
+    filters: L(
+      'Choose where your questions come from — you, your life, the world beyond it — and how far you want to be pushed. Change either whenever you like.',
+      'Escolha de onde vêm suas perguntas — de você, da sua vida, do mundo ao seu redor — e até onde você quer ir. Mude quando quiser.',
     ),
-    weights: L(
-      'And how far you want to be pushed. Some questions are a passing thought, some stay with you for days.',
-      'E até onde você quer ir. Algumas perguntas são um pensamento passageiro; outras ficam com você por dias.',
-    ),
-    saved: L(
-      'Anything you put aside is kept here — the questions you liked when the moment was wrong.',
-      'Tudo que você deixa de lado fica aqui — as perguntas de que você gostou na hora errada.',
-    ),
-    streak: L(
-      'The moon fills as you come back — a little more every few days, full at twenty-five.',
-      'A lua vai enchendo conforme você volta — um pouco mais a cada poucos dias, cheia aos vinte e cinco.',
+    // Two sentences rather than one: the moon is the only one of the three
+    // whose behaviour cannot be guessed by looking at it, so it gets a sentence
+    // of its own instead of a clause wedged between dashes.
+    corner: L(
+      'Your corner: the questions you saved, your moon, and the settings behind the gear. The moon fills as you come back — full at twenty-five days.',
+      'Seu canto: as perguntas que você salvou, a sua lua e os ajustes atrás da engrenagem. A lua vai enchendo conforme você volta — cheia aos vinte e cinco dias.',
     ),
   },
 

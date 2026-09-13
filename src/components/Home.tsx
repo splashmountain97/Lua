@@ -37,7 +37,11 @@ export default function Home({ lua }: { lua: Lua }) {
   const { lang, t } = useLang();
   const { titleY, moonCY, lineY, height: stageH } = useStageLayout();
   const promptRef = useRef<HTMLDivElement>(null);
-  const catsRef = useRef<HTMLDivElement>(null);
+  // The two first-run clusters are lit as wholes, so each is a box rather than
+  // a control: the filters at the foot of the screen, and the counters tiled
+  // into the top corner. See INTRO in useLua.
+  const filtersRef = useRef<HTMLDivElement>(null);
+  const cornerRef = useRef<HTMLDivElement>(null);
   const writeRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const saveRef = useRef<HTMLButtonElement>(null);
@@ -47,7 +51,6 @@ export default function Home({ lua }: { lua: Lua }) {
   const shareRef = useRef<HTMLButtonElement>(null);
   const streakRef = useRef<HTMLButtonElement>(null);
   const gearRef = useRef<HTMLButtonElement>(null);
-  const weightsRef = useRef<HTMLDivElement>(null);
   const ph = state.phase;
   // The number is what is still put aside, matching the panel's own 'Saved'
   // header — a question reflected on is history, not a pending one. The button
@@ -134,10 +137,24 @@ export default function Home({ lua }: { lua: Lua }) {
             in one corner rather than staying spread across a row it no longer
             fills. It still survives a zero — a control explained during the
             first run and then gone is worse than one showing nothing yet. */}
-        {(saved.length > 0 || introStep >= INTRO.saved) && (
+        {/* The three tile edge to edge, and the first run now lights them as
+            one group, so they hang off a box of exactly their own union —
+            three 46s wide, at the corner the rightmost of them already held.
+            The children keep their own absolute placement, measured from the
+            box's right edge instead of the stage's, which lands each of them
+            where it stood before.
+
+            Deliberately not given pointer-events of its own. The chrome layer
+            above turns taps off for the whole corner while it is faded, and a
+            child that set them back to 'auto' would be reachable through that.
+            Being a bare div, the uncovered strip left when the bookmark is
+            absent passes the stage's tap test exactly as the empty space it
+            replaces did. */}
+        <div ref={cornerRef} style={{ position: 'absolute', top: 70, right: 14, width: 138, height: 46 }}>
+        {(saved.length > 0 || introStep >= INTRO.corner) && (
           <button ref={savedRef} type="button" onClick={actions.openPanel}
             aria-label={t(UI.home.savedAria(savedCount))} style={{
-              position: 'absolute', top: 70, right: 106,
+              position: 'absolute', top: 0, right: 92,
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
               width: 46, height: 46, background: 'none', border: 0, padding: 0, cursor: 'pointer',
               color: savedFull ? 'rgba(242,193,78,.85)' : '#9397ab',
@@ -157,7 +174,7 @@ export default function Home({ lua }: { lua: Lua }) {
             the bookmark shook the moon instead. */}
         <button ref={streakRef} type="button" onClick={actions.goStreak}
           aria-label={t(UI.home.streakAria(streakDays))} style={{
-            position: 'absolute', top: 70, right: 60,
+            position: 'absolute', top: 0, right: 46,
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
             width: 46, height: 46, background: 'none', border: 0, padding: 0, cursor: 'pointer',
           }}>
@@ -182,7 +199,7 @@ export default function Home({ lua }: { lua: Lua }) {
             sits to the top and pads down onto the streak's moon instead. */}
         <button ref={gearRef} type="button" onClick={actions.openSettings}
           aria-label={t(UI.settings.title)} title={t(UI.settings.title)} style={{
-            position: 'absolute', top: 70, right: 14,
+            position: 'absolute', top: 0, right: 0,
             display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
             width: 46, height: 46, padding: '7px 0 0',
             background: 'none', border: 0, cursor: 'pointer',
@@ -198,6 +215,7 @@ export default function Home({ lua }: { lua: Lua }) {
             <circle cx="12" cy="12" r="3" />
           </svg>
         </button>
+        </div>
 
         <div style={{ position: 'absolute', top: titleY, left: 0, right: 0, textAlign: 'center', padding: '0 32px' }}>
           <div style={{ font: '300 25px/1.2 Inter,sans-serif', letterSpacing: '-.028em', color: '#f0eef2' }}>{hintTitle}</div>
@@ -226,7 +244,11 @@ export default function Home({ lua }: { lua: Lua }) {
             </div>
           )}
 
-          <div ref={catsRef}>
+          {/* Categories, weights and the weight's own note are lit together:
+              they are one decision in two halves, and the note explains the
+              half above it. Nothing here is positioned by the wrapper — it
+              exists to be measured. */}
+          <div ref={filtersRef}>
             <div style={{ margin: '0 0 3px', padding: '0 2px' }}>
               <span style={{ font: '400 11.5px/1.4 Inter,sans-serif', letterSpacing: '.01em', color: '#9397ab' }}>{t(UI.home.tapToChoose)}</span>
             </div>
@@ -278,34 +300,33 @@ export default function Home({ lua }: { lua: Lua }) {
                 );
               })}
             </div>
-          </div>
 
-          <div ref={weightsRef}>
-          <div style={{ margin: '6px 0 3px', padding: '0 2px' }}>
-            <span style={{ font: '400 11.5px/1.4 Inter,sans-serif', letterSpacing: '.01em', color: '#9397ab' }}>{t(UI.home.howHard)}</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            {WEIGHTS.map(w => {
-              const on = state.weight === w.id;
-              return (
-                <button key={String(w.id)} type="button" onClick={(e) => actions.setWeight(w.id, e)} style={{ display: 'flex', alignItems: 'center', height: 46, padding: 0, background: 'none', border: 0, cursor: 'pointer' }}>
-                  <span style={{
-                    display: 'flex', alignItems: 'center', height: 32, padding: '0 13px', borderRadius: 100,
-                    font: '400 12.5px/1 Inter,sans-serif', letterSpacing: '.012em', transition: 'all .18s',
-                    border: `1px solid ${on ? 'rgba(145,132,217,.5)' : 'rgba(147,151,171,.14)'}`,
-                    background: on ? 'rgba(145,132,217,.09)' : 'transparent',
-                    color: on ? '#d2cefd' : '#9397ab',
-                  }}>{t(w.label)}</span>
-                </button>
-              );
-            })}
-          </div>
-          </div>
-          <div style={{
-            padding: '0 2px', margin: '7px 0 0', font: '400 11px/1.4 Inter,sans-serif',
-            color: state.weight === null ? 'rgba(147,151,171,.75)' : 'rgba(181,171,252,.8)',
-          }}>
-            {t(state.weight === null ? WEIGHT_ANY_NOTE : WEIGHT_NOTE[state.weight])}
+            <div style={{ margin: '6px 0 3px', padding: '0 2px' }}>
+              <span style={{ font: '400 11.5px/1.4 Inter,sans-serif', letterSpacing: '.01em', color: '#9397ab' }}>{t(UI.home.howHard)}</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              {WEIGHTS.map(w => {
+                const on = state.weight === w.id;
+                return (
+                  <button key={String(w.id)} type="button" onClick={(e) => actions.setWeight(w.id, e)} style={{ display: 'flex', alignItems: 'center', height: 46, padding: 0, background: 'none', border: 0, cursor: 'pointer' }}>
+                    <span style={{
+                      display: 'flex', alignItems: 'center', height: 32, padding: '0 13px', borderRadius: 100,
+                      font: '400 12.5px/1 Inter,sans-serif', letterSpacing: '.012em', transition: 'all .18s',
+                      border: `1px solid ${on ? 'rgba(145,132,217,.5)' : 'rgba(147,151,171,.14)'}`,
+                      background: on ? 'rgba(145,132,217,.09)' : 'transparent',
+                      color: on ? '#d2cefd' : '#9397ab',
+                    }}>{t(w.label)}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div style={{
+              padding: '0 2px', margin: '7px 0 0', font: '400 11px/1.4 Inter,sans-serif',
+              color: state.weight === null ? 'rgba(147,151,171,.75)' : 'rgba(181,171,252,.8)',
+            }}>
+              {t(state.weight === null ? WEIGHT_ANY_NOTE : WEIGHT_NOTE[state.weight])}
+            </div>
           </div>
         </div>
       </div>
@@ -583,11 +604,12 @@ export default function Home({ lua }: { lua: Lua }) {
 
       {/* The first run, in order. Six while the question is up — it is the
           thing they came for, so it gets a beat to itself before anything is
-          explained — then four more once it has been put down, because the
+          explained — then two more once it has been put down, because the
           filters mean nothing until you have seen what they filter.
           The six are ordered by what someone is most likely to reach for, not
           by where the controls sit: another question, then the three things to
-          do with this one, and the way out last. See INTRO in useLua. */}
+          do with this one, and the way out last. The last two are the screen's
+          two clusters rather than its four controls. See INTRO in useLua. */}
       <Spotlight
         targetRef={promptRef}
         show={ph === 'settled' && introStep === INTRO.reflection && !state.shareNote}
@@ -632,30 +654,16 @@ export default function Home({ lua }: { lua: Lua }) {
       />
 
       <Spotlight
-        targetRef={catsRef}
-        show={ph === 'idle' && introStep === INTRO.cats && !state.infoOpen}
-        text={t(UI.intro.cats)}
+        targetRef={filtersRef}
+        show={ph === 'idle' && introStep === INTRO.filters && !state.infoOpen}
+        text={t(UI.intro.filters)}
         place="above"
         onDismiss={actions.advanceIntro}
       />
       <Spotlight
-        targetRef={weightsRef}
-        show={ph === 'idle' && introStep === INTRO.weights && !state.infoOpen}
-        text={t(UI.intro.weights)}
-        place="above"
-        onDismiss={actions.advanceIntro}
-      />
-      <Spotlight
-        targetRef={savedRef}
-        show={ph === 'idle' && introStep === INTRO.saved && !state.infoOpen}
-        text={t(UI.intro.saved)}
-        place="below"
-        onDismiss={actions.advanceIntro}
-      />
-      <Spotlight
-        targetRef={streakRef}
-        show={ph === 'idle' && introStep === INTRO.streak && !state.infoOpen}
-        text={t(UI.intro.streak)}
+        targetRef={cornerRef}
+        show={ph === 'idle' && introStep === INTRO.corner && !state.infoOpen}
+        text={t(UI.intro.corner)}
         place="below"
         onDismiss={actions.advanceIntro}
       />
