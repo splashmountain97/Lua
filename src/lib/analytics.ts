@@ -1,5 +1,6 @@
 import type { PostHog } from 'posthog-js';
 import type { CategoryId, Prompt, Weight } from '../data/content';
+import { isDevDevice, setDevDevice } from './storage';
 
 // The only measurement in the app, and it is held to the same bargain the rest
 // of the app makes: nothing that leaves the device may identify a person or
@@ -48,6 +49,9 @@ const queued: [string, Record<string, string | number> | undefined][] = [];
  * which is a lot to send someone in order to do nothing.
  */
 export function initAnalytics() {
+  // Before the key check, so ?lua-dev=1 still records the choice on a build
+  // that sends nothing — the flag outlives whichever page happened to set it.
+  devDevice = readDevFlag();
   if (loading || ph || !KEY) return;
   loading = true;
   import('posthog-js').then(({ default: posthog }) => {
@@ -81,10 +85,48 @@ export function initAnalytics() {
   }).catch(() => { /* analytics is never worth breaking the app for */ });
 }
 
+/**
+ * Whether the events from this page are the author's own.
+ *
+ * Testing happens on the real site — there is nowhere else a key exists, since
+ * neither the dev server nor a preview deploy is given one — so the author's
+ * visits land in the same project as everybody else's, and roughly a fifth of
+ * the arrivals recorded so far are their own.
+ *
+ * Tagged rather than dropped. The author's device is the only one that can
+ * confirm an event fires at all, and a switch that makes it silent takes that
+ * away at exactly the moment it is wanted.
+ */
+let devDevice = false;
+
+/**
+ * Read from the URL on every load, not only from storage.
+ *
+ * The testing in question is done in a private Safari tab, which throws away
+ * localStorage at the end of the session, so a flag that could only be stored
+ * would be gone by the next visit. The URL carries it instead, and the stored
+ * copy is a convenience for ordinary browsers, which then need it only once.
+ *
+ * Put ?lua-dev=1 on a home-screen shortcut and every launch is tagged.
+ */
+function readDevFlag(): boolean {
+  let fromUrl: boolean | null = null;
+  try {
+    const v = new URLSearchParams(window.location.search).get('lua-dev');
+    if (v === '1') fromUrl = true;
+    else if (v === '0') fromUrl = false;
+  } catch { /* no URL to read is the same as nothing being asked for */ }
+  if (fromUrl === null) return isDevDevice();
+  setDevDevice(fromUrl);
+  return fromUrl;
+}
+
 function send(event: string, props?: Record<string, string | number>) {
   if (!KEY) return;
-  if (ph) { ph.capture(event, props); return; }
-  if (queued.length < 50) queued.push([event, props]);
+  // Added here rather than at each call site so no event can be sent untagged.
+  const withDev = devDevice ? { ...props, dev: 'true' } : props;
+  if (ph) { ph.capture(event, withDev); return; }
+  if (queued.length < 50) queued.push([event, withDev]);
 }
 
 /** The moon was shaken. Paired with prompt_shown, this is the whole funnel. */
