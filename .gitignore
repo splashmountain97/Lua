@@ -25,3 +25,11 @@ dist-ssr
 
 # local editor/tooling config
 .claude/
+
+# Secrets. .env.example is the tracked template and stays; a real .env never
+# does. Vite's own convention only covers *.local, which left plain .env — the
+# exact filename .env.example tells you to create — one `git add .` from being
+# committed with the Supabase and PostHog keys in it.
+.env
+.env.*
+!.env.example

@@ -1,4 +1,4 @@
-import { joinWaitlist as keepLocally } from './storage';
+import { getWaitlist, joinWaitlist as keepLocally, setWaitlist, type WaitlistEntry } from './storage';
 
 /**
  * The one place an address leaves the device.
@@ -17,12 +17,32 @@ import { joinWaitlist as keepLocally } from './storage';
  * Nothing else is sent. Not which questions were seen, not when, not the day
  * count — only the address someone typed and which door they typed it at,
  * which is the entire result the test is after.
+ *
+ * ── Why the order below matters ──────────────────────────────────────────────
+ *
+ * The address is written to the device BEFORE the request, and removed only
+ * once the server has accepted it. The previous version did the opposite: it
+ * kept a copy only when the send visibly failed, and nothing ever read that
+ * copy back.
+ *
+ * That cost a real person. On 12 September someone read two questions, went
+ * looking for Life, hit the wall and left their address — while the Supabase
+ * project happened to be paused. The insert failed, the copy went to
+ * localStorage, and it sat there unread. They are the only stranger who has
+ * ever asked to be told when a door opens, and they could not be answered.
+ *
+ * Writing first also closes a hole the old order could not: a send that is
+ * still in flight when the tab closes runs neither its `catch` nor its `!ok`
+ * branch, so the address would have been lost with no trace anywhere. The card
+ * says 'You're on the list' immediately and does not wait for the network, so
+ * that race is entirely realistic.
  */
 const URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
 
-export async function sendWaitlist(email: string, door: string): Promise<void> {
-  if (!URL || !KEY) { keepLocally({ email, door, at: Date.now() }); return; }
+/** True only when the row is actually in the table. */
+async function post(entry: WaitlistEntry): Promise<boolean> {
+  if (!URL || !KEY) return false;
   try {
     const res = await fetch(`${URL}/rest/v1/waitlist_emails`, {
       method: 'POST',
@@ -32,15 +52,38 @@ export async function sendWaitlist(email: string, door: string): Promise<void> {
         'Content-Type': 'application/json',
         Prefer: 'return=minimal',
       },
-      body: JSON.stringify({ email, source_tag: door }),
+      body: JSON.stringify({ email: entry.email, source_tag: entry.door }),
     });
-    // The card has already said 'You're on the list', because making someone
-    // wait on a network round trip to be told that is worse than the rare case
-    // of it failing. So a failure is kept on the device rather than dropped:
-    // the address is still there to send later, and nobody was told something
-    // untrue that cost them anything.
-    if (!res.ok) keepLocally({ email, door, at: Date.now() });
+    return res.ok;
   } catch {
-    keepLocally({ email, door, at: Date.now() });
+    return false;
+  }
+}
+
+/** Drop one entry, re-reading first so a concurrent write is not clobbered. */
+function forget(entry: WaitlistEntry) {
+  setWaitlist(getWaitlist().filter(e => !(e.email === entry.email && e.at === entry.at)));
+}
+
+export async function sendWaitlist(email: string, door: string): Promise<void> {
+  const entry: WaitlistEntry = { email, door, at: Date.now() };
+  // Kept first, so nothing can lose it in between.
+  keepLocally(entry);
+  if (await post(entry)) forget(entry);
+}
+
+/**
+ * Send anything a previous visit could not, on the next visit that can.
+ *
+ * Called once at startup. Failures are left in place to be tried again rather
+ * than dropped, and each is sent in turn rather than all at once: a queue this
+ * size has no reason to open several connections, and if the table is still
+ * unreachable the first failure is representative of the rest.
+ */
+export async function flushWaitlist(): Promise<void> {
+  if (!URL || !KEY) return;
+  for (const entry of getWaitlist()) {
+    if (await post(entry)) forget(entry);
+    else return;
   }
 }

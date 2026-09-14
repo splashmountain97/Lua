@@ -234,14 +234,37 @@ export function bumpDayCount(): number {
  */
 export interface WaitlistEntry { email: string; door: string; at: number }
 
-export function joinWaitlist(entry: WaitlistEntry) {
-  let list: WaitlistEntry[] = [];
+/**
+ * Addresses waiting to reach the table.
+ *
+ * Read and written as a whole list rather than appended to, because entries
+ * now leave as well as arrive: one is removed the moment the server accepts
+ * it. Every caller re-reads before writing, so a send finishing while a flush
+ * is mid-flight cannot overwrite the other's work with a stale copy.
+ */
+export function getWaitlist(): WaitlistEntry[] {
   try {
     const raw = safeGet(WAITLIST_KEY);
     const v: unknown = raw ? JSON.parse(raw) : [];
-    if (Array.isArray(v)) list = v as WaitlistEntry[];
+    if (Array.isArray(v)) return v as WaitlistEntry[];
   } catch { /* a corrupt list is replaced, not repaired */ }
-  safeSet(WAITLIST_KEY, JSON.stringify([...list, entry]));
+  return [];
+}
+
+/**
+ * Twenty is a cap on a queue that should never have more than one thing in it;
+ * anything approaching it means sending has been broken for a long time. The
+ * newest are kept, and there is deliberately no expiry by age: someone who
+ * asked to be told when a door opens is still owed that answer next month, and
+ * dropping their address on a timer would lose the very thing this exists to
+ * protect.
+ */
+export function setWaitlist(list: WaitlistEntry[]) {
+  safeSet(WAITLIST_KEY, JSON.stringify(list.slice(-20)));
+}
+
+export function joinWaitlist(entry: WaitlistEntry) {
+  setWaitlist([...getWaitlist(), entry]);
 }
 
 export interface Prefs {
