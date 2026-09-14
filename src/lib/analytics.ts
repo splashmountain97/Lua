@@ -61,7 +61,11 @@ export function initAnalytics() {
       person_profiles: 'identified_only',
       autocapture: false,
       disable_session_recording: true,
-      capture_pageview: true,
+      // Off so the first pageview can be captured by hand below, after the
+      // super properties are registered. Left on, posthog sends it during
+      // init() — before register() has run — and the one event that every
+      // visit produces is the one event that arrives untagged.
+      capture_pageview: false,
       capture_pageleave: false,
       // Everything below is off by default in this app but ON by default in
       // PostHog, and several are switched on remotely rather than from here.
@@ -77,6 +81,13 @@ export function initAnalytics() {
       advanced_disable_feature_flags: true,
       disable_external_dependency_loading: true,
     });
+    // Registered before the first capture, so every event carries these —
+    // including the pageview on the next line and the queued ones below.
+    posthog.register({
+      launched: launchedAs(),
+      ...(devDevice ? { dev: 'true' } : {}),
+    });
+    posthog.capture('$pageview');
     ph = posthog;
     // A shake can easily beat the download; without this the first one is lost,
     // which is the single event least worth losing.
@@ -121,12 +132,31 @@ function readDevFlag(): boolean {
   return fromUrl;
 }
 
+/**
+ * Whether this was opened from a home-screen icon or from a browser tab.
+ *
+ * Asked because 'did anyone keep it?' is the one question a daily habit has to
+ * answer, and an install is the only evidence of it this app can see without
+ * keeping an identity. It says how the app was opened, never by whom.
+ *
+ * Both checks are needed. iOS Safari has carried navigator.standalone since
+ * long before it understood the display-mode query, and iOS is where the home
+ * screen actually gets used.
+ */
+function launchedAs(): 'standalone' | 'browser' {
+  try {
+    if (window.matchMedia('(display-mode: standalone)').matches) return 'standalone';
+    if ((window.navigator as Navigator & { standalone?: boolean }).standalone) return 'standalone';
+  } catch { /* an environment with neither is a browser as far as this cares */ }
+  return 'browser';
+}
+
 function send(event: string, props?: Record<string, string | number>) {
   if (!KEY) return;
-  // Added here rather than at each call site so no event can be sent untagged.
-  const withDev = devDevice ? { ...props, dev: 'true' } : props;
-  if (ph) { ph.capture(event, withDev); return; }
-  if (queued.length < 50) queued.push([event, withDev]);
+  // dev and launched are registered as super properties instead of being added
+  // here, so they reach $pageview too — which this function never sees.
+  if (ph) { ph.capture(event, props); return; }
+  if (queued.length < 50) queued.push([event, props]);
 }
 
 /** The moon was shaken. Paired with prompt_shown, this is the whole funnel. */
