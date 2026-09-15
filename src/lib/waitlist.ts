@@ -25,11 +25,16 @@ import { getWaitlist, joinWaitlist as keepLocally, setWaitlist, type WaitlistEnt
  * kept a copy only when the send visibly failed, and nothing ever read that
  * copy back.
  *
- * That cost a real person. On 12 September someone read two questions, went
- * looking for Life, hit the wall and left their address — while the Supabase
- * project happened to be paused. The insert failed, the copy went to
- * localStorage, and it sat there unread. They are the only stranger who has
- * ever asked to be told when a door opens, and they could not be answered.
+ * That has already cost one address. On 12 September a visit read two
+ * questions, went looking for Life, hit the wall and submitted an address; the
+ * row never arrived. Four waitlist_joined events exist against five rows, and
+ * the doors do not reconcile — two 'life' events against one 'life' row, whose
+ * timestamp ties it to a different visit. So a submission was accepted by the
+ * card and lost on the way to the table.
+ *
+ * Who submitted it is not known and is not knowable from this data: an id here
+ * survives one page load, and guessing at a person from their country and
+ * browser is how you end up asserting things that are not true.
  *
  * Writing first also closes a hole the old order could not: a send that is
  * still in flight when the tab closes runs neither its `catch` nor its `!ok`
