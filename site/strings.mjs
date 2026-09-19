@@ -33,61 +33,74 @@ export const S = {
     menu: L('Menu', 'Menu'),
   },
   home: {
-    title: L('Lua — a question, once a day', 'Lua — uma pergunta por dia'),
+    title: L('Lua — journaling, without the blank page', 'Lua — diário, sem a página em branco'),
     kicker: L('A question, once a day', 'Uma pergunta por dia'),
-    h1: L('The question is ours. The answer is yours.', 'A pergunta é nossa. A resposta é sua.'),
+    h1: L('Journaling, without the blank page.', 'Diário, sem a página em branco.'),
     lead: L(
-      'Journaling is just answering an honest question about your own life, on purpose. People have done it for two thousand years — emperors did it, and so did people with nothing.',
-      'Escrever sobre si mesmo é só responder, de propósito, uma pergunta honesta sobre a própria vida. As pessoas fazem isso há dois mil anos — imperadores fizeram, e quem não tinha nada também.',
+      'Shake the moon and one honest question comes out. Answer it on paper, in your head, or out loud. Thirty seconds, and you know yourself a little better than yesterday.',
+      'Chacoalhe a lua e uma pergunta honesta sai de dentro. Responda no papel, na cabeça ou em voz alta. Trinta segundos, e você se conhece um pouco melhor do que ontem.',
     ),
-    cta: L('Try it now', 'Experimentar agora'),
+    cta: L('Get today’s question', 'Pegar a pergunta de hoje'),
     ctaNote: L('Free · No account · English & Português', 'Grátis · Sem conta · Português & English'),
     three: [
       {
-        head: L('Shake.', 'Chacoalhe.'),
+        head: L('No blank page.', 'Sem página em branco.'),
         body: L(
-          'Press and hold the moon, or shake your phone. One question comes out of the glass.',
-          'Segure a lua, ou chacoalhe o celular. Uma pergunta sai do vidro.',
+          'Lua asks. You only answer. One question at a time, never a cursor blinking at you.',
+          'A Lua pergunta. Você só responde. Uma pergunta de cada vez, nunca um cursor piscando para você.',
         ),
       },
       {
-        head: L('Sit with it.', 'Fique com ela.'),
+        head: L('Nothing to type.', 'Nada para digitar.'),
         body: L(
-          'One question a day. Answer it on paper, in your head, or out loud — alone or with friends. You decide.',
-          'Uma pergunta por dia. Responda no papel, na cabeça ou em voz alta — só você ou com amigos. Você decide.',
+          'Say it on a walk, write it in the notebook you already have, or just think it through. Lua has no text box, on purpose.',
+          'Diga numa caminhada, escreva no caderno que você já tem, ou só pense. A Lua não tem caixa de texto, de propósito.',
         ),
       },
       {
-        head: L('Keep nothing.', 'Não guarde nada.'),
+        head: L('Nothing kept.', 'Nada guardado.'),
         body: L(
-          'Lua keeps none of it. No account, nothing saved, nothing sent.',
-          'A Lua não guarda nada disso. Sem conta, nada salvo, nada enviado.',
+          'No account, nothing saved, nothing sent. What you think stays where you thought it.',
+          'Sem conta, nada salvo, nada enviado. O que você pensa fica onde você pensou.',
         ),
       },
     ],
     why: {
-      kicker: L('Why one question', 'Por que uma pergunta'),
-      h2: L('Earth is loud. The moon isn’t.', 'A Terra é barulhenta. A Lua não.'),
+      kicker: L('Why so little', 'Por que tão pouco'),
+      h2: L('Apps want more of you. Lua wants less.', 'Os apps querem mais de você. A Lua quer menos.'),
       p1: L(
-        'A blank page asks for everything at once. A question asks for one thing. That is the whole difference, and it is why people have kept at this for two thousand years.',
-        'Uma página em branco pede tudo de uma vez. Uma pergunta pede uma coisa só. Essa é a diferença inteira, e é por isso que as pessoas continuam fazendo isso há dois mil anos.',
+        'Track your mood. Rate your sleep. Tick the boxes, answer the follow-ups, keep the streak alive. Somewhere along the way, reflection got turned into a form to fill in, and a form is the opposite of a quiet mind.',
+        'Registre o humor. Avalie o sono. Marque as caixinhas, responda as perguntas seguintes, mantenha a sequência. Em algum momento, refletir virou um formulário para preencher, e formulário é o oposto de uma mente quieta.',
       ),
       p2: L(
-        'A few hundred questions, handpicked slowly. Written, not generated. Some are light enough for a bus ride. Some will follow you around for a week.',
-        'Algumas centenas de perguntas, escolhidas a dedo, sem pressa. Escritas, não geradas. Algumas são leves o bastante para uma viagem de ônibus. Outras vão te seguir por uma semana.',
+        'Lua does the reverse. One question, a handful of features, and then it lets you go: back to the real world, and to the quiet place inside you where the answer actually is.',
+        'A Lua faz o contrário. Uma pergunta, poucos recursos, e depois ela te solta: de volta ao mundo real, e ao lugar quieto dentro de você onde a resposta realmente está.',
+      ),
+    },
+    proof: {
+      kicker: L('Two thousand years', 'Dois mil anos'),
+      h2: L('This isn’t new. It’s old.', 'Isso não é novo. É antigo.'),
+      p1: L(
+        'Answering an honest question about your own life, on purpose, is the oldest habit there is. Emperors did it, and so did people with nothing.',
+        'Responder, de propósito, uma pergunta honesta sobre a própria vida é o hábito mais antigo que existe. Imperadores fizeram, e quem não tinha nada também.',
+      ),
+      p2: L(
+        'Lua’s questions are written by hand and picked slowly. A few hundred of them, from light to heavy, none of them generated.',
+        'As perguntas da Lua são escritas à mão e escolhidas sem pressa. Algumas centenas, do leve ao pesado, nenhuma gerada.',
       ),
       quote: L('The soul is dyed by the thoughts.', 'A alma é tingida pelos pensamentos.'),
       quoteBy: L('Marcus Aurelius, Meditations, V.16', 'Marco Aurélio, Meditações, V.16'),
+      principle: L('The question is ours. The answer is yours.', 'A pergunta é nossa. A resposta é sua.'),
     },
     push: {
       line: L('Ready to know yourself better?', 'Quer se conhecer melhor?'),
     },
     inside: {
-      kicker: L('Inside the moon', 'Dentro da lua'),
-      h2: L('Hold it. The window opens.', 'Segure. A janela se abre.'),
+      kicker: L('How it feels', 'Como é'),
+      h2: L('Shake. Read. Sit with it.', 'Chacoalhe. Leia. Fique com ela.'),
       lead: L(
-        'This is Lua as it is on your phone today. The moon is the whole interface: press it and the glass pushes in, and the question is waiting in the swirl.',
-        'Esta é a Lua como ela é no seu celular hoje. A lua é a interface inteira: pressione e o vidro se aproxima, e a pergunta está esperando no redemoinho.',
+        'This is Lua as it is on your phone today. The moon is the whole interface: hold it, and the glass opens on one question.',
+        'Esta é a Lua como ela é no seu celular hoje. A lua é a interface inteira: segure, e o vidro se abre em uma pergunta.',
       ),
       moonAria: L('The moon: a grey cratered sphere with a round glass window, purple and gold swirling inside', 'A lua: uma esfera cinza com crateras e uma janela redonda de vidro, com um redemoinho roxo e dourado dentro'),
     },
@@ -95,10 +108,10 @@ export const S = {
       {
         id: 'reveal',
         kicker: L('The reveal', 'A revelação'),
-        head: L('One question. Sit with it as long as you like.', 'Uma pergunta. Fique com ela o tempo que quiser.'),
+        head: L('One line, and nothing else on the screen.', 'Uma linha, e nada mais na tela.'),
         body: L(
-          'Hold the moon, or shake the phone. What comes out is one line, with nothing around it, and it stays until you close it.',
-          'Segure a lua, ou chacoalhe o celular. O que sai é uma linha só, sem nada em volta, e ela fica até você fechar.',
+          'Hold the moon, or shake the phone. What comes out is one question with nothing around it, and it stays until you close it. Sit with it as long as you like.',
+          'Segure a lua, ou chacoalhe o celular. O que sai é uma pergunta só, sem nada em volta, e ela fica até você fechar. Fique com ela o tempo que quiser.',
         ),
         note: L('Not the one? Shake again for another.', 'Não era essa? Chacoalhe de novo para outra.'),
         screen: 'reveal',
@@ -107,7 +120,7 @@ export const S = {
       {
         id: 'choose',
         kicker: L('Where they come from', 'De onde elas vêm'),
-        head: L('Choose where your questions come from, and how hard they push.', 'Escolha de onde vêm suas perguntas, e até onde elas vão.'),
+        head: L('You choose how deep it goes.', 'Você escolhe até onde vai.'),
         body: L(
           'Three sources — you, your life, the world beyond it — and three weights, from light to heavy. Change either whenever you like.',
           'Três origens — você, sua vida, o mundo ao seu redor — e três pesos, do leve ao pesado. Mude quando quiser.',
@@ -122,10 +135,10 @@ export const S = {
       {
         id: 'share',
         kicker: L('Send it to someone', 'Mande para alguém'),
-        head: L('They get the question. No app required.', 'A pessoa recebe a pergunta. Sem precisar de app.'),
+        head: L('Send one to a friend. They don’t need the app.', 'Mande uma para alguém. A pessoa não precisa do app.'),
         body: L(
-          'Send a question to someone — they’ll get the prompt, no app required to open it. It arrives with one line saying somebody thought of them, and then the question, exactly as you saw it.',
-          'Mande uma pergunta para alguém — a pessoa recebe a pergunta e não precisa de app nenhum para abrir. Chega com uma linha dizendo que alguém pensou nela, e depois a pergunta, exatamente como você viu.',
+          'It arrives with one line saying somebody thought of them, and then the question, exactly as you saw it. Answer it together, or apart.',
+          'Chega com uma linha dizendo que alguém pensou nela, e depois a pergunta, exatamente como você viu. Respondam juntos, ou cada um do seu lado.',
         ),
         screen: 'arrival',
         alt: L('The arrival screen a sent question opens on: a small astronaut portrait and the line “Someone thought of you”', 'A tela de chegada de uma pergunta enviada: um pequeno retrato de astronauta e a linha “Alguém pensou em você”'),
@@ -133,7 +146,7 @@ export const S = {
       {
         id: 'streak',
         kicker: L('Coming back', 'Voltar'),
-        head: L('Your moon fills as you come back.', 'Sua lua enche conforme você volta.'),
+        head: L('Come back, and the moon fills.', 'Volte, e a lua enche.'),
         body: L(
           'There is no chart here, and nothing to lose. The object keeps the count for you: each day you come back, a little more of it is lit. Full at twenty-five days.',
           'Não tem gráfico aqui, e não tem nada a perder. A lua guarda a conta para você: a cada dia que você volta, um pouco mais dela se acende. Cheia aos vinte e cinco dias.',
@@ -155,23 +168,14 @@ export const S = {
       ),
       alt: L('The saved list: a few questions put aside for later, and one marked as reflected on', 'A lista de salvas: algumas perguntas deixadas para depois, e uma marcada como refletida'),
     },
-    langs: {
-      kicker: L('Two languages', 'Duas línguas'),
-      h2: L('Written in English. Translated by hand into Portuguese.', 'Escrita em inglês. Traduzida à mão para o português.'),
-      body: L(
-        'Every question exists in both, reviewed side by side, and the app follows your phone unless you tell it otherwise.',
-        'Cada pergunta existe nas duas, revisadas lado a lado, e o app segue o seu celular a menos que você diga o contrário.',
-      ),
-      altEn: L('The same question in English', 'A mesma pergunta em inglês'),
-      altPt: L('The same question in Portuguese', 'A mesma pergunta em português'),
-    },
     get: {
       kicker: L('Get Lua', 'Leve a Lua'),
-      h2: L('On your phone today.', 'No seu celular hoje.'),
+      h2: L('Take the moon with you.', 'Leve a lua com você.'),
       body: L(
-        'Lua works on any phone as a web app. Add it to your home screen and it opens like one. The App Store and Google Play versions are on their way.',
-        'A Lua funciona em qualquer celular como app de navegador. Adicione à tela inicial e ela abre como um app. As versões para App Store e Google Play estão a caminho.',
+        'Works on any phone today as a web app. Add it to your home screen and it opens like one. App Store and Google Play are on their way.',
+        'Funciona em qualquer celular hoje, como app de navegador. Adicione à tela inicial e ela abre como um app. App Store e Google Play estão a caminho.',
       ),
+      langs: L('In English and Portuguese, written and translated by hand.', 'Em inglês e português, escrita e traduzida à mão.'),
       qr: L('Point your camera here', 'Aponte a câmera aqui'),
       qrAria: L('QR code that opens Lua at luadaily.com/app', 'Código QR que abre a Lua em luadaily.com/app'),
       openWeb: L('Open Lua in your browser', 'Abrir a Lua no navegador'),

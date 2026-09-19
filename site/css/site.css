@@ -232,6 +232,15 @@ p { margin: 0 0 14px; max-width: var(--measure); text-wrap: pretty; color: var(-
 .quote p { font: 400 26px/1.3 var(--serif); letter-spacing: -.01em; color: var(--ink); margin: 0 0 8px; }
 .quote cite { font: 400 13px/1.4 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-mute); font-style: normal; }
 
+/* Proof: text only, centred, under the row of columns. */
+.proof { padding: 24px 0 110px; }
+.proof-in { text-align: center; max-width: 640px; }
+.proof-in p { margin-left: auto; margin-right: auto; }
+.proof .quote { border: 0; padding: 0; margin: 36px auto 0; }
+.principle { margin: 44px auto 0; font: 400 24px/1.3 var(--serif); letter-spacing: -.01em; color: var(--ink); font-variant-caps: normal; }
+.principle::before { content: ""; display: block; width: 36px; height: 1px; background: var(--ink-line); margin: 0 auto 22px; }
+.langs-note { margin-top: 18px; }
+
 /* ── The push-in ─────────────────────────────────────────────────────── */
 .push { position: relative; height: 240vh; background: var(--paper); --p: 0; }
 .push-stage { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; background: var(--paper); }

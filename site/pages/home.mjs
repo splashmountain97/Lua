@@ -24,6 +24,7 @@ const COLUMNS = `<svg viewBox="0 0 220 44" aria-hidden="true">
 <path d="M188 20.6c2.6-.3 5.2-.3 7.8 0M189.2 20.6l-.4 16.9M195.3 20.6l.5 16.8"/>
 </svg>`;
 
+
 export function badges(lang) {
   const t = (p) => p[lang];
   const one = (url, icon, on, name) => url
@@ -66,12 +67,11 @@ export default function home({ lang, qr }) {
 <section class="paper three" aria-label="${esc(t(S.nav.features))}">
   <div class="wrap three-grid">
     ${H.three.map((x, i) => `<div class="three-item rise">
-      ${[ICONS.moon, ICONS.notebook, ICONS.hatch][i]}
+      ${[ICONS.notebook, ICONS.moon, ICONS.hatch][i]}
       <h2 class="h3">${t(x.head)}</h2>
       <p>${t(x.body)}</p>
     </div>`).join('\n')}
   </div>
-  <div class="rule">${COLUMNS}</div>
 </section>
 
 <section class="paper why" id="why">
@@ -84,11 +84,22 @@ export default function home({ lang, qr }) {
       <h2 class="h2">${t(H.why.h2)}</h2>
       <p>${t(H.why.p1)}</p>
       <p>${t(H.why.p2)}</p>
-      <blockquote class="quote">
-        <p>${t(H.why.quote)}</p>
-        <cite>${t(H.why.quoteBy)}</cite>
-      </blockquote>
     </div>
+  </div>
+</section>
+
+<section class="paper proof">
+  <div class="rule">${COLUMNS}</div>
+  <div class="wrap proof-in rise">
+    <p class="kicker">${t(H.proof.kicker)}</p>
+    <h2 class="h2">${t(H.proof.h2)}</h2>
+    <p>${t(H.proof.p1)}</p>
+    <p>${t(H.proof.p2)}</p>
+    <blockquote class="quote">
+      <p>${t(H.proof.quote)}</p>
+      <cite>${t(H.proof.quoteBy)}</cite>
+    </blockquote>
+    <p class="principle">${t(H.proof.principle)}</p>
   </div>
 </section>
 
@@ -182,19 +193,7 @@ export default function home({ lang, qr }) {
   </div>
 </section>
 
-<section class="night langs" data-theme-section="night">
-  <div class="wrap">
-    <p class="kicker">${t(H.langs.kicker)}</p>
-    <h2 class="h2">${t(H.langs.h2)}</h2>
-    <p class="lead">${t(H.langs.body)}</p>
-    <div class="langs-pair">
-      <figure class="rise">${phone('reveal', t(H.langs.altEn), { small: true })}<figcaption>English</figcaption></figure>
-      <figure class="rise">${phone('reveal-pt', t(H.langs.altPt), { small: true })}<figcaption>Português</figcaption></figure>
-    </div>
-  </div>
-</section>
-
-<section class="night deep get" id="get">
+<section class="night deep get" id="get" data-theme-section="night">
   <div class="wrap get-grid">
     <div class="rise">
       <p class="kicker">${t(H.get.kicker)}</p>
@@ -205,6 +204,7 @@ export default function home({ lang, qr }) {
         <a class="btn btn-night-ghost" href="${href('/try', lang)}">${t(S.nav.tryIt)}</a>
       </div>
       ${badges(lang)}
+      <p class="note langs-note">${t(H.get.langs)}</p>
     </div>
     <div class="qr rise" role="img" aria-label="${esc(t(H.get.qrAria))}">
       ${qr}
