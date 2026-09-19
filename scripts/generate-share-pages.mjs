@@ -1,4 +1,4 @@
-// Builds one static page per question under dist/q/<id>/.
+// Builds one static page per question under dist/app/q/<id>/, served at /app/q/<id>.
 //
 // Share links have to preview properly in a chat app, and the crawlers that
 // build those previews do not run the app's JavaScript — they read the HTML the
@@ -20,8 +20,8 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const DIST = join(root, 'dist');
-const ORIGIN = 'https://luadaily.com';
+const DIST = join(root, 'dist', 'app');
+const ORIGIN = 'https://luadaily.com/app';
 
 const escapeAttr = (s) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -81,4 +81,4 @@ for (const { id, t } of prompts) {
   }
 }
 
-console.log(`share pages: ${prompts.length * LOCALES.length} written to dist/q/`);
+console.log(`share pages: ${prompts.length * LOCALES.length} written to dist/app/q/`);

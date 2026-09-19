@@ -1,6 +1,8 @@
 # Lua
 
-A shake-to-reveal daily reflection prompt — a mobile web app (installable as a PWA).
+A shake-to-reveal daily reflection prompt — a mobile web app (installable as a PWA),
+served at https://luadaily.com/app/. The root of luadaily.com is the marketing site
+(see "The site" below).
 
 Press and hold the moon (or shake, once motion permission is granted) to reveal today's
 question. Filter by category (Self / Life / World) and weight (Light / Firm / Heavy).
@@ -13,10 +15,34 @@ this device's own local storage (streak, unlock status, filter preferences).
 
 ```
 npm install
-npm run dev      # local dev server
-npm run build    # type-check + production build
+npm run dev      # local dev server — the app is at http://localhost:5173/app/
+npm run build    # type-check + production build of the app, the share pages and the site
 npm run lint     # oxlint
+npm run serve    # serve the built dist/ the way Vercel will, at http://localhost:4173
 ```
+
+The app is built with `base: '/app/'` into `dist/app/`; everything else in `dist/` is
+written by `scripts/build-site.mjs`. `vercel.json` redirects the old `/q/<id>` links
+to `/app/q/<id>` and rewrites unmatched `/app/q/*` to the app. A worker at `/sw.js`
+retires the one that cached the app at `/` before the move; the site's pages send
+anything opened in standalone mode (an old home-screen install) on to `/app/`.
+
+## The site
+
+`site/` holds the marketing pages: plain HTML rendered at build time from the
+templates in `site/pages`, in English at `/` and Portuguese under `/pt/`, from the one
+string table in `site/strings.mjs` (pairs adjacent, like `src/lib/strings.ts`).
+`site/config.mjs` carries the store links (empty until the apps are published — the
+badges then say "coming soon") and the placeholders the legal pages print.
+
+Generated inputs, committed so the deploy does not redo them:
+
+- `site/img/` — responsive AVIF/WebP/JPEG of the drawings, from `node scripts/generate-site-images.mjs`
+- `site/screens/` — real screenshots of the app, from `node scripts/capture-screens.mjs`
+  (needs the dev server running and Chrome installed)
+- `site/img/og.png` — the preview card, from `node scripts/capture-og.mjs`
+
+`.well-known/` files for app links are placeholders until the store release.
 
 ## Assets
 

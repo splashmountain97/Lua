@@ -3,7 +3,12 @@ import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
+// The app lives under /app/: the root of luadaily.com is the marketing site
+// (see scripts/build-site.mjs). Same origin, so the local storage that holds
+// someone's streak and saved questions survived the move from /.
 export default defineConfig({
+  base: '/app/',
+  build: { outDir: 'dist/app' },
   plugins: [
     react(),
     VitePWA({
@@ -19,6 +24,8 @@ export default defineConfig({
         description: 'A shake-to-reveal daily reflection prompt.',
         theme_color: '#161826',
         background_color: '#0e0f18',
+        scope: '/app/',
+        start_url: '/app/',
         display: 'standalone',
         orientation: 'portrait',
         icons: [
