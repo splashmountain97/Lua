@@ -71,15 +71,15 @@ export function detectLang(): Lang {
 /**
  * The language a share link was sent in, if the app was opened through one.
  *
- * /q/pt/<id> serves a Portuguese preview and /q/<id> an English one, so the
+ * /app/q/pt/<id> serves a Portuguese preview and /app/q/<id> an English one, so the
  * path already says which language the sender was reading in. Anything else
  * on the site says nothing.
  */
 export function langFromPath(): Lang | null {
   if (typeof window === 'undefined') return null;
   const path = window.location.pathname;
-  if (/^\/q\/pt\/\d+\/?$/.test(path)) return 'pt';
-  if (/^\/q\/\d+\/?$/.test(path)) return 'en';
+  if (/^\/app\/q\/pt\/\d+\/?$/.test(path)) return 'pt';
+  if (/^\/app\/q\/\d+\/?$/.test(path)) return 'en';
   return null;
 }
 

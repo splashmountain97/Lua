@@ -1,0 +1,11 @@
+[
+  {
+    "_comment": "TODO before store release: replace the SHA256 fingerprint with the Play App Signing certificate's. Served as application/json by vercel.json.",
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.dailylua.app",
+      "sha256_cert_fingerprints": ["SHA256_CERT_FINGERPRINT"]
+    }
+  }
+]

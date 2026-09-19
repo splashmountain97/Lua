@@ -518,7 +518,7 @@ export const LANDING_URL = 'https://luadaily.com';
 
 /** The page built for one question — see scripts/generate-share-pages.mjs. */
 export const shareUrl = (id: number, lang: Lang) =>
-  lang === 'pt' ? `${LANDING_URL}/q/pt/${id}` : `${LANDING_URL}/q/${id}`;
+  lang === 'pt' ? `${LANDING_URL}/app/q/pt/${id}` : `${LANDING_URL}/app/q/${id}`;
 
 export function promptIndexById(id: number): number {
   return PROMPTS.findIndex(p => p.id === id);

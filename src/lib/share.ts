@@ -8,15 +8,15 @@ const COPY_WORDS: Record<'en', CopyWords> = {
 };
 
 /**
- * The question id in a /q/<id> share link, if the app was opened through one.
+ * The question id in an /app/q/<id> share link, if the app was opened through one.
  * The pages under /q are built at deploy time so the link previews correctly in
  * a chat app; this is how the running app recognises one and opens on that
  * question rather than a random one.
  */
 export function sharedPromptId(): number | null {
-  // /q/<id> is English and /q/pt/<id> Portuguese; both name the same question.
+  // /app/q/<id> is English and /app/q/pt/<id> Portuguese; both name the same question.
   // Which language it was sent in is lib/i18n's business, not this one's.
-  const path = /^\/q\/(?:pt\/)?(\d+)\/?$/.exec(window.location.pathname);
+  const path = /^\/app\/q\/(?:pt\/)?(\d+)\/?$/.exec(window.location.pathname);
   // ?p= is accepted as well as /q/<id>, so a hand-written or hand-edited link
   // still finds its question. Links are not made this way: /q/<id> is a real
   // page built at deploy time carrying that question's own preview, and a

@@ -1,13 +1,59 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "rewrites": [
+  "redirects": [
     {
       "source": "/q/pt/:id",
-      "destination": "/index.html"
+      "destination": "/app/q/pt/:id",
+      "permanent": true
     },
     {
       "source": "/q/:id",
-      "destination": "/index.html"
+      "destination": "/app/q/:id",
+      "permanent": true
+    },
+    {
+      "source": "/app",
+      "destination": "/app/",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/app/q/pt/:id",
+      "destination": "/app/index.html"
+    },
+    {
+      "source": "/app/q/:id",
+      "destination": "/app/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/.well-known/apple-app-site-association",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        }
+      ]
+    },
+    {
+      "source": "/.well-known/assetlinks.json",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        }
+      ]
+    },
+    {
+      "source": "/sw.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
+        }
+      ]
     }
   ]
 }

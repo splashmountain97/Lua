@@ -1,0 +1,9 @@
+{
+  "_comment": "TODO before store release: replace TEAMID with the Apple Developer Team ID. Served as application/json by vercel.json.",
+  "applinks": {
+    "apps": [],
+    "details": [
+      { "appID": "TEAMID.com.dailylua.app", "paths": ["/app/*"] }
+    ]
+  }
+}
