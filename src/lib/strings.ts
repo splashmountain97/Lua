@@ -44,16 +44,16 @@ export const UI = {
     ),
     aboutCategory: L('About this category', 'Sobre esta categoria'),
     notOpenYet: (label: string) => L(
-      `${label} — not open yet`,
-      `${label} — ainda não disponível`,
+      `${label}: not open yet`,
+      `${label}: ainda não disponível`,
     ),
     closeQuestion: L('Close this question', 'Fechar esta pergunta'),
     close: L('Close', 'Fechar'),
     writeAria: L('Write about this question', 'Escrever sobre esta pergunta'),
     writeTitle: L('Write about it', 'Escrever sobre ela'),
     saveFullAria: L(
-      'Saved list full — remove one to save another',
-      'Lista de salvos cheia — remova uma para salvar outra',
+      'Saved list full. Remove one to save another',
+      'Lista de salvos cheia. Remova uma para salvar outra',
     ),
     unsaveAria: L('Remove this question from saved', 'Remover esta pergunta dos salvos'),
     saveAria: L('Save this question for later', 'Salvar esta pergunta para depois'),
@@ -64,8 +64,8 @@ export const UI = {
     shareTitle: L('Send to a friend', 'Enviar para um amigo'),
     shakeAgain: L('Shake again', 'Chacoalhar de novo'),
     shakeAgainLockedAria: L(
-      'Shake again — five a day is the free limit',
-      'Chacoalhar de novo — cinco por dia é o limite gratuito',
+      'Shake again. Five a day is the free limit',
+      'Chacoalhar de novo. Cinco por dia é o limite gratuito',
     ),
   },
 
@@ -79,8 +79,8 @@ export const UI = {
       'Não era essa? Chacoalhe de novo para outra.',
     ),
     share: L(
-      "Send a question to someone — they'll get the prompt, no app required to open it.",
-      'Mande uma pergunta para alguém — a pessoa recebe a pergunta e não precisa de app nenhum para abrir.',
+      "Send a question to someone. They'll get the prompt, no app required to open it.",
+      'Mande uma pergunta para alguém. A pessoa recebe a pergunta e não precisa de app nenhum para abrir.',
     ),
     write: L(
       'Copy it to your clipboard, to answer wherever you keep your words.',
@@ -100,15 +100,15 @@ export const UI = {
     // they sit on the screen, left to right, so the words can be mapped to the
     // things without a second glance.
     filters: L(
-      'Choose where your questions come from — you, your life, the world beyond it — and how far you want to be pushed. Change either whenever you like.',
-      'Escolha de onde vêm suas perguntas — de você, da sua vida, do mundo ao seu redor — e até onde você quer ir. Mude quando quiser.',
+      'Choose where your questions come from: you, your life, the world beyond it. Then how far you want to be pushed. Change either whenever you like.',
+      'Escolha de onde vêm suas perguntas: de você, da sua vida, do mundo ao seu redor. Depois, até onde você quer ir. Mude quando quiser.',
     ),
     // Two sentences rather than one: the moon is the only one of the three
     // whose behaviour cannot be guessed by looking at it, so it gets a sentence
     // of its own instead of a clause wedged between dashes.
     corner: L(
-      'Your corner: the questions you saved, your moon, and the settings behind the gear. The moon fills as you come back — full at twenty-five days.',
-      'Seu canto: as perguntas que você salvou, a sua lua e os ajustes atrás da engrenagem. A lua vai enchendo conforme você volta — cheia aos vinte e cinco dias.',
+      'Your corner: the questions you saved, your moon, and the settings behind the gear. The moon fills as you come back, full at twenty-five days.',
+      'Seu canto: as perguntas que você salvou, a sua lua e os ajustes atrás da engrenagem. A lua vai enchendo conforme você volta, cheia aos vinte e cinco dias.',
     ),
   },
 
@@ -117,10 +117,10 @@ export const UI = {
     stillNoBoxAria: L('Still no text box', 'Continua sem caixa de texto'),
     copiedKicker: L('Copied to your clipboard.', 'Copiado para a área de transferência.'),
     copiedBody: L(
-      'Lua’s not built for typing — paper works better for this. Paste it into your favourite notes app if you’d rather write there instead.',
-      'A Lua não foi feita para digitar — papel funciona melhor aqui. Cole no seu app de notas favorito se preferir escrever lá.',
+      'Lua’s not built for typing. Paper works better for this. Paste it into your favourite notes app if you’d rather write there instead.',
+      'A Lua não foi feita para digitar. Papel funciona melhor aqui. Cole no seu app de notas favorito se preferir escrever lá.',
     ),
-    stillNoBox: L('Still no text box — on purpose.', 'Continua sem caixa de texto — de propósito.'),
+    stillNoBox: L('Still no text box. On purpose.', 'Continua sem caixa de texto. De propósito.'),
     copy: L('Copy to clipboard', 'Copiar para a área de transferência'),
     copied: L('Copied', 'Copiado'),
     // Moved here from onboarding screen two. It is the strongest thing the
@@ -145,8 +145,8 @@ export const UI = {
       'Vinte é o limite gratuito. Remova uma para abrir espaço.',
     ),
     privacy: L(
-      'Only the question is kept — never what you did with it.',
-      'Só a pergunta é guardada — nunca o que você fez com ela.',
+      'Only the question is kept, never what you did with it.',
+      'Só a pergunta é guardada, nunca o que você fez com ela.',
     ),
     empty: L(
       'Nothing put aside. Bookmark a question when you like it but the moment is wrong.',
@@ -200,8 +200,8 @@ export const UI = {
     body: {
       1: [
         L(
-          'Journaling is just answering an honest question about your own life, on purpose. People have done it for two thousand years — emperors did it, and so did people with nothing.',
-          'Escrever sobre si mesmo é só responder, de propósito, uma pergunta honesta sobre a própria vida. As pessoas fazem isso há dois mil anos — imperadores fizeram, e quem não tinha nada também.',
+          'Journaling is just answering an honest question about your own life, on purpose. People have done it for two thousand years. Emperors did it, and so did people with nothing.',
+          'Escrever sobre si mesmo é só responder, de propósito, uma pergunta honesta sobre a própria vida. As pessoas fazem isso há dois mil anos. Imperadores fizeram, e quem não tinha nada também.',
         ),
         L(
           'A few hundred questions, handpicked slowly.',
@@ -210,8 +210,8 @@ export const UI = {
       ],
       2: [
         L(
-          'One question a day. Answer it on paper, in your head, or out loud — alone or with friends. You decide.',
-          'Uma pergunta por dia. Responda no papel, na cabeça ou em voz alta — só você ou com amigos. Você decide.',
+          'One question a day. Answer it on paper, in your head, or out loud, alone or with friends. You decide.',
+          'Uma pergunta por dia. Responda no papel, na cabeça ou em voz alta, só você ou com amigos. Você decide.',
         ),
         L(
           'Lua keeps none of it. No account, nothing saved, nothing sent.',
@@ -230,8 +230,8 @@ export const UI = {
       'Esta ainda está atrás da lua. Deixe seu e-mail e a gente avisa assim que abrir.',
     ),
     lifts: (what: Localized) => L(
-      `${what.en} — for now. Leave your email and we’ll let you know the moment that limit goes away.`,
-      `${what.pt} — por enquanto. Deixe seu e-mail e a gente avisa assim que esse limite cair.`,
+      `${what.en}, for now. Leave your email and we’ll let you know the moment that limit goes away.`,
+      `${what.pt}, por enquanto. Deixe seu e-mail e a gente avisa assim que esse limite cair.`,
     ),
     limitDay: L('Five questions a day is the free limit', 'Cinco perguntas por dia é o limite gratuito'),
     limitSave: L('Twenty saved is the free limit', 'Vinte salvas é o limite gratuito'),
@@ -241,7 +241,7 @@ export const UI = {
     kickerSave: L('Twenty saved · free limit', 'Vinte salvas · limite gratuito'),
     headNotOpen: L('Not open yet', 'Ainda não disponível'),
     headDay: L('Come back tomorrow', 'Volte amanhã'),
-    headSave: L('Full — for now', 'Cheio — por enquanto'),
+    headSave: L('Full, for now', 'Cheio, por enquanto'),
     ctaOpens: L('Tell me when it opens', 'Me avise quando abrir'),
     ctaLifts: L('Tell me when it lifts', 'Me avise quando cair'),
     dismissCategory: L('Stay with Self for now', 'Ficar com Você por enquanto'),
@@ -249,15 +249,15 @@ export const UI = {
     dismissSave: L('I’ll clear a few first', 'Vou limpar algumas antes'),
     onList: L('You’re on the list', 'Você está na lista'),
     onListBody: L(
-      'One message, when that happens. Nothing else — that hasn’t changed.',
-      'Uma mensagem, quando acontecer. Nada além disso — isso não mudou.',
+      'One message, when that happens. Nothing else. That hasn’t changed.',
+      'Uma mensagem, quando acontecer. Nada além disso. Isso não mudou.',
     ),
     backToQuestion: L('Back to your question', 'Voltar para a pergunta'),
     emailPlaceholder: L('you@example.com', 'voce@exemplo.com'),
     emailAria: L('Email address', 'Endereço de e-mail'),
     noteBadAddress: L(
-      'That address looks incomplete — mind checking it?',
-      'Esse endereço parece incompleto — pode conferir?',
+      'That address looks incomplete. Mind checking it?',
+      'Esse endereço parece incompleto. Pode conferir?',
     ),
     noteNoAddress: L(
       'An address first, then we can tell you.',
@@ -302,8 +302,8 @@ export const UI = {
     // 'Automatic' and its note are UI copy, and so only they translate.
     auto: L('Automatic', 'Automático'),
     autoNote: (name: string) => L(
-      `Follows your device — ${name}`,
-      `Segue o seu aparelho — ${name}`,
+      `Follows your device: ${name}`,
+      `Segue o seu aparelho: ${name}`,
     ),
     // The row's value says the outcome, not the mechanism: someone on
     // Automatic wants to know which language they are actually getting.

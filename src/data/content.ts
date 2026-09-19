@@ -161,7 +161,7 @@ export const PROMPTS: Prompt[] = [
   { id: 59, c: 'you', w: 3, t: { en: 'Which emotions in other people are hardest for you to be around?', pt: 'Quais emoções nos outros são as mais difíceis de suportar por perto?' } },
   { id: 60, c: 'you', w: 3, t: { en: 'When things go well for others, do you enjoy cheering them on, or does their success sting?', pt: 'Quando as coisas dão certo para os outros, você vibra junto ou o sucesso deles dói?' } },
   { id: 61, c: 'you', w: 3, t: { en: 'When things go wrong, do you treat it as yours to improve, or do you look for who is at fault?', pt: 'Quando algo dá errado, você trata como algo seu para melhorar ou procura de quem é a culpa?' } },
-  { id: 151, c: 'you', w: 3, t: { en: 'Are you happier than you were three years ago — yes or no, before you start explaining?', pt: 'Você está mais feliz do que há três anos — sim ou não, antes de começar a explicar?' } },
+  { id: 151, c: 'you', w: 3, t: { en: 'Are you happier than you were three years ago? Yes or no, before you start explaining.', pt: 'Você está mais feliz do que há três anos? Sim ou não, antes de começar a explicar.' } },
   { id: 153, c: 'you', w: 3, t: { en: 'Make two lists: people who love you, and things you love. Which was easier to write?', pt: 'Faça duas listas: pessoas que te amam e coisas que você ama. Qual foi mais fácil de escrever?' } },
   { id: 154, c: 'you', w: 3, t: { en: 'What’s a comfortable story you tell about your life that you’re not fully sure is true?', pt: 'Qual história confortável você conta sobre a sua vida sem ter certeza de que é verdade?' } },
   { id: 158, c: 'you', w: 3, t: { en: 'What’s something true you’ve been softening when you say it out loud?', pt: 'Que verdade você tem suavizado na hora de dizer em voz alta?' } },
@@ -239,7 +239,7 @@ export const PROMPTS: Prompt[] = [
   { id: 112, c: 'life', w: 2, t: { en: 'Out of ten, where are your finances right now?', pt: 'De zero a dez, como estão as suas finanças agora?' } },
   { id: 155, c: 'life', w: 2, t: { en: 'When did you last feel genuinely close to another person? What was different about that moment?', pt: 'Quando foi a última vez que você sentiu proximidade real com alguém? O que aquele momento tinha de diferente?' } },
   { id: 156, c: 'life', w: 2, t: { en: 'What have you made enough of to have real opinions about, and what rule do you follow now that you didn’t at the start?', pt: 'O que você já fez o bastante para ter opiniões de verdade, e qual regra você segue hoje que não seguia no começo?' } },
-  { id: 160, c: 'life', w: 2, t: { en: 'What did you build this week — not what you finished, but what exists now that didn’t on Monday?', pt: 'O que você construiu esta semana — não o que terminou, mas o que existe agora e não existia na segunda?' } },
+  { id: 160, c: 'life', w: 2, t: { en: 'What did you build this week? Not what you finished, but what exists now that didn’t on Monday.', pt: 'O que você construiu esta semana? Não o que terminou, mas o que existe agora e não existia na segunda.' } },
   { id: 161, c: 'life', w: 2, t: { en: 'If your job title vanished tomorrow, what could you still do that someone would pay for?', pt: 'Se o seu cargo sumisse amanhã, o que você ainda saberia fazer que alguém pagaria por?' } },
   { id: 163, c: 'life', w: 2, t: { en: 'Out of ten, how would you rate what you know, who trusts you, and what you own?', pt: 'De zero a dez, como você avalia o que sabe, quem confia em você e o que possui?' } },
   { id: 164, c: 'life', w: 2, t: { en: 'Who do you know that makes you want to work harder? When did you last spend real time with them?', pt: 'Quem te dá vontade de trabalhar mais? Quando foi a última vez que passou um tempo de verdade com essa pessoa?' } },
@@ -252,7 +252,7 @@ export const PROMPTS: Prompt[] = [
   { id: 205, c: 'life', w: 2, t: { en: 'Are you chasing happiness in a way that is actually pushing it further away?', pt: 'Você está perseguindo a felicidade de um jeito que a afasta ainda mais?' } },
   { id: 206, c: 'life', w: 2, t: { en: 'How often do you choose the “sure thing” at the expense of your own growth?', pt: 'Com que frequência você escolhe a aposta segura em troca do seu próprio crescimento?' } },
   { id: 217, c: 'life', w: 2, t: { en: 'Who or what has had a strong influence in your life?', pt: 'Quem ou o que teve uma influência forte na sua vida?' } },
-  { id: 218, c: 'life', w: 2, t: { en: 'Which is least important to you — money, power, fame — and why?', pt: 'O que é menos importante para você — dinheiro, poder ou fama — e por quê?' } },
+  { id: 218, c: 'life', w: 2, t: { en: 'Money, power, fame: which matters least to you, and why?', pt: 'Dinheiro, poder, fama: qual importa menos para você, e por quê?' } },
   { id: 251, c: 'life', w: 2, t: { en: 'You have to invite three people to dinner, dead or alive. Who do you invite, and why?', pt: 'Você tem que chamar três pessoas para jantar, vivas ou mortas. Quem você chama, e por quê?' } },
   { id: 258, c: 'life', w: 2, t: { en: 'What situation has caused you to confront your ethics recently?', pt: 'Que situação recente te fez confrontar a sua ética?' } },
   { id: 261, c: 'life', w: 2, t: { en: 'Which parts of your work and your life are good as they stand, and which are not?', pt: 'Quais partes do seu trabalho e da sua vida estão boas como estão, e quais não estão?' } },
@@ -340,7 +340,7 @@ export const PROMPTS: Prompt[] = [
   { id: 146, c: 'world', w: 3, t: { en: 'Would you trade the freedom to choose your life for the certainty of just surviving it?', pt: 'Você trocaria a liberdade de escolher a sua vida pela certeza de apenas sobreviver a ela?' } },
   { id: 184, c: 'world', w: 3, t: { en: 'Replace every plank of a boat, one at a time, and it’s still called the same boat. Are you still the same person you were at ten?', pt: 'Troque cada tábua de um barco, uma por uma, e ele continua o mesmo barco. Você ainda é a mesma pessoa que era aos dez anos?' } },
   { id: 185, c: 'world', w: 3, t: { en: 'If the universe has no meaning of its own, does the meaning you make still count?', pt: 'Se o universo não tem sentido próprio, o sentido que você cria ainda vale?' } },
-  { id: 187, c: 'world', w: 3, t: { en: 'Would you accept your life exactly as it went — or is there one thing you’d refuse to make peace with?', pt: 'Você aceitaria a sua vida exatamente como ela foi — ou há algo com que você se recusaria a fazer as pazes?' } },
+  { id: 187, c: 'world', w: 3, t: { en: 'Would you accept your life exactly as it went, or is there one thing you’d refuse to make peace with?', pt: 'Você aceitaria a sua vida exatamente como ela foi, ou há algo com que você se recusaria a fazer as pazes?' } },
   { id: 188, c: 'world', w: 3, t: { en: 'What’s something about being alive that feels wonderful and unbearable at the same time?', pt: 'O que em estar vivo é maravilhoso e insuportável ao mesmo tempo?' } },
   { id: 189, c: 'world', w: 3, t: { en: 'Has anything ever made your own death feel real, rather than just an idea?', pt: 'Alguma coisa já fez a sua própria morte parecer real, e não apenas uma ideia?' } },
   { id: 208, c: 'world', w: 3, t: { en: 'Does a person’s value come from what they produce or simply from their existence?', pt: 'O valor de uma pessoa vem do que ela produz ou simplesmente de ela existir?' } },
@@ -370,8 +370,8 @@ export const WEIGHT_NAME: Record<Weight, Localized> = {
 // nothing had happened.
 export const WEIGHT_NOTE: Record<Weight, Localized> = {
   1: {
-    en: 'A gentler set. Nothing here will ambush you — answer it however you like, and take your time.',
-    pt: 'Um conjunto mais gentil. Nada aqui vai te pegar de surpresa — responda como quiser, sem pressa.',
+    en: 'A gentler set. Nothing here will ambush you. Answer it however you like, and take your time.',
+    pt: 'Um conjunto mais gentil. Nada aqui vai te pegar de surpresa. Responda como quiser, sem pressa.',
   },
   2: {
     en: 'Enough to make you stop and think properly, without following you around for the rest of the day.',
@@ -383,17 +383,17 @@ export const WEIGHT_NOTE: Record<Weight, Localized> = {
   },
 };
 export const WEIGHT_ANY_NOTE: Localized = {
-  en: 'Filter, give it a shake, then answer however you want — pen and paper, out loud, or just in your head. Take your time.',
-  pt: 'Filtre, chacoalhe e responda do jeito que quiser — no papel, em voz alta ou só na sua cabeça. Sem pressa.',
+  en: 'Filter, give it a shake, then answer however you want: pen and paper, out loud, or just in your head. Take your time.',
+  pt: 'Filtre, chacoalhe e responda do jeito que quiser: no papel, em voz alta ou só na sua cabeça. Sem pressa.',
 };
 
 // Welcome body copy — swap the index to change the whole screen.
 export const WELCOME_ALTS = [
   'Everything else on your phone is built to keep you moving. This is built to stop you, for about a minute.',
-  'The tube, the kettle boiling, a spare minute — most of it disappears without a thought. Lua asks you to spend just one of those minutes actually thinking, about something real. No account, no journal, nothing stored.',
+  'The tube, the kettle boiling, a spare minute. Most of it disappears without a thought. Lua asks you to spend just one of those minutes actually thinking, about something real. No account, no journal, nothing stored.',
   'The world isn’t going to slow down for you, so slow down on purpose. One real question, once a day, and a minute to sit with it. No account, no journal, nothing stored.',
   'Long before apps, people carried a single question around for a day and let it do its work. That is all this is. No account, no journal, nothing stored.',
-  'You probably know less about yourself than you think — most of us are too busy to check. One question a day, one minute of actually thinking. No account, no journal, nothing stored.',
+  'You probably know less about yourself than you think. Most of us are too busy to check. One question a day, one minute of actually thinking. No account, no journal, nothing stored.',
 ];
 export const WELCOME_COPY = WELCOME_ALTS[0];
 
@@ -464,13 +464,13 @@ export const IDLE_TIPS: Record<Lang, string[]> = {
 export const WRITE_TIPS: Record<Lang, readonly string[]> = {
   en: [
     'Paper slows you down enough to actually think.',
-    'No autocorrect, no undo — just what you actually meant.',
+    'No autocorrect, no undo. Just what you actually meant.',
     'A blank page is more private than any app.',
     'Some of the best thinking happens with a pen in hand.',
   ],
   pt: [
     'O papel te desacelera o suficiente para pensar de verdade.',
-    'Sem corretor, sem desfazer — só o que você quis dizer mesmo.',
+    'Sem corretor, sem desfazer. Só o que você quis dizer mesmo.',
     'Uma página em branco é mais privada que qualquer app.',
     'Boa parte do melhor pensamento acontece com uma caneta na mão.',
   ],
@@ -527,5 +527,5 @@ export function promptIndexById(id: number): number {
 /** The moon is passed in rather than worked out here: this file is the library, and the sender's streak is not part of it. */
 export const shareText = (prompt: Prompt, lang: Lang, moon = '🌙') =>
   lang === 'pt'
-    ? `A Lua me perguntou: “${prompt.t.pt}” — pensei em você ${moon}\n${shareUrl(prompt.id, lang)}`
-    : `Lua asked me: “${prompt.t.en}” — thought of you ${moon}\n${shareUrl(prompt.id, lang)}`;
+    ? `A Lua me perguntou: “${prompt.t.pt}”. Pensei em você ${moon}\n${shareUrl(prompt.id, lang)}`
+    : `Lua asked me: “${prompt.t.en}”. Thought of you ${moon}\n${shareUrl(prompt.id, lang)}`;
