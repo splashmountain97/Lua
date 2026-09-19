@@ -19,7 +19,7 @@ export default defineConfig({
       registerType: 'prompt',
       injectRegister: null,
       manifest: {
-        name: 'Lua — a question, once a day',
+        name: 'Lua · A question, once a day',
         short_name: 'Lua',
         description: 'A shake-to-reveal daily reflection prompt.',
         theme_color: '#161826',

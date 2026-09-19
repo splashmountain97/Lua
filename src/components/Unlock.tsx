@@ -48,7 +48,7 @@ export default function Unlock({ unlocked, onUnlock, onNotNow }: {
           color: '#d2cefd', font: '400 15px/1 Inter,sans-serif', letterSpacing: '.01em',
         }}
       >
-        {unlocked ? t(UI.unlock.unlocked) : 'Unlock — $8.99 once'}
+        {unlocked ? t(UI.unlock.unlocked) : 'Unlock for $8.99, once'}
       </button>
       <button
         type="button" onClick={onNotNow}
