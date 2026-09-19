@@ -33,7 +33,7 @@ export const S = {
     menu: L('Menu', 'Menu'),
   },
   home: {
-    title: L('Lua — journaling, without the blank page', 'Lua — diário, sem a página em branco'),
+    title: L('Lua · Journaling, without the blank page', 'Lua · Diário, sem a página em branco'),
     kicker: L('A question, once a day', 'Uma pergunta por dia'),
     h1: L('Journaling, without the blank page.', 'Diário, sem a página em branco.'),
     lead: L(
@@ -122,8 +122,8 @@ export const S = {
         kicker: L('Where they come from', 'De onde elas vêm'),
         head: L('You choose how deep it goes.', 'Você escolhe até onde vai.'),
         body: L(
-          'Three sources — you, your life, the world beyond it — and three weights, from light to heavy. Change either whenever you like.',
-          'Três origens — você, sua vida, o mundo ao seu redor — e três pesos, do leve ao pesado. Mude quando quiser.',
+          'Three sources: you, your life, and the world beyond it. Three weights, from light to heavy. Change either whenever you like.',
+          'Três origens: você, sua vida e o mundo ao seu redor. Três pesos, do leve ao pesado. Mude quando quiser.',
         ),
         note: L(
           'Self is open now. Life and Beyond You are being finished; leave an email inside the app and it will tell you when they open.',
@@ -157,10 +157,10 @@ export const S = {
     ],
     write: {
       kicker: L('Where the answer goes', 'Para onde vai a resposta'),
-      h2: L('Still no text box — on purpose.', 'Continua sem caixa de texto — de propósito.'),
+      h2: L('Still no text box. On purpose.', 'Continua sem caixa de texto. De propósito.'),
       p1: L(
-        'Lua’s not built for typing — paper works better for this. The write button copies the question to your clipboard, so you can paste it into your favourite notes app if you’d rather write there instead.',
-        'A Lua não foi feita para digitar — papel funciona melhor aqui. O botão de escrever copia a pergunta para a área de transferência, para você colar no seu app de notas favorito se preferir escrever lá.',
+        'Lua’s not built for typing. Paper works better for this. The write button copies the question to your clipboard, so you can paste it into your favourite notes app if you’d rather write there instead.',
+        'A Lua não foi feita para digitar. Papel funciona melhor aqui. O botão de escrever copia a pergunta para a área de transferência, para você colar no seu app de notas favorito se preferir escrever lá.',
       ),
       p2: L(
         'Lua keeps none of it. No account, nothing saved, nothing sent.',
@@ -220,7 +220,7 @@ export const S = {
     ),
   },
   privacy: {
-    title: L('Privacy Policy — Lua', 'Política de Privacidade — Lua'),
+    title: L('Privacy Policy · Lua', 'Política de Privacidade · Lua'),
     description: L('What Lua keeps, what it does not, and what leaves your device.', 'O que a Lua guarda, o que não guarda, e o que sai do seu aparelho.'),
     h1: L('Privacy', 'Privacidade'),
     lead: L(
@@ -261,8 +261,8 @@ export const S = {
         id: 'leaves', h: L('What leaves your device, and when', 'O que sai do seu aparelho, e quando'),
         ps: [
           L(
-            'Anonymous usage events. To learn whether the app works — whether people who arrive actually shake the moon, which filters get touched — the web app sends a few events to PostHog, on servers in the European Union. They carry no name, no account, no cookie, no device identifier that survives the visit, no question text and no question id. They describe the control that was used, never the reader. Session recording, heat maps and surveys are switched off, and PostHog is not allowed to load any extra scripts. Because nothing identifies you across visits, these events cannot be linked to you, and there is nothing for us to look up or delete.',
-            'Eventos de uso anônimos. Para saber se o app funciona — se quem chega chacoalha a lua de verdade, quais filtros são tocados — o app de navegador envia alguns eventos ao PostHog, em servidores na União Europeia. Eles não carregam nome, conta, cookie, identificador de aparelho que sobreviva à visita, texto de pergunta nem id de pergunta. Descrevem o controle que foi usado, nunca quem leu. Gravação de sessão, mapas de calor e pesquisas estão desligados, e o PostHog não pode carregar nenhum script extra. Como nada identifica você entre visitas, esses eventos não podem ser ligados a você, e não há nada para consultarmos ou apagarmos.',
+            'Anonymous usage events. To learn whether the app works, such as whether people who arrive actually shake the moon and which filters get touched, the web app sends a few events to PostHog, on servers in the European Union. They carry no name, no account, no cookie, no device identifier that survives the visit, no question text and no question id. They describe the control that was used, never the reader. Session recording, heat maps and surveys are switched off, and PostHog is not allowed to load any extra scripts. Because nothing identifies you across visits, these events cannot be linked to you, and there is nothing for us to look up or delete.',
+            'Eventos de uso anônimos. Para saber se o app funciona, por exemplo se quem chega chacoalha a lua de verdade e quais filtros são tocados, o app de navegador envia alguns eventos ao PostHog, em servidores na União Europeia. Eles não carregam nome, conta, cookie, identificador de aparelho que sobreviva à visita, texto de pergunta nem id de pergunta. Descrevem o controle que foi usado, nunca quem leu. Gravação de sessão, mapas de calor e pesquisas estão desligados, e o PostHog não pode carregar nenhum script extra. Como nada identifica você entre visitas, esses eventos não podem ser ligados a você, e não há nada para consultarmos ou apagarmos.',
           ),
           L(
             'Page views. This website and the web app use Vercel Analytics, which counts page views without cookies and without identifying visitors.',
@@ -300,7 +300,7 @@ export const S = {
     ],
   },
   terms: {
-    title: L('Terms of Use — Lua', 'Termos de Uso — Lua'),
+    title: L('Terms of Use · Lua', 'Termos de Uso · Lua'),
     description: L('The terms for using Lua, in plain words.', 'Os termos para usar a Lua, em palavras simples.'),
     h1: L('Terms of Use', 'Termos de Uso'),
     lead: L(
@@ -339,7 +339,7 @@ export const S = {
     ],
   },
   support: {
-    title: L('Support — Lua', 'Ajuda — Lua'),
+    title: L('Support · Lua', 'Ajuda · Lua'),
     description: L('Answers to the questions people ask about Lua.', 'Respostas às perguntas que as pessoas fazem sobre a Lua.'),
     h1: L('Support', 'Ajuda'),
     lead: L(

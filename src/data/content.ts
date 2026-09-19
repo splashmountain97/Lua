@@ -23,24 +23,24 @@ export const CATS: Category[] = [
     id: 'you',
     label: { en: 'Self', pt: 'Você' },
     desc: {
-      en: 'Who you are, right now — your feelings, your character, the day you just lived.',
-      pt: 'Quem você é, agora — seus sentimentos, seu jeito, o dia que você acabou de viver.',
+      en: 'Who you are, right now: your feelings, your character, the day you just lived.',
+      pt: 'Quem você é, agora: seus sentimentos, seu jeito, o dia que você acabou de viver.',
     },
   },
   {
     id: 'life',
     label: { en: 'Life', pt: 'Vida' },
     desc: {
-      en: 'What you do with your time — work, relationships, family, the dreams you’re chasing or postponing, how you’re spending the years you have.',
-      pt: 'O que você faz com o seu tempo — trabalho, relações, família, os sonhos que você persegue ou adia, como você gasta os anos que tem.',
+      en: 'What you do with your time: work, relationships, family, the dreams you’re chasing or postponing, how you’re spending the years you have.',
+      pt: 'O que você faz com o seu tempo: trabalho, relações, família, os sonhos que você persegue ou adia, como você gasta os anos que tem.',
     },
   },
   {
     id: 'world',
     label: { en: 'Beyond You', pt: 'Ao seu redor' },
     desc: {
-      en: 'Bigger than you — curiosity, existence, the universe, the questions nobody has a clean answer to.',
-      pt: 'Maior que você — curiosidade, existência, o universo, as perguntas que ninguém responde direito.',
+      en: 'Bigger than you: curiosity, existence, the universe, the questions nobody has a clean answer to.',
+      pt: 'Maior que você: curiosidade, existência, o universo, as perguntas que ninguém responde direito.',
     },
   },
 ];
