@@ -27,6 +27,30 @@ to `/app/q/<id>` and rewrites unmatched `/app/q/*` to the app. A worker at `/sw.
 retires the one that cached the app at `/` before the move; the site's pages send
 anything opened in standalone mode (an old home-screen install) on to `/app/`.
 
+## The question library
+
+`src/data/content.ts` is the library: every question with a permanent id, a category, a
+weight and both languages. New questions go on the end with the next id; nothing is ever
+renumbered (share links carry the id). The native app mirrors this file from here.
+
+A weekly scheduled task (`~/.claude/scheduled-tasks/lua-weekly-questions`, Sundays)
+reads what Pedro highlighted, watched and captured that week — the Readwise and Recall
+notes in the Obsidian vault, the phone captures, and `03 - Projects/Lua/Lua Seeds.md` —
+drafts a handful of questions in Lua's voice from the *ideas* (never the sentences), and
+opens a PR for review. The mechanical parts live in `scripts/question-pipeline.mjs`:
+
+```
+node scripts/question-pipeline.mjs sources --since 2026-11-19   # what is new this week
+node scripts/question-pipeline.mjs check candidates.json         # duplicates, copying, shape
+node scripts/question-pipeline.mjs append candidates.json        # add to the library with new ids
+node scripts/question-pipeline.mjs log candidates.json --pr 57   # record in the vault's Question Log
+node scripts/question-pipeline.mjs snapshot                      # remember which highlights were seen
+```
+
+`check` fails a candidate that is identical or too close to an existing question, that
+shares a run of six words with any Readwise highlight or Recall note, or that points at
+its source. The PR is the gate: delete a line to reject, merge to accept.
+
 ## The site
 
 `site/` holds the marketing pages: plain HTML rendered at build time from the
