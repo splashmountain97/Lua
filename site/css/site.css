@@ -196,10 +196,17 @@ p { margin: 0 0 14px; max-width: var(--measure); text-wrap: pretty; color: var(-
 @media (min-width: 900px) {
   .hero { grid-template-columns: 1fr 1fr; align-items: stretch; column-gap: 24px; min-height: min(100svh - 64px, 920px); }
   .hero-art { order: 2; height: auto; min-height: 640px; }
+  /* The drawing is taller than it is wide. Left in flow it sets the row height
+     and pushes the badges under the fold, so it is taken out of flow here and
+     object-fit crops it to whatever height the copy needs. */
+  .hero-art picture { position: absolute; inset: 0; }
   .hero-art img { object-position: 42% 45%; }
   .hero-art::after { left: 0; right: auto; width: 140px; height: 100%; top: 0; background: linear-gradient(90deg, var(--paper), rgba(244,239,230,0)); }
   .hero-art::before { content: ""; position: absolute; z-index: 1; left: 0; right: 0; bottom: 0; height: 100px; background: linear-gradient(rgba(244,239,230,0), var(--paper)); }
-  .hero-copy { order: 1; align-self: center; padding: 72px 24px 72px var(--gutter); max-width: 620px; justify-self: end; width: 100%; }
+  /* No max-width here: the left padding grows with the viewport below, and a
+     border-box cap would eat the text column as it grows. The column is a 1fr
+     track, so the copy stays about 514px wide at every width past 1140px. */
+  .hero-copy { order: 1; align-self: center; padding: 72px 24px 72px var(--gutter); justify-self: end; width: 100%; }
 }
 @media (min-width: 1140px) { .hero-copy { padding-left: max(var(--gutter), calc((100vw - 1100px) / 2)); } }
 
