@@ -1,9 +1,9 @@
 {
-  "_comment": "TODO before store release: replace TEAMID with the Apple Developer Team ID. Served as application/json by vercel.json.",
+  "_comment": "Served as application/json by vercel.json. The appID is the Apple Team ID followed by the bundle id.",
   "applinks": {
     "apps": [],
     "details": [
-      { "appID": "TEAMID.com.dailylua.app", "paths": ["/app/*"] }
+      { "appID": "DBLWXNM3U5.com.dailylua.app", "paths": ["/app/*"] }
     ]
   }
 }

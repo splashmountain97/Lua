@@ -6,11 +6,10 @@
 export const APP_STORE_URL = '';
 export const PLAY_STORE_URL = '';
 
-// Filled in before the store submission. Rendered verbatim into the legal
-// pages, so anything left as a placeholder is visible there, not hidden.
-export const CONTACT_EMAIL = 'CONTACT_EMAIL';
-export const LEGAL_ENTITY_NAME = 'LEGAL_ENTITY_NAME';
-export const JURISDICTION = 'JURISDICTION';
+// Rendered verbatim into the legal pages.
+export const CONTACT_EMAIL = 'prmurgel@gmail.com';
+export const LEGAL_ENTITY_NAME = 'Pedro de Souza Leite';
+export const JURISDICTION = 'England and Wales';
 
 export const ORIGIN = 'https://luadaily.com';
 export const APP_PATH = '/app/';

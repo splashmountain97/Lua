@@ -114,4 +114,4 @@ self.addEventListener('activate', (e) => e.waitUntil(
 ));
 `);
 
-console.log(`site: ${urls.length} pages written to dist/ (${BUNDLE_ID} in .well-known left as placeholders)`);
+console.log(`site: ${urls.length} pages written to dist/`);
