@@ -546,26 +546,46 @@ export const shareUrl = (id: number, lang: Lang, variant?: ShareVariant) => {
  * by them, so a wording that is retired keeps its letter and a new one takes
  * the next. Each send draws one at random (lib/share), so a variant is never
  * the habit of one particular sender.
+ *
+ * Five, laid out so they can be read in pairs as well as one by one, since
+ * the numbers will be small for a long time. Two things vary: whether the
+ * sender says something about themselves (c, d) or nothing (a, b), and
+ * whether the message ends by asking for an answer (b, d) or by signing off
+ * (a, c). Pooled, c+d against a+b is the story; b+d against a+c is the ask.
+ * The fifth (e) is the floor: the question and nothing else, to find out
+ * whether any framing earns its place over the card the link already shows.
  */
-export const SHARE_VARIANTS = ['a', 'b', 'c'] as const;
+export const SHARE_VARIANTS = ['a', 'b', 'c', 'd', 'e'] as const;
 export type ShareVariant = (typeof SHARE_VARIANTS)[number];
 
 const SHARE_WORDING: Record<ShareVariant, (q: string, moon: string) => Localized> = {
-  // The original: the app named, the question quoted, a sign-off.
+  // a — the original: the app named, the question quoted, a sign-off.
   a: (q, moon) => ({
     en: `Lua asked me: “${q}”. Thought of you ${moon}`,
     pt: `A Lua me perguntou: “${q}”. Pensei em você ${moon}`,
   }),
-  // The question first and alone, then an invitation to answer it. The app is
-  // not named; the preview under the link does that.
+  // b — the ask: the question first and alone, then an invitation to answer
+  // it. The app is not named; the card under the link does that.
   b: (q, moon) => ({
     en: `“${q}”\n\nThought of you. What would you say? ${moon}`,
     pt: `“${q}”\n\nPensei em você. O que você responderia? ${moon}`,
   }),
-  // The question first, then the plainest account of why it was sent.
+  // c — the story: a word about the sender's own habit before the question,
+  // and a sign-off about the recipient's taste rather than the sender's mind.
+  // The one claim here made on the sender's behalf is that they journal.
   c: (q, moon) => ({
-    en: `“${q}”\n\nI got this one today and thought of you ${moon}`,
-    pt: `“${q}”\n\nRecebi essa hoje e pensei em você ${moon}`,
+    en: `I started journaling, and today Lua asked me this: “${q}”. Thought you’d like it ${moon}`,
+    pt: `Comecei a escrever um diário, e hoje a Lua me perguntou isso: “${q}”. Achei que você ia gostar ${moon}`,
+  }),
+  // d — the story and the ask together.
+  d: (q, moon) => ({
+    en: `I started journaling, and today Lua asked me this: “${q}”. What would you say? ${moon}`,
+    pt: `Comecei a escrever um diário, e hoje a Lua me perguntou isso: “${q}”. O que você responderia? ${moon}`,
+  }),
+  // e — the floor: the question, the moon, the link.
+  e: (q, moon) => ({
+    en: `“${q}” ${moon}`,
+    pt: `“${q}” ${moon}`,
   }),
 };
 
