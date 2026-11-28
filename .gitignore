@@ -33,4 +33,3 @@ dist-ssr
 .env
 .env.*
 !.env.example
-site/content.mjs

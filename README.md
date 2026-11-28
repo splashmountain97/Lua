@@ -38,8 +38,7 @@ badges then say "coming soon") and the placeholders the legal pages print.
 Generated inputs, committed so the deploy does not redo them:
 
 - `site/img/` — responsive AVIF/WebP/JPEG of the drawings, from `node scripts/generate-site-images.mjs`
-- `site/screens/` — real screenshots of the app, from `node scripts/capture-screens.mjs`
-  (needs the dev server running and Chrome installed)
+- `site/screens/` — three real captures of the iPhone app, from `node scripts/site-screens.mjs` (reads lua-app/docs/screenshots/raw)
 - `site/img/og.png` — the preview card, from `node scripts/capture-og.mjs`
 
 `.well-known/` files for app links are placeholders until the store release.

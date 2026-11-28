@@ -6,14 +6,14 @@ export default function tryPage({ lang, qr }) {
   const t = (p) => p[lang];
   const T = S.tryPage;
   return `
-<section class="night deep try" data-theme-section="night">
+<section class="try">
   <div class="wrap try-grid">
     <div>
       <p class="kicker">${t(T.kicker)}</p>
       <h1 class="h2">${t(T.h1)}</h1>
       <p class="lead try-desk-only">${t(T.desk)}</p>
       <div class="try-mobile try-mobile-only">
-        <a class="btn btn-glow" href="${APP_PATH}">${t(T.open)}</a>
+        <a class="btn btn-ink" href="${APP_PATH}">${t(T.open)}</a>
       </div>
       <div class="try-desk-only">
         <p class="kicker" style="margin-top:36px">${t(T.orPhone)}</p>

@@ -6,14 +6,15 @@
 <head>
 <meta charset="utf-8">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@400&family=Source+Sans+3:wght@400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/site.css">
 <style>
   html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; }
   body { background: #F4EFE6; position: relative; }
   .art { position: absolute; left: 0; top: 0; width: 1200px; height: 630px; overflow: hidden; }
   .cam { position: absolute; width: 1400px; height: calc(1400px / 1.8333); left: calc(760px - .5036 * 1400px); top: calc(315px - .4193 * 1400px / 1.8333); transform-origin: 50.36% 41.93%; transform: scale(1.25); }
   .cam img.bg { position: absolute; inset: 0; width: 100%; height: 100%; }
-  .visor img { animation: none; }
+  .visor { position: absolute; left: 40.86%; top: 25.43%; width: 19%; height: 33%; border-radius: 50%; overflow: hidden; }
+  .visor img { position: absolute; left: -8%; top: -8%; width: 116%; height: 116%; object-fit: cover; filter: blur(.7px); }
+  .visor-glass { position: absolute; left: 40.86%; top: 25.43%; width: 19%; height: 33%; border-radius: 50%; box-shadow: inset 0 2px 5px rgba(233,237,245,.2), inset 0 -8px 15px rgba(0,0,0,.6), 0 0 30px 6px rgba(142,63,168,.34); }
   .fade { position: absolute; inset: 0; background: linear-gradient(90deg, #F4EFE6 0%, #F4EFE6 30%, rgba(244,239,230,0) 62%); }
   .copy { position: absolute; left: 88px; top: 0; height: 630px; display: flex; flex-direction: column; justify-content: center; }
   .wm { font: 400 92px/1 "Newsreader", Georgia, serif; letter-spacing: -.03em; color: #2A2724; margin: 0 0 22px; }

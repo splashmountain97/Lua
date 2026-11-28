@@ -23,14 +23,11 @@ export const S = {
     madeSlowly: L('Made slowly.', 'Feito devagar.'),
   },
   nav: {
-    why: L('Why Lua', 'Por que a Lua'),
-    features: L('Features', 'Recursos'),
     tryIt: L('Try it now', 'Experimente'),
     privacy: L('Privacy', 'Privacidade'),
     terms: L('Terms', 'Termos'),
     support: L('Support', 'Ajuda'),
     open: L('Open Lua', 'Abrir a Lua'),
-    menu: L('Menu', 'Menu'),
   },
   home: {
     title: L('Lua · Journaling, without the blank page', 'Lua · Diário, sem a página em branco'),
@@ -41,6 +38,7 @@ export const S = {
       'Chacoalhe a lua e uma pergunta honesta sai de dentro. Responda no papel, na cabeça ou em voz alta. Trinta segundos, e você se conhece um pouco melhor do que ontem.',
     ),
     cta: L('Get today’s question', 'Pegar a pergunta de hoje'),
+    ctaWeb: L('Or open it in your browser', 'Ou abra no navegador'),
     ctaNote: L('Free · No account · English & Português', 'Grátis · Sem conta · Português & English'),
     three: [
       {
@@ -53,125 +51,62 @@ export const S = {
       {
         head: L('Nothing to type.', 'Nada para digitar.'),
         body: L(
-          'Say it on a walk, write it in the notebook you already have, or just think it through. Lua has no text box, on purpose.',
-          'Diga numa caminhada, escreva no caderno que você já tem, ou só pense. A Lua não tem caixa de texto, de propósito.',
+          'Say it on a walk, or write it in the notebook you already have. Lua has no text box, on purpose: the write button copies the question to wherever you keep your notes.',
+          'Diga numa caminhada, ou escreva no caderno que você já tem. A Lua não tem caixa de texto, de propósito: o botão de escrever copia a pergunta para onde você guarda suas anotações.',
         ),
       },
       {
         head: L('Nothing kept.', 'Nada guardado.'),
         body: L(
-          'No account, nothing saved, nothing sent. What you think stays where you thought it.',
-          'Sem conta, nada salvo, nada enviado. O que você pensa fica onde você pensou.',
+          'No account, no journal, no server of ours. What you think stays where you thought it.',
+          'Sem conta, sem diário, sem servidor nosso. O que você pensa fica onde você pensou.',
         ),
       },
     ],
+    app: {
+      kicker: L('The app', 'O app'),
+      h2: L('Shake. Read. Sit with it.', 'Chacoalhe. Leia. Fique com ela.'),
+      shots: [
+        {
+          screen: 'question',
+          cap: L('One question, and nothing else on the screen. It stays until you close it.', 'Uma pergunta, e nada mais na tela. Ela fica até você fechar.'),
+          alt: L('A question open in the app: “What are you still carrying that was never yours?”', 'Uma pergunta aberta no app: “O que você ainda carrega que nunca foi seu?”'),
+        },
+        {
+          screen: 'filters',
+          cap: L('Light, medium or heavy. Self, life, or the world beyond you.', 'Leve, médio ou pesado. Você, sua vida, ou o mundo ao seu redor.'),
+          alt: L('The filters sheet: the Self, Life and Beyond You categories, and the Light, Medium and Heavy weights with Heavy selected', 'A tela de filtros: as categorias Você, Vida e Ao seu redor, e os pesos Leve, Médio e Pesado, com Pesado selecionado'),
+        },
+        {
+          screen: 'share',
+          cap: L('Send one to a friend. They don’t need the app.', 'Mande uma para alguém. A pessoa não precisa do app.'),
+          alt: L('The share sheet open over a question, ready to send it as a message', 'A tela de compartilhar aberta sobre uma pergunta, pronta para enviá-la como mensagem'),
+        },
+      ],
+    },
     why: {
       kicker: L('Why so little', 'Por que tão pouco'),
       h2: L('Apps want more of you. Lua wants less.', 'Os apps querem mais de você. A Lua quer menos.'),
       p1: L(
-        'Track your mood. Rate your sleep. Tick the boxes, answer the follow-ups, keep the streak alive. Somewhere along the way, reflection got turned into a form to fill in, and a form is the opposite of a quiet mind.',
-        'Registre o humor. Avalie o sono. Marque as caixinhas, responda as perguntas seguintes, mantenha a sequência. Em algum momento, refletir virou um formulário para preencher, e formulário é o oposto de uma mente quieta.',
+        'Track your mood. Rate your sleep. Tick the boxes, keep the streak alive. Somewhere along the way, reflection got turned into a form to fill in. Lua does the reverse: one honest question, and then it lets you go, back to the real world and to the quiet place where the answer actually is.',
+        'Registre o humor. Avalie o sono. Marque as caixinhas, mantenha a sequência. Em algum momento, refletir virou um formulário para preencher. A Lua faz o contrário: uma pergunta honesta, e depois ela te solta, de volta ao mundo real e ao lugar quieto onde a resposta realmente está.',
       ),
       p2: L(
-        'Lua does the reverse. One question, a handful of features, and then it lets you go: back to the real world, and to the quiet place inside you where the answer actually is.',
-        'A Lua faz o contrário. Uma pergunta, poucos recursos, e depois ela te solta: de volta ao mundo real, e ao lugar quieto dentro de você onde a resposta realmente está.',
-      ),
-    },
-    proof: {
-      kicker: L('Two thousand years', 'Dois mil anos'),
-      h2: L('This isn’t new. It’s old.', 'Isso não é novo. É antigo.'),
-      p1: L(
-        'Answering an honest question about your own life, on purpose, is the oldest habit there is. Emperors did it, and so did people with nothing.',
-        'Responder, de propósito, uma pergunta honesta sobre a própria vida é o hábito mais antigo que existe. Imperadores fizeram, e quem não tinha nada também.',
-      ),
-      p2: L(
-        'Lua’s questions are written by hand and picked slowly. A few hundred of them, from light to heavy, none of them generated.',
-        'As perguntas da Lua são escritas à mão e escolhidas sem pressa. Algumas centenas, do leve ao pesado, nenhuma gerada.',
+        'The questions are written by hand and picked slowly. A few hundred of them, from light to heavy, none of them generated.',
+        'As perguntas são escritas à mão e escolhidas sem pressa. Algumas centenas, do leve ao pesado, nenhuma gerada.',
       ),
       quote: L('The soul is dyed by the thoughts.', 'A alma é tingida pelos pensamentos.'),
       quoteBy: L('Marcus Aurelius, Meditations, V.16', 'Marco Aurélio, Meditações, V.16'),
       principle: L('The question is ours. The answer is yours.', 'A pergunta é nossa. A resposta é sua.'),
     },
-    push: {
-      line: L('Ready to know yourself better?', 'Quer se conhecer melhor?'),
-    },
-    inside: {
-      kicker: L('How it feels', 'Como é'),
-      h2: L('Shake. Read. Sit with it.', 'Chacoalhe. Leia. Fique com ela.'),
-      lead: L(
-        'This is Lua as it is on your phone today. The moon is the whole interface: hold it, and the glass opens on one question.',
-        'Esta é a Lua como ela é no seu celular hoje. A lua é a interface inteira: segure, e o vidro se abre em uma pergunta.',
-      ),
-      moonAria: L('The moon: a grey cratered sphere with a round glass window, purple and gold swirling inside', 'A lua: uma esfera cinza com crateras e uma janela redonda de vidro, com um redemoinho roxo e dourado dentro'),
-    },
-    features: [
-      {
-        id: 'reveal',
-        kicker: L('The reveal', 'A revelação'),
-        head: L('One line, and nothing else on the screen.', 'Uma linha, e nada mais na tela.'),
-        body: L(
-          'Hold the moon, or shake the phone. What comes out is one question with nothing around it, and it stays until you close it. Sit with it as long as you like.',
-          'Segure a lua, ou chacoalhe o celular. O que sai é uma pergunta só, sem nada em volta, e ela fica até você fechar. Fique com ela o tempo que quiser.',
-        ),
-        note: L('Not the one? Shake again for another.', 'Não era essa? Chacoalhe de novo para outra.'),
-        screen: 'reveal',
-        alt: L('A question open in the app: “What is one thing you are grateful for?”, with write, save and send actions beneath it', 'Uma pergunta aberta no app: “Qual é uma coisa pela qual você sente gratidão?”, com as ações de escrever, salvar e enviar embaixo'),
-      },
-      {
-        id: 'choose',
-        kicker: L('Where they come from', 'De onde elas vêm'),
-        head: L('You choose how deep it goes.', 'Você escolhe até onde vai.'),
-        body: L(
-          'Three sources: you, your life, and the world beyond it. Three weights, from light to heavy. Change either whenever you like.',
-          'Três origens: você, sua vida e o mundo ao seu redor. Três pesos, do leve ao pesado. Mude quando quiser.',
-        ),
-        note: L(
-          'Self is open now. Life and Beyond You are being finished; leave an email inside the app and it will tell you when they open.',
-          'Você está aberta agora. Vida e Ao seu redor estão sendo terminadas; deixe um e-mail no app e ele avisa quando abrirem.',
-        ),
-        screen: 'home',
-        alt: L('The home screen: the moon, and beneath it the Self, Life and Beyond You pills and the Any, Light, Medium, Heavy weights', 'A tela inicial: a lua, e embaixo os botões Você, Vida e Ao seu redor e os pesos Qualquer, Leve, Médio, Pesado'),
-      },
-      {
-        id: 'share',
-        kicker: L('Send it to someone', 'Mande para alguém'),
-        head: L('Send one to a friend. They don’t need the app.', 'Mande uma para alguém. A pessoa não precisa do app.'),
-        body: L(
-          'It arrives with one line saying somebody thought of them, and then the question, exactly as you saw it. Answer it together, or apart.',
-          'Chega com uma linha dizendo que alguém pensou nela, e depois a pergunta, exatamente como você viu. Respondam juntos, ou cada um do seu lado.',
-        ),
-        screen: 'arrival',
-        alt: L('The arrival screen a sent question opens on: a small astronaut portrait and the line “Someone thought of you”', 'A tela de chegada de uma pergunta enviada: um pequeno retrato de astronauta e a linha “Alguém pensou em você”'),
-      },
-      {
-        id: 'streak',
-        kicker: L('Coming back', 'Voltar'),
-        head: L('Come back, and the moon fills.', 'Volte, e a lua enche.'),
-        body: L(
-          'There is no chart here, and nothing to lose. The object keeps the count for you: each day you come back, a little more of it is lit. Full at twenty-five days.',
-          'Não tem gráfico aqui, e não tem nada a perder. A lua guarda a conta para você: a cada dia que você volta, um pouco mais dela se acende. Cheia aos vinte e cinco dias.',
-        ),
-        screen: 'streak',
-        alt: L('The streak screen: “9 days in a row” beside the moon, with a row of dots filling toward twenty-five', 'A tela de sequência: “9 dias seguidos” ao lado da lua, com uma fileira de pontos enchendo até vinte e cinco'),
-      },
-    ],
-    write: {
-      kicker: L('Where the answer goes', 'Para onde vai a resposta'),
-      h2: L('Still no text box. On purpose.', 'Continua sem caixa de texto. De propósito.'),
-      p1: L(
-        'Lua’s not built for typing. Paper works better for this. The write button copies the question to your clipboard, so you can paste it into your favourite notes app if you’d rather write there instead.',
-        'A Lua não foi feita para digitar. Papel funciona melhor aqui. O botão de escrever copia a pergunta para a área de transferência, para você colar no seu app de notas favorito se preferir escrever lá.',
-      ),
-      p2: L(
-        'Lua keeps none of it. No account, nothing saved, nothing sent.',
-        'A Lua não guarda nada disso. Sem conta, nada salvo, nada enviado.',
-      ),
-      alt: L('The saved list: a few questions put aside for later, and one marked as reflected on', 'A lista de salvas: algumas perguntas deixadas para depois, e uma marcada como refletida'),
-    },
     get: {
       kicker: L('Get Lua', 'Leve a Lua'),
       h2: L('Take the moon with you.', 'Leve a lua com você.'),
-      body: L(
+      bodyLive: L(
+        'Free on the App Store. Or open it in any browser and add it to your home screen, no install needed.',
+        'Grátis na App Store. Ou abra em qualquer navegador e adicione à tela inicial, sem instalar nada.',
+      ),
+      bodySoon: L(
         'Works on any phone today as a web app. Add it to your home screen and it opens like one. App Store and Google Play are on their way.',
         'Funciona em qualquer celular hoje, como app de navegador. Adicione à tela inicial e ela abre como um app. App Store e Google Play estão a caminho.',
       ),
@@ -358,10 +293,6 @@ export const S = {
       { id: 'answers', q: L('Where do my answers go?', 'Para onde vão as minhas respostas?'), a: L(
         'Nowhere, on purpose. Lua has no text box. The write button copies the question to your clipboard so you can answer on paper or in the notes app you already use.',
         'Para lugar nenhum, de propósito. A Lua não tem caixa de texto. O botão de escrever copia a pergunta para a área de transferência, para você responder no papel ou no app de notas que já usa.',
-      ) },
-      { id: 'self', q: L('Why can I only open Self?', 'Por que só consigo abrir Você?'), a: L(
-        'Life and Beyond You are still being finished. Tap either one and you can leave an email; you will get one message when it opens, and nothing else.',
-        'Vida e Ao seu redor ainda estão sendo terminadas. Toque em qualquer uma e você pode deixar um e-mail; vai receber uma mensagem quando abrir, e nada além disso.',
       ) },
       { id: 'five', q: L('It says five a day.', 'Diz cinco por dia.'), a: L(
         'Five questions a day is the free limit for now. The count comes back at midnight. If you would like the limit lifted, the wall lets you say so.',
