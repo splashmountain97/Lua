@@ -33,6 +33,13 @@ anything opened in standalone mode (an old home-screen install) on to `/app/`.
 weight and both languages. New questions go on the end with the next id; nothing is ever
 renumbered (share links carry the id). The native app mirrors this file from here.
 
+The build also publishes the library as data at `/app/questions.json`
+(`scripts/generate-questions-json.mjs`): `{ version, generatedAt, count, prompts }`, where
+`version` is the commit. The native app fetches it once a day and uses it as its live
+library when it parses, with the copy compiled into the binary as the offline fallback,
+so new questions reach phones from the same merge that puts them on the web. Vercel caches
+it for an hour (`vercel.json`).
+
 A weekly scheduled task (`~/.claude/scheduled-tasks/lua-weekly-questions`, Sundays)
 reads what Pedro highlighted, watched and captured that week — the Readwise and Recall
 notes in the Obsidian vault, the phone captures, and `03 - Projects/Lua/Lua Seeds.md` —
