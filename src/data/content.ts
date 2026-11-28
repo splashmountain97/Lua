@@ -350,6 +350,12 @@ export const PROMPTS: Prompt[] = [
   { id: 215, c: 'world', w: 3, t: { en: 'What would happen to society if everyone suddenly felt they already had enough?', pt: 'O que aconteceria com a sociedade se todos de repente sentissem que já têm o suficiente?' } },
   { id: 270, c: 'world', w: 3, t: { en: 'Why do you think wars exist in the world?', pt: 'Por que você acha que existem guerras no mundo?' } },
   { id: 292, c: 'world', w: 3, t: { en: 'How do you see God? Has this changed over time?', pt: 'Como você vê Deus? Isso mudou com o tempo?' } },
+  { id: 296, c: 'you', w: 2, t: { en: 'Which recent win are you quietly crediting to skill that was mostly luck?', pt: 'Qual vitória recente você anda atribuindo a talento, quando foi mais sorte?' } },
+  { id: 297, c: 'life', w: 2, t: { en: 'What is your number for enough, and when did it last move?', pt: 'Qual é o seu número para “suficiente”, e quando foi a última vez que ele mudou?' } },
+  { id: 298, c: 'life', w: 1, t: { en: 'What decision are you making today that you will want to remember your reasons for?', pt: 'Que decisão você está tomando hoje cujos motivos você vai querer lembrar depois?' } },
+  { id: 299, c: 'life', w: 2, t: { en: 'What in your week could run without you, and why are you still the one doing it?', pt: 'O que na sua semana poderia rodar sem você, e por que ainda é você que faz?' } },
+  { id: 300, c: 'life', w: 2, t: { en: 'What do you know only because you kept showing up somewhere for years?', pt: 'O que você sabe só porque continuou aparecendo no mesmo lugar por anos?' } },
+  { id: 301, c: 'you', w: 2, t: { en: 'When you finally have someone’s attention, what do you have to say?', pt: 'Quando você finalmente tem a atenção de alguém, o que você tem a dizer?' } },
 ];
 
 export const WEIGHTS: { id: Weight | null; label: Localized }[] = [
