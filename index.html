@@ -15,7 +15,13 @@
     <meta property="og:title" content="Lua · A question, once a day" />
     <meta property="og:description" content="Shake it, or tap it, and sit with what it asks." />
     <meta property="og:url" content="https://luadaily.com/app/" />
-    <meta property="og:image" content="https://luadaily.com/app/icon-512.jpg" />
+    <!-- Under 300px on purpose: WhatsApp and iMessage lay an image that wide out as a
+         full-width card above the text, a smaller one as a thumbnail beside it. A sent
+         question should read as a note, not a poster. Built by scripts/generate-icons.mjs. -->
+    <meta property="og:image" content="https://luadaily.com/app/share-256.jpg" />
+    <meta property="og:image:width" content="256" />
+    <meta property="og:image:height" content="256" />
+    <meta property="og:image:type" content="image/jpeg" />
     <meta name="twitter:card" content="summary" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

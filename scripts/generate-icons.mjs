@@ -63,5 +63,11 @@ async function buildIcon({ size, f, wx, wy, ground, outFile }) {
 // Concept A — sphere bleeds past the square, window off-centre where it really is.
 await buildIcon({ size: 512, f: 1.34, wx: 0.5, wy: 0.46, ground: '#1a1c26', outFile: 'icon-512.jpg' });
 await buildIcon({ size: 192, f: 1.34, wx: 0.5, wy: 0.46, ground: '#1a1c26', outFile: 'icon-192.jpg' });
+// The link preview, for /app/ and the share pages under /app/q. Deliberately
+// under 300px: WhatsApp (and iMessage) lay an image that wide or wider out as
+// a full-width card above the text, and a smaller one as a thumbnail beside
+// it. A sent question is a message, not a poster — the thumbnail is the one
+// that reads as a note from a person.
+await buildIcon({ size: 256, f: 1.34, wx: 0.5, wy: 0.46, ground: '#1a1c26', outFile: 'share-256.jpg' });
 // Concept C — whole object, real margin: used for the maskable icon, which needs a safe zone.
 await buildIcon({ size: 512, f: 0.84, wx: null, wy: null, ground: '#161826', outFile: 'icon-512-maskable.jpg' });

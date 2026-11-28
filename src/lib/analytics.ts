@@ -1,5 +1,6 @@
 import type { PostHog } from 'posthog-js';
-import type { CategoryId, Prompt, Weight } from '../data/content';
+import type { CategoryId, Prompt, ShareVariant, Weight } from '../data/content';
+import { sharedVariant } from './share';
 import { isDevDevice, setDevDevice } from './storage';
 
 // The only measurement in the app, and it is held to the same bargain the rest
@@ -83,9 +84,18 @@ export function initAnalytics() {
     });
     // Registered before the first capture, so every event carries these —
     // including the pageview on the next line and the queued ones below.
+    const variant = sharedVariant();
     posthog.register({
       launched: launchedAs(),
       ...(devDevice ? { dev: 'true' } : {}),
+      // The wording the share link that opened this visit was sent with (see
+      // SHARE_VARIANTS in data/content). On every event of the visit, so the
+      // pageview counts the arrivals per wording and moon_shaken counts the
+      // ones who went on to ask for a question of their own. Against
+      // share_sent per wording, that is the whole test. It names the message,
+      // never who sent it or who opened it; the question's id stays out, as
+      // everywhere else.
+      ...(variant ? { share_variant: variant } : {}),
     });
     posthog.capture('$pageview');
     ph = posthog;
@@ -237,6 +247,16 @@ export function trackFilter(kind: 'category' | 'weight', value: CategoryId | Wei
 /** Which of the four things on the reveal screen actually get used. */
 export function trackAction(action: 'write' | 'save' | 'unsave' | 'share' | 'again' | 'close') {
   send('reveal_action', { action });
+}
+
+/**
+ * A question left the device, worded one of the ways under test. The
+ * denominator of the share test: arrivals per wording (share_variant on the
+ * recipient's pageview) over sends per wording here. Only a completed sheet
+ * or a successful copy counts — a sheet backed out of sent nothing.
+ */
+export function trackShareSent(variant: ShareVariant, via: 'sheet' | 'clipboard') {
+  send('share_sent', { share_variant: variant, via });
 }
 
 /** Whether the three screens are read or skipped. */

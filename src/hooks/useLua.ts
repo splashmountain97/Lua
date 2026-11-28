@@ -4,12 +4,12 @@ import { IDLE_FIRST, IDLE_RETURN, IDLE_TIPS, SETTLING, WRITE_TIPS } from '../dat
 import { useLang } from './useLang';
 import { UI } from '../lib/strings';
 import { PHASES, REVEAL_MS, type Phase } from '../lib/phases';
-import { copyOnly, shareOrCopy, sharedPromptId } from '../lib/share';
+import { copyOnly, pickShareVariant, shareOrCopy, sharedPromptId } from '../lib/share';
 import type { WriteTier } from '../components/WriteModal';
 import type { Door } from '../components/Wall';
 import { DAY_CAP, SAVE_CAP } from '../lib/limits';
 import { shareMoon } from '../lib/streak';
-import { trackPromptShown, trackShake, trackFilter, trackAction, trackSavedOpened, trackWallShown, trackWaitlist } from '../lib/analytics';
+import { trackPromptShown, trackShake, trackFilter, trackAction, trackSavedOpened, trackShareSent, trackWallShown, trackWaitlist } from '../lib/analytics';
 import type { RevealTrigger } from '../lib/analytics';
 import {
   getCoachSeen, getPrefs, getUnlocked, hasOpenedBefore,
@@ -749,14 +749,19 @@ export function useLua() {
   async function share(e?: React.SyntheticEvent) {
     e?.stopPropagation();
     trackAction('share');
-    const msg = shareText(PROMPTS[stateRef.current.promptIx], lang, shareMoon(streakDays));
+    // One of the wordings under test, drawn for this send alone. Which one
+    // gets opened at the other end is answered in PostHog, not here.
+    const variant = pickShareVariant();
+    const msg = shareText(PROMPTS[stateRef.current.promptIx], lang, shareMoon(streakDays), variant);
     // A deadline rather than a flag. The share promise is at the mercy of the
     // platform sheet and may never settle; a flag cleared in a finally would
     // then stay set and leave the question impossible to tap away. A deadline
     // expires on its own, so the worst case is a moment of ignored taps.
     shareGuardUntilRef.current = Date.now() + 1500;
     try {
-      await shareOrCopy(msg, noteCopy, copyWords);
+      const outcome = await shareOrCopy(msg, noteCopy, copyWords);
+      if (outcome === 'shared') trackShareSent(variant, 'sheet');
+      else if (outcome === 'copied') trackShareSent(variant, 'clipboard');
     } finally {
       shareGuardUntilRef.current = Date.now() + 800;
     }

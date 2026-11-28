@@ -522,16 +522,77 @@ export const IDLE_RETURN: Record<Lang, string[]> = {
 
 export const LANDING_URL = 'https://luadaily.com';
 
-/** The page built for one question — see scripts/generate-share-pages.mjs. */
-export const shareUrl = (id: number, lang: Lang) =>
-  lang === 'pt' ? `${LANDING_URL}/app/q/pt/${id}` : `${LANDING_URL}/app/q/${id}`;
+/**
+ * The page built for one question — see scripts/generate-share-pages.mjs.
+ *
+ * `variant` is the wording the link was sent with (see SHARE_VARIANTS). It
+ * rides as ?v= so the page the recipient opens can say which message brought
+ * them; the static page under /q is the same whatever the query.
+ */
+export const shareUrl = (id: number, lang: Lang, variant?: ShareVariant) => {
+  const page = lang === 'pt' ? `${LANDING_URL}/app/q/pt/${id}` : `${LANDING_URL}/app/q/${id}`;
+  return variant ? `${page}?v=${variant}` : page;
+};
+
+/**
+ * The wordings a question can be sent with, under test against each other.
+ *
+ * Which wording gets a sent question opened is the thing being measured, and
+ * the recipient's device is the only place it can be seen — so the id travels
+ * in the link, and the arrival carries it back (lib/analytics). The id names
+ * the wording, never the sender or the reader.
+ *
+ * The letters are the record, like the prompt ids: counts in PostHog are keyed
+ * by them, so a wording that is retired keeps its letter and a new one takes
+ * the next. Each send draws one at random (lib/share), so a variant is never
+ * the habit of one particular sender.
+ *
+ * Five, laid out so they can be read in pairs as well as one by one, since
+ * the numbers will be small for a long time. Two things vary: whether the
+ * sender says something about themselves (c, d) or nothing (a, b), and
+ * whether the message ends by asking for an answer (b, d) or by signing off
+ * (a, c). Pooled, c+d against a+b is the story; b+d against a+c is the ask.
+ * The fifth (e) is the floor: the question and nothing else, to find out
+ * whether any framing earns its place over the card the link already shows.
+ */
+export const SHARE_VARIANTS = ['a', 'b', 'c', 'd', 'e'] as const;
+export type ShareVariant = (typeof SHARE_VARIANTS)[number];
+
+const SHARE_WORDING: Record<ShareVariant, (q: string, moon: string) => Localized> = {
+  // a — the original: the app named, the question quoted, a sign-off.
+  a: (q, moon) => ({
+    en: `Lua asked me: “${q}”. Thought of you ${moon}`,
+    pt: `A Lua me perguntou: “${q}”. Pensei em você ${moon}`,
+  }),
+  // b — the ask: the question first and alone, then an invitation to answer
+  // it. The app is not named; the card under the link does that.
+  b: (q, moon) => ({
+    en: `“${q}”\n\nThought of you. What would you say? ${moon}`,
+    pt: `“${q}”\n\nPensei em você. O que você responderia? ${moon}`,
+  }),
+  // c — the story: a word about the sender's own habit before the question,
+  // and a sign-off about the recipient's taste rather than the sender's mind.
+  // The one claim here made on the sender's behalf is that they journal.
+  c: (q, moon) => ({
+    en: `I started journaling, and today Lua asked me this: “${q}”. Thought you’d like it ${moon}`,
+    pt: `Comecei a escrever um diário, e hoje a Lua me perguntou isso: “${q}”. Achei que você ia gostar ${moon}`,
+  }),
+  // d — the story and the ask together.
+  d: (q, moon) => ({
+    en: `I started journaling, and today Lua asked me this: “${q}”. What would you say? ${moon}`,
+    pt: `Comecei a escrever um diário, e hoje a Lua me perguntou isso: “${q}”. O que você responderia? ${moon}`,
+  }),
+  // e — the floor: the question, the moon, the link.
+  e: (q, moon) => ({
+    en: `“${q}” ${moon}`,
+    pt: `“${q}” ${moon}`,
+  }),
+};
 
 export function promptIndexById(id: number): number {
   return PROMPTS.findIndex(p => p.id === id);
 }
 
 /** The moon is passed in rather than worked out here: this file is the library, and the sender's streak is not part of it. */
-export const shareText = (prompt: Prompt, lang: Lang, moon = '🌙') =>
-  lang === 'pt'
-    ? `A Lua me perguntou: “${prompt.t.pt}”. Pensei em você ${moon}\n${shareUrl(prompt.id, lang)}`
-    : `Lua asked me: “${prompt.t.en}”. Thought of you ${moon}\n${shareUrl(prompt.id, lang)}`;
+export const shareText = (prompt: Prompt, lang: Lang, moon = '🌙', variant: ShareVariant = 'a') =>
+  `${SHARE_WORDING[variant](prompt.t[lang], moon)[lang]}\n${shareUrl(prompt.id, lang, variant)}`;
