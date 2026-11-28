@@ -1,3 +1,5 @@
+import { SHARE_VARIANTS, type ShareVariant } from '../data/content';
+
 /**
  * The two words this module can say, handed in by the caller so that nothing
  * here has to know which language is on screen.
@@ -29,6 +31,31 @@ export function sharedPromptId(): number | null {
 }
 
 /**
+ * The wording the link this page was opened through was sent with (?v=), if
+ * it carries one this build knows. A link with no tag, or a tag from a
+ * retired wording, is simply a link.
+ */
+export function sharedVariant(): ShareVariant | null {
+  try {
+    const v = new URLSearchParams(window.location.search).get('v');
+    return v && (SHARE_VARIANTS as readonly string[]).includes(v) ? (v as ShareVariant) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** One wording, drawn afresh for every send. */
+export function pickShareVariant(): ShareVariant {
+  return SHARE_VARIANTS[Math.floor(Math.random() * SHARE_VARIANTS.length)];
+}
+
+/**
+ * What became of a share: the sheet was completed, backed out of, or — where
+ * there is no sheet — the text landed on the clipboard, or nothing did.
+ */
+export type ShareOutcome = 'shared' | 'cancelled' | 'copied' | 'failed';
+
+/**
  * Puts text on the clipboard without opening the share sheet — for taking a
  * question away to write about, which is a private act, not a send.
  */
@@ -57,20 +84,20 @@ export async function shareOrCopy(
   message: string,
   note: (text: string) => void,
   words = COPY_WORDS.en,
-) {
+): Promise<ShareOutcome> {
   const nav = navigator as Navigator & { share?: (data: { text: string }) => Promise<void> };
   if (nav.share) {
     try {
       await nav.share({ text: message });
-      return;
+      return 'shared';
     } catch (err) {
-      if (err && (err as Error).name === 'AbortError') return;
+      if (err && (err as Error).name === 'AbortError') return 'cancelled';
     }
   }
   try {
     await navigator.clipboard.writeText(message);
     note(words.copied);
-    return;
+    return 'copied';
   } catch { /* fall through to the legacy path */ }
   try {
     const ta = document.createElement('textarea');
@@ -82,7 +109,9 @@ export async function shareOrCopy(
     const ok = document.execCommand('copy');
     document.body.removeChild(ta);
     note(ok ? words.copied : words.failed);
+    return ok ? 'copied' : 'failed';
   } catch {
     note(words.failed);
+    return 'failed';
   }
 }

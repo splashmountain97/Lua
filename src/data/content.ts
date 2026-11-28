@@ -522,16 +522,57 @@ export const IDLE_RETURN: Record<Lang, string[]> = {
 
 export const LANDING_URL = 'https://luadaily.com';
 
-/** The page built for one question — see scripts/generate-share-pages.mjs. */
-export const shareUrl = (id: number, lang: Lang) =>
-  lang === 'pt' ? `${LANDING_URL}/app/q/pt/${id}` : `${LANDING_URL}/app/q/${id}`;
+/**
+ * The page built for one question — see scripts/generate-share-pages.mjs.
+ *
+ * `variant` is the wording the link was sent with (see SHARE_VARIANTS). It
+ * rides as ?v= so the page the recipient opens can say which message brought
+ * them; the static page under /q is the same whatever the query.
+ */
+export const shareUrl = (id: number, lang: Lang, variant?: ShareVariant) => {
+  const page = lang === 'pt' ? `${LANDING_URL}/app/q/pt/${id}` : `${LANDING_URL}/app/q/${id}`;
+  return variant ? `${page}?v=${variant}` : page;
+};
+
+/**
+ * The wordings a question can be sent with, under test against each other.
+ *
+ * Which wording gets a sent question opened is the thing being measured, and
+ * the recipient's device is the only place it can be seen — so the id travels
+ * in the link, and the arrival carries it back (lib/analytics). The id names
+ * the wording, never the sender or the reader.
+ *
+ * The letters are the record, like the prompt ids: counts in PostHog are keyed
+ * by them, so a wording that is retired keeps its letter and a new one takes
+ * the next. Each send draws one at random (lib/share), so a variant is never
+ * the habit of one particular sender.
+ */
+export const SHARE_VARIANTS = ['a', 'b', 'c'] as const;
+export type ShareVariant = (typeof SHARE_VARIANTS)[number];
+
+const SHARE_WORDING: Record<ShareVariant, (q: string, moon: string) => Localized> = {
+  // The original: the app named, the question quoted, a sign-off.
+  a: (q, moon) => ({
+    en: `Lua asked me: “${q}”. Thought of you ${moon}`,
+    pt: `A Lua me perguntou: “${q}”. Pensei em você ${moon}`,
+  }),
+  // The question first and alone, then an invitation to answer it. The app is
+  // not named; the preview under the link does that.
+  b: (q, moon) => ({
+    en: `“${q}”\n\nThought of you. What would you say? ${moon}`,
+    pt: `“${q}”\n\nPensei em você. O que você responderia? ${moon}`,
+  }),
+  // The question first, then the plainest account of why it was sent.
+  c: (q, moon) => ({
+    en: `“${q}”\n\nI got this one today and thought of you ${moon}`,
+    pt: `“${q}”\n\nRecebi essa hoje e pensei em você ${moon}`,
+  }),
+};
 
 export function promptIndexById(id: number): number {
   return PROMPTS.findIndex(p => p.id === id);
 }
 
 /** The moon is passed in rather than worked out here: this file is the library, and the sender's streak is not part of it. */
-export const shareText = (prompt: Prompt, lang: Lang, moon = '🌙') =>
-  lang === 'pt'
-    ? `A Lua me perguntou: “${prompt.t.pt}”. Pensei em você ${moon}\n${shareUrl(prompt.id, lang)}`
-    : `Lua asked me: “${prompt.t.en}”. Thought of you ${moon}\n${shareUrl(prompt.id, lang)}`;
+export const shareText = (prompt: Prompt, lang: Lang, moon = '🌙', variant: ShareVariant = 'a') =>
+  `${SHARE_WORDING[variant](prompt.t[lang], moon)[lang]}\n${shareUrl(prompt.id, lang, variant)}`;
